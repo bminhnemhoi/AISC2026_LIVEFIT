@@ -1,8 +1,0 @@
-node_modules
-.next
-.ops
-.git
-.env
-.env*.local
-coverage
-*.tsbuildinfo

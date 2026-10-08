@@ -39,10 +39,6 @@ data/labeling/*
 web/node_modules/
 web/.next/
 web/out/
-next/node_modules/
-next/.next/
-next/.competition-demo/
-next/out/
 
 # Notebooks: strip outputs before commit (see HARNESS.md); checkpoints never committed
 .ipynb_checkpoints/
