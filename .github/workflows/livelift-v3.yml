@@ -1,0 +1,38 @@
+name: LiveLift V3
+on:
+  push:
+    paths: ['next/**', 'docker/next*', 'docker-compose.v3.yml', '.github/workflows/livelift-v3.yml']
+  pull_request:
+    paths: ['next/**', 'docker/next*', 'docker-compose.v3.yml', '.github/workflows/livelift-v3.yml']
+permissions:
+  contents: read
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: next
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.3'
+          cache: npm
+          cache-dependency-path: next/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:phase2-live
+      - run: npm run build:ops
+      - run: npm run build
+      - run: npm run test:platform-live
+      - run: npm audit --omit=dev --audit-level=high
+      - name: Compose validation
+        working-directory: .
+        env:
+          LIVELIFT_HOST: livelift.example.com
+          LIVELIFT_APP_ORIGIN: https://livelift.example.com
+          LIVELIFT_WORKSPACE_ID: 00000000-0000-4000-8000-000000000001
+          LIVELIFT_ROOM_ID: studio
+        run: docker compose -f docker-compose.v3.yml config --quiet

@@ -9,14 +9,12 @@ chứng làm bản sắc mà để badge nói dối thì tự bắn vào chân m
 Nguồn duy nhất là chính pytest. Script gọi ``--collect-only`` cho ba nhóm rồi
 ghi con số vào:
 
-  - README.md                       badge Tests, dòng lệnh mẫu, "Quality gates", dòng
-                                    Kiểm thử tự động của bảng Bộ số chuẩn
   - web/src/app/page.tsx            hằng PROOF của trang chủ
   - docs/competition/FACT-SHEET.md  dòng "Bộ kiểm thử" (kèm ngày đếm)
   - docs/competition/sang-tao-tre-2026/  noi-dung.md (Tóm tắt, Bảng 5), 05-BAN-KE-KHAI.md
                                     (mục VIII), 07-KICH-BAN-2-VIDEO.md (lời thoại, bảng số)
 
-Ba tệp nộp cuối (thêm tối 25/09/2026) và README (từ 27/09/2026) còn chép KẾT QUẢ một lần
+Ba tệp nộp cuối (thêm tối 25/09/2026) còn chép KẾT QUẢ một lần
 chạy ("2.091 đạt, 2 bỏ qua"). Script không tự sửa số đó; nếu số đạt + bỏ qua không còn
 cộng ra tổng thu thập thì báo LỖI, thoát mã 1 — phải chạy lại bộ test rồi sửa tay.
 
@@ -33,6 +31,9 @@ Kiểm toán 25/09/2026 sửa ba lỗ của bản trước:
     thoát mã 1.
 
 Con số là số test pytest THU THẬP được, không phải số đã chạy xanh hôm đó.
+README.md hiện mô tả sản phẩm next/, không phải bề mặt công bố số test Python.
+Không ghi vào docs/legacy/ORIGIN-README.vi.md: đây là bản lưu trữ lịch sử 27/09/2026.
+FACT-SHEET và hồ sơ vẫn đồng bộ số thu thập; kết quả chạy có ngày/commit giữ nguyên.
 
 Chạy:
 
@@ -50,7 +51,6 @@ import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import quote
 
 GOC = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(GOC / "src"))
@@ -87,7 +87,7 @@ def vi(n: int) -> str:
 
 
 def cum_cham(so: SoTest) -> str:
-    """Cụm chữ chuẩn cho nhóm chậm — README và FACT-SHEET dùng đúng cụm này."""
+    """Cụm chữ chuẩn cho nhóm chậm của FACT-SHEET."""
     return (
         f"{so.cham} cổng chậm ({so.thong_ke} mô phỏng/thống kê · {so.nlp} đánh giá NLP"
         f" · {so.css} cổng build CSS)"
@@ -153,48 +153,11 @@ class Luat:
     la_ngay: bool = False
 
 
-def _badge(m: re.Match[str], so: SoTest, _ngay: str) -> str:
-    chu = quote(f"{so.nhanh} nhanh + {so.cham} cổng chậm", safe="")
-    return f"badge/tests-{chu}-{m.group(1)}"
-
-
 HO_SO = "docs/competition/sang-tao-tre-2026/"
 
 CUM_CHAM_RE = r"\d+ cổng chậm \(\d+ mô phỏng/thống kê · \d+ đánh giá NLP · \d+ cổng build CSS\)"
 
 LUAT: dict[str, list[Luat]] = {
-    "README.md": [
-        # Màu badge giữ nguyên (không khoá vào brightgreen — sự cố T1 25/09).
-        Luat("badge Tests", re.compile(r"badge/tests-[^)\]\s]*?-([a-z]+)(?=\))"), _badge),
-        Luat(
-            'dòng lệnh pytest -m "not slow"',
-            re.compile(r'(pytest -m "not slow"\s+# )\d+ test nhanh'),
-            lambda m, so, _: f"{m.group(1)}{so.nhanh} test nhanh",
-        ),
-        Luat(
-            "dòng lệnh pytest -m browser",
-            re.compile(r"(pytest -m browser\s+# )\d+ test trình duyệt"),
-            lambda m, so, _: f"{m.group(1)}{so.trinh_duyet} test trình duyệt",
-        ),
-        Luat(
-            "Quality gates",
-            re.compile(r"Quality gates: \d+ test nhanh"),
-            lambda m, so, _: f"Quality gates: {so.nhanh} test nhanh",
-        ),
-        Luat("cụm cổng chậm", re.compile(CUM_CHAM_RE), lambda m, so, _: cum_cham(so)),
-        # README viết lại 27/09/2026 có bảng "Bộ số chuẩn" nêu tổng số test và đủ ba nhóm.
-        # Không có luật này thì tổng và số test trình duyệt ở bảng cũ đi mà không ai báo.
-        Luat(
-            "bảng Bộ số chuẩn: dòng Kiểm thử tự động",
-            re.compile(
-                r"[\d.]+ test thu thập được, gồm [\d.]+ nhanh, \d+ chậm và \d+ trên trình duyệt"
-            ),
-            lambda m, so, _: (
-                f"{vi(so.tong)} test thu thập được, gồm {vi(so.nhanh)} nhanh, {so.cham} chậm"
-                f" và {so.trinh_duyet} trên trình duyệt"
-            ),
-        ),
-    ],
     "web/src/app/page.tsx": [
         Luat(
             "hằng PROOF",
@@ -282,8 +245,7 @@ LUAT: dict[str, list[Luat]] = {
 }
 
 #: Tệp chép cả KẾT QUẢ một lần chạy — kiểm bằng ``lech_ket_qua_chay``, không tự sửa.
-#: README vào danh sách từ 27/09/2026 (bảng Bộ số chuẩn ghi "2.114 đạt, 2 bỏ qua").
-TEP_KET_QUA_CHAY = (*(k for k in LUAT if k.startswith(HO_SO)), "README.md")
+TEP_KET_QUA_CHAY = tuple(k for k in LUAT if k.startswith(HO_SO))
 
 KET_QUA_CHAY_RE = re.compile(r"(\d[\d.]*) đạt, (\d[\d.]*) bỏ qua")
 

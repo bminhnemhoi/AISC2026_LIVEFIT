@@ -11,7 +11,7 @@ Bốn kiểm tra, không cần mạng và không cần server:
 2. mọi liên kết tương đối trong tài liệu giải được về một file có thật;
 3. không có ảnh mồ côi trong ``docs/img/`` — ảnh đã chụp thì phải được dùng,
    nếu không lần dọn kho sau sẽ không ai dám xoá;
-4. README trỏ tới hướng dẫn (đường vào của người dùng mới).
+4. README gốc lưu trữ và chỉ mục tài liệu trỏ tới hướng dẫn nghiên cứu.
 
 Ngoài ra, gate nội dung: các nhãn nút được trích dẫn trong hướng dẫn phải khớp
 CHUỖI THẬT trong mã nguồn web — cùng tinh thần contract test web↔API. Hướng dẫn
@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 GUIDE = DOCS / "HUONG-DAN-SU-DUNG.md"
 IMG_DIR = DOCS / "img"
-README = ROOT / "README.md"
+README = DOCS / "legacy" / "ORIGIN-README.vi.md"
 
 IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
 LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
@@ -84,7 +84,13 @@ def test_khong_co_anh_mo_coi(guide_text: str) -> None:
 
 def test_readme_tro_toi_huong_dan() -> None:
     text = README.read_text(encoding="utf-8")
-    assert "docs/HUONG-DAN-SU-DUNG.md" in text, "README phải trỏ tới hướng dẫn sử dụng"
+    links = LINK_RE.findall(text)
+    assert any((README.parent / link).resolve() == GUIDE for link in links), (
+        "README lưu trữ phải có liên kết giải được tới hướng dẫn sử dụng gốc"
+    )
+    index = (DOCS / "README.md").read_text(encoding="utf-8")
+    assert "(HUONG-DAN-SU-DUNG.md)" in index
+    assert "(legacy/ORIGIN-README.vi.md)" in index
 
 
 # ---------------------------------------------------------------------------
