@@ -414,7 +414,8 @@ def test_nguon_md_sinh_tu_tom_tat_khong_sua_tay(vh, monkeypatch, tmp_path):
     tai_lieu = {
         p: (GOC / p).read_text(encoding="utf-8")
         for p in (
-            "README.md",
+            "docs/legacy/ORIGIN-README.vi.md",
+            "docs/competition/FACT-SHEET.md",
             "docs/TONG-KET-DU-AN.md",
             "docs/HUONG-DAN-SU-DUNG.md",
             "ops/runbooks/quy-trinh-phien.md",
@@ -424,8 +425,8 @@ def test_nguon_md_sinh_tu_tom_tat_khong_sua_tay(vh, monkeypatch, tmp_path):
         phang = re.sub(r"\s+", " ", chu)
         for cum in ("làm mù hoàn toàn", "*không thể* rò nhánh", "KHÔNG BAO GIỜ**"):
             assert cum not in phang, f"{p} còn nói làm mù trọn vẹn: {cum!r}"
-        assert "một phần" in phang, f"{p} phải nói làm mù người dẫn chỉ một phần"
-    for p in ("README.md", "docs/TONG-KET-DU-AN.md"):
+        assert "một phần" in phang.lower(), f"{p} phải nói làm mù người dẫn chỉ một phần"
+    for p in ("docs/legacy/ORIGIN-README.vi.md", "docs/TONG-KET-DU-AN.md"):
         for i, d in enumerate(tai_lieu[p].splitlines(), 1):
             if "làm mù" in d:
                 assert "một phần" in d, f"{p}:{i} nói làm mù mà không nói 'một phần'"
