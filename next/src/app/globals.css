@@ -1,0 +1,121 @@
+@import "tailwindcss";
+@import "remixicon/fonts/remixicon.css";
+
+/*
+  Motion. This is an operating desk: motion acknowledges input and explains a state change, nothing else.
+  Feedback 150ms, overlays 180ms, swapped content 200ms; always decelerating, never springy, never looping on data.
+  Every entrance animates FROM a hidden frame TO the element's normal style, so a skipped animation still leaves
+  the content on screen. Used only behind `motion-safe:`; the reduced-motion block below also flattens everything.
+*/
+@theme {
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-fade-in: fade-in 160ms var(--ease-settle);
+  --animate-pop-in: pop-in 180ms var(--ease-settle);
+  --animate-content-in: content-in 200ms var(--ease-settle);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+  /* Popovers and dialogs: a short settle from their anchor. Bottom sheets set --pop-from to rise instead. */
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(var(--pop-from, -4px)) scale(0.98); }
+  }
+  /* New content in place: a tab's panel, a fresh AI result, the next segment. */
+  @keyframes content-in {
+    from { opacity: 0; transform: translateY(2px); }
+  }
+}
+
+@layer base {
+  :root {
+    --bg-canvas: #090B0F;
+    --surface-l1: #13161C;
+    --surface-l2: #1B1F27;
+    --surface-l3: #252A34;
+    --surface-l4: #303643;
+    
+    --border-subtle: #2A303A;
+    --border-strong: #39414D;
+    
+    --text-primary: #F5F7FC;
+    --text-secondary: #CAD0DA;
+    --text-muted: #B7C1CE;
+    --text-subtle: #8A95A5;
+    
+    --accent-lime: #DFFF00;
+    --accent-lime-hover: #CBEA00;
+    --accent-lime-text: #111407;
+    --accent-lime-subtle: #242A22;
+    
+    --evidence-violet: #C8B2FF;
+    --evidence-violet-bg: #211F2B;
+    
+    --status-warning: #FFB800;
+    --status-danger: #FF5C5C;
+    --status-success: #22C55E;
+    --status-unknown: #C8CDD6;
+
+    /* Restrained signal tokens from the approved canvases: amber warns, red is controlled. */
+    --signal-warn: #F6C875;
+    --signal-warn-bg: #2A2316;
+    --signal-warn-line: #5E4822;
+    --signal-danger: #F4A4A4;
+    --signal-danger-bg: #302025;
+    --signal-danger-line: #6B2A35;
+    --simulated: #C8B2FF;
+    --simulated-bg: #211F2B;
+    --simulated-line: #44385C;
+    
+    /* AI assistance: cyan, so advice never borrows the lime of the one real action or the violet of SIMULATED. */
+    --ai: #7DD8EA;
+    --ai-bg: #12222A;
+    --ai-line: #25505F;
+
+    --focus-ring: #DFFF00;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    color-scheme: dark;
+    font-family: var(--font-rubik), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    scrollbar-width: thin;
+    scrollbar-color: #4B5665 #13161C;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+    Every control eases its hover/press colours instead of snapping. Zero specificity and the base layer, so any
+    component's own `transition-*` utility still wins.
+  */
+  :where(a, button, summary, select, input, textarea) {
+    transition-property: color, background-color, border-color, text-decoration-color, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+}
+
+/* Operational focus states - WCAG 2.1 AA compliant */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

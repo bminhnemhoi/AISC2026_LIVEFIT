@@ -30,7 +30,7 @@ jobs:
         run: ruff format --check src tests
 
   test:
-    name: pytest (fast) + coverage
+    name: original research pytest (fast) + coverage
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -57,7 +57,7 @@ jobs:
         run: python scripts/check_isolation.py
 
   web:
-    name: web build (Next.js)
+    name: original research web build (Next.js 14)
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     continue-on-error: false
@@ -76,8 +76,45 @@ jobs:
       - name: Build
         run: npm run build
 
+  product:
+    name: current LiveLift product (Next.js 16)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: next
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.3"
+          cache: npm
+          cache-dependency-path: next/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      # Unit/component tests; live-server cases retain their existing prerequisites.
+      # Full browser certification is a separate acceptance run.
+      - name: Unit and component tests
+        run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          LIVELIFT_APP_ORIGIN: https://livelift-ci.invalid
+          LIVELIFT_WORKSPACE_ID: 00000000-0000-4000-8000-000000000001
+          LIVELIFT_ROOM_ID: ci-room
+          LIVELIFT_DB_PATH: ${{ runner.temp }}/livelift-ci/authority.sqlite
+          LIVELIFT_BACKUP_DIR: ${{ runner.temp }}/livelift-ci/backups
+          LIVELIFT_INTELLIGENCE_MODE: "off"
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
   nightly:
-    name: pytest (slow statistical validation)
+    name: original research pytest (slow statistical validation)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:

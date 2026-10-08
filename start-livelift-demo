@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+repo=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+command -v node >/dev/null 2>&1 || { echo 'FAIL Node missing. Install Node 22.23.3, then run ./start-livelift-demo.'; exit 1; }
+exec node "$repo/scripts/competition/launcher.mjs" start "$@"
