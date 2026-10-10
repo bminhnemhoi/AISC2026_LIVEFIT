@@ -62,7 +62,7 @@ export const ASSUMPTIONS: readonly string[] = [
   "SIMULATED: a pinned product draws far more add-to-carts than the others, rising over its first two minutes on show.",
   "SIMULATED: about one add-to-cart in three becomes a purchase at once. A purchase lowers stock only when stock was entered.",
   "SIMULATED: a few comments carry obviously fake phone numbers and emails so the PII mask is visible.",
-  "SIMULATED: these are assumptions written into the simulation, not findings about real viewers or about Shopee.",
+  "SIMULATED: these are assumptions written into the simulation, not findings about real viewers or about any real platform.",
 ];
 
 /** A uniform number in [0, 1) for this seed, second and purpose. */

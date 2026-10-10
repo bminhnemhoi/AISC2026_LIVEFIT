@@ -189,7 +189,7 @@ export const fixtureLiveEdgeCases: HostAppViewModel = {
   comments: FIXTURE_STANDARD_COMMENTS.slice(0, 3),
   banner: {
     tone: "danger",
-    text: "SIMULATED Shopee: Authorisation token expired. LiveLift degraded to manual.",
+    text: "SIMULATED Live: Authorisation token expired. LiveLift degraded to manual.",
   },
 };
 
@@ -364,7 +364,7 @@ export const fixtureLiveLongEnglish: HostAppViewModel = {
   comments: FIXTURE_LONG_ENGLISH_COMMENTS,
   banner: {
     tone: "info",
-    text: "Connected to SIMULATED Shopee Live broadcast environment. All controls responsive.",
+    text: "Connected to SIMULATED Live broadcast environment. All controls responsive.",
   },
 };
 

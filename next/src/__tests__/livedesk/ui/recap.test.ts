@@ -117,11 +117,11 @@ describe("Words the screens add", () => {
   });
 
   it("translations keep the platform's own words and never change an unknown sentence", () => {
-    expect(tBanner('SIMULATED Shopee is rate limiting: "Too many requests". The Live Desk stopped calling it. Carry on in the app by hand.', "vi"))
-      .toBe('SIMULATED Shopee đang giới hạn tần suất gọi: "Too many requests". Live Desk đã ngừng gọi nền tảng. Bạn tiếp tục thao tác bằng tay trong ứng dụng.');
+    expect(tBanner('SIMULATED Live is rate limiting: "Too many requests". The Live Desk stopped calling it. Carry on in the app by hand.', "vi"))
+      .toBe('SIMULATED Live đang giới hạn tần suất gọi: "Too many requests". Live Desk đã ngừng gọi nền tảng. Bạn tiếp tục thao tác bằng tay trong ứng dụng.');
     expect(tBanner("Something new", "vi")).toBe("Something new");
     expect(tImportNote("4 imported, 0 rows skipped", "vi")).toBe("Đã nhập 4, bỏ qua 0 dòng");
-    expect(tImportNote('Start live: SIMULATED Shopee refused: "error_param"', "vi")).toBe('Bắt đầu live: SIMULATED Shopee từ chối: "error_param"');
+    expect(tImportNote('Start live: SIMULATED Live refused: "error_param"', "vi")).toBe('Bắt đầu live: SIMULATED Live từ chối: "error_param"');
     expect(tStartBlocked("Unknown reason", "vi")).toBe("Unknown reason");
     expect(readSignal({ label: "Stock", value: "Not entered" }, "vi")).toMatchObject({ count: null, missing: true, text: "Chưa nhập" });
     expect(readSignal({ label: "Ask price, last 2 min", value: "7 comments" }, "vi")).toMatchObject({ key: "price", count: 7, text: "7 bình luận" });

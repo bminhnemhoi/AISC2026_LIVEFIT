@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeskSimulation, useLiveDesk, useLiveRecap } from "@/lib/livedesk/hooks";
@@ -10,13 +10,14 @@ import type {
 } from "@/lib/livedesk/types";
 import type { DeskCopy } from "./copy";
 import { DeskChart } from "./DeskChart";
-import { IconAlert, IconBolt, IconInfo, IconPause, IconPin, IconPlay, IconShield, IconSkip, IconUnpin } from "./icons";
+import { IconAlert, IconBolt, IconChevronRight, IconInfo, IconPause, IconPin, IconPlay, IconShield, IconSkip, IconUnpin } from "./icons";
 import { INTENT_ORDER, clock, headline, num, readSignal, tAiStatus, tAssumption, tBanner, type ReadSignal } from "./i18n";
 import { Phone } from "./Phone";
 import type { DeskLang } from "./prefs";
 import { Sheet, useTrap } from "./Sheet";
 import { JBadge, Shell, useShell } from "./Shell";
 import { Button, Meter, Num, SimTag, useFlip } from "./ui";
+import { EmptyArt } from "./art";
 
 /**
  * The Live Desk: one dominant answer, the product list with one-tap pin, one chart, the comment stream with intent
@@ -34,6 +35,33 @@ function proposed(view: LiveDeskViewModel, kind: CopilotSuggestion["kind"]): Cop
 
 const productName = (view: LiveDeskViewModel, id: string): string => view.products.find((p) => p.id === id)?.name ?? id;
 
+/** True once the desk is one column (phones). Starts false, so the server and tests see the desk layout. */
+function useNarrow(): boolean {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(max-width: 679px)");
+    const update = (): void => setNarrow(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return narrow;
+}
+
+/** On a phone a secondary panel folds behind its title, so the answer and the products come first. */
+function Fold({ narrow, summary, className, testId, labelledBy, children }: {
+  narrow: boolean; summary: React.ReactNode; className: string; testId: string; labelledBy?: string; children: React.ReactNode;
+}) {
+  if (!narrow) return <section className={className} aria-labelledby={labelledBy} data-testid={testId}>{summary}{children}</section>;
+  return (
+    <details className={`${className} fold`} aria-labelledby={labelledBy} data-testid={testId}>
+      <summary className="fold-summary">{summary}<IconChevronRight size={18} className="fold-chev" /></summary>
+      {children}
+    </details>
+  );
+}
+
 // ---- header pieces ----------------------------------------------------------------------------------------------
 
 function LiveStatus({ view }: { view: LiveDeskViewModel }) {
@@ -41,11 +69,13 @@ function LiveStatus({ view }: { view: LiveDeskViewModel }) {
   if (view.mode === "ended") {
     return <div className="live-status is-ended" data-testid="desk-live-status">{c.endedAt(view.clock.elapsedLabel)}</div>;
   }
+  const paused = !view.clock.running;
   return (
-    <div className="live-status" data-testid="desk-live-status">
+    <div className={`live-status${paused ? " is-paused" : ""}`} data-testid="desk-live-status">
       <span className="live-dot" aria-hidden="true" />
       <span className="live-word">{c.live}</span>
       <span className="live-time num">{view.clock.elapsedLabel}</span>
+      {paused && <span className="paused-chip" data-testid="desk-paused">{c.paused}</span>}
       <span className="live-sep" aria-hidden="true" />
       <span className="live-viewers" data-testid="desk-viewers">
         {view.viewers === null ? <span className="unknown">{c.unknown}</span> : <Num value={view.viewers} format={(n) => num(n, lang)} />}
@@ -158,11 +188,11 @@ function SuggestionAnswer({ s, view, actions }: { s: CopilotSuggestion; view: Li
   const signals = s.signals.map((x) => readSignal(x, lang));
   return (
     <div className="answer-body" key={`pin-${s.id}`} data-testid={`desk-suggestion-${s.id}`} data-state={s.state}>
-      <h2 className="answer-title" data-journey="5"><JBadge n={5} />{headline(s, name, lang)}</h2>
-      <p className="answer-lede">{s.source === "ai" ? c.ledeAi : low ? c.ledeLow(s.sampleSize) : c.ledeNormal}</p>
-      <div className="why" data-journey="4">
-        <Reasons signals={signals} kind={s.kind} />
+      <h2 className={`answer-title${low ? " is-tentative" : ""}`} data-journey="5"><JBadge n={5} />{headline(s, name, lang)}</h2>
+      <div className={`why${low ? " is-low" : ""}`} data-journey="4">
         <ConfidenceLine s={s} />
+        <p className="answer-lede">{s.source === "ai" ? c.ledeAi : low ? c.ledeLow(s.sampleSize) : c.ledeNormal}</p>
+        <Reasons signals={signals} kind={s.kind} />
       </div>
       <div className="answer-actions">
         <Button size="lg" variant={low ? "secondary" : "primary"} icon={<IconPin />} disabled={view.mode !== "live"} onClick={() => actions.onAcceptSuggestion(s.id)} data-testid={`desk-accept-${s.id}`}>
@@ -213,6 +243,11 @@ function Answer({ view, actions, recap }: { view: LiveDeskViewModel; actions: Li
       <div className="answer-body" key="idle">
         <h2 className="answer-title" data-journey="5"><JBadge n={5} />{c.idleTitle}</h2>
         <p className="answer-lede" data-journey="4"><JBadge n={4} />{c.idleLede}</p>
+        <div className="answer-actions">
+          <Button size="lg" variant="primary" icon={<IconPlay />} disabled={view.mode !== "live" || view.clock.running} onClick={() => actions.onRun()} data-testid="desk-run-guide">
+            {c.runSim}
+          </Button>
+        </div>
       </div>
     );
   } else if (showing) {
@@ -359,7 +394,7 @@ function AboutDrawer({ view, liveId, onClose }: { view: LiveDeskViewModel; liveI
       <section className="about">
         <h3>{c.aboutRun}</h3>
         <p className="about-intro">{c.aboutRunText}</p>
-        <p className="about-status">{c.fingerprint}: <code>{view.fingerprint ?? c.noFingerprint}</code></p>
+        <p className="about-status">{c.fingerprint}: <code data-testid="desk-fingerprint">{view.fingerprint ?? c.noFingerprint}</code></p>
       </section>
       <section className="about">
         <h3>{c.aboutFault} <SimTag quiet>SIMULATED</SimTag></h3>
@@ -401,6 +436,23 @@ function ConfirmEnd({ view, onCancel, onConfirm }: { view: LiveDeskViewModel; on
 function ClockControls({ view, actions }: { view: LiveDeskViewModel; actions: LiveDeskActions }) {
   const { c } = useShell();
   const live = view.mode === "live";
+  const more = useRef<HTMLDetailsElement>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  // A tap anywhere else closes it, like any popover.
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onDown = (e: PointerEvent): void => {
+      if (more.current && !more.current.contains(e.target as Node)) more.current.open = false;
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [moreOpen]);
+  const closeMore = (e: React.KeyboardEvent): void => {
+    if (e.key !== "Escape" || !more.current?.open) return;
+    e.stopPropagation();
+    more.current.open = false;
+    more.current.querySelector("summary")?.focus();
+  };
   return (
     <div className="clock" role="group" aria-label={c.clockLabel} data-testid="desk-clock">
       <span className="clock-now num"><span className="sr-only">{c.clockLabel} </span>{view.clock.virtualNowLabel}</span>
@@ -410,17 +462,27 @@ function ClockControls({ view, actions }: { view: LiveDeskViewModel; actions: Li
       <button type="button" className="dock-btn" disabled={!live || !view.clock.running} onClick={() => actions.onPause()} data-testid="desk-pause">
         <IconPause size={18} /><span>{c.pause}</span>
       </button>
-      <div className="speed" role="group" aria-label={c.speedLabel}>
-        {view.clock.speeds.map((v) => (
-          <button key={v} type="button" className="dock-btn" aria-pressed={view.clock.speed === v} disabled={!live} onClick={() => actions.onSpeed(v)} data-testid={`desk-speed-${v}`}>{v}×</button>
-        ))}
-      </div>
-      {SKIPS.map((s) => (
-        <button key={s} type="button" className="dock-btn" disabled={!live} onClick={() => actions.onSkip(s)} data-testid={`desk-skip-${s}`}>
-          {s === 30 && <IconSkip size={18} />}<span>{c.skip(s)}</span>
-        </button>
-      ))}
-      <button type="button" className="dock-btn" onClick={() => actions.onReset()} data-testid="desk-reset">{c.reset}</button>
+      <details className="clock-more" ref={more} onKeyDown={closeMore} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
+        <summary className="dock-btn" data-testid="desk-more">
+          <span className="num">{c.speedNow(view.clock.speed)}</span><span className="sr-only">{c.moreHint}</span>
+          <IconChevronRight size={16} className="fold-chev" />
+        </summary>
+        <div className="clock-more-panel">
+          <div className="speed" role="group" aria-label={c.speedLabel}>
+            {view.clock.speeds.map((v) => (
+              <button key={v} type="button" className="dock-btn" aria-pressed={view.clock.speed === v} disabled={!live} onClick={() => actions.onSpeed(v)} data-testid={`desk-speed-${v}`}>{v}×</button>
+            ))}
+          </div>
+          <div className="skips" role="group" aria-label={c.skipLabel}>
+            {SKIPS.map((sec) => (
+              <button key={sec} type="button" className="dock-btn" disabled={!live} onClick={() => actions.onSkip(sec)} data-testid={`desk-skip-${sec}`}>
+                {sec === 30 && <IconSkip size={18} />}<span>{c.skip(sec)}</span>
+              </button>
+            ))}
+          </div>
+          <button type="button" className="dock-btn" onClick={() => actions.onReset()} data-testid="desk-reset">{c.reset}</button>
+        </div>
+      </details>
     </div>
   );
 }
@@ -429,6 +491,7 @@ function ClockControls({ view, actions }: { view: LiveDeskViewModel; actions: Li
 
 function DeskBody({ liveId, view, actions, recap }: { liveId: string; view: LiveDeskViewModel; actions: LiveDeskActions; recap: RecapViewModel | null }) {
   const { c, lang } = useShell();
+  const narrow = useNarrow();
   const next = proposed(view, "show_next");
   const suggested = view.mode === "live" && next ? next.productId : null;
   const chart = {
@@ -465,14 +528,11 @@ function DeskBody({ liveId, view, actions, recap }: { liveId: string; view: Live
         </div>
         <div className="col col-center">
           <Answer view={view} actions={actions} recap={recap} />
-          <section className="panel chart-panel" aria-labelledby="chart-h" data-testid="desk-chart">
-            <div className="panel-head">
-              <h2 id="chart-h">{c.chartTitle}</h2>
-              <SimTag quiet>SIMULATED</SimTag>
-            </div>
+          <Fold narrow={narrow} className="panel chart-panel" testId="desk-chart" labelledBy="chart-h"
+            summary={<div className="panel-head"><h2 id="chart-h">{c.chartTitle}</h2><SimTag quiet>SIMULATED</SimTag></div>}>
             <DeskChart data={chart} variant="live" c={c} lang={lang} />
             <p className="chart-note">{c.chartNote}</p>
-          </section>
+          </Fold>
         </div>
         <div className="col col-right">
           <Comments view={view} />
@@ -499,6 +559,7 @@ function NotFound() {
   return (
     <div className="desk-empty" data-testid="desk-not-found">
       <div className="empty">
+        <EmptyArt />
         <h1>{c.notFound}</h1>
         <p>{c.notFoundHelp}</p>
         <Link href="/start" className="btn btn-primary btn-md">{c.start}</Link>
@@ -545,7 +606,6 @@ export function LiveDeskScreen({ liveId }: { liveId: string }) {
       modalOpen={about || confirm}
       headerStatus={<LiveStatus view={view} />}
       headerEnd={<EndControl view={view} liveId={liveId} onEnd={() => setConfirm(true)} />}
-      dockStart={<span className="dock-print">{"· "}<DeskFingerprint view={view} /></span>}
       dockCenter={<ClockControls view={view} actions={actions} />}
       dockEnd={<AboutButton onOpen={() => setAbout(true)} />}
       onSpace={live ? () => (view.clock.running ? actions.onPause() : actions.onRun()) : undefined}
@@ -557,11 +617,6 @@ export function LiveDeskScreen({ liveId }: { liveId: string }) {
       )}
     </Shell>
   );
-}
-
-function DeskFingerprint({ view }: { view: LiveDeskViewModel }) {
-  const { c } = useShell();
-  return <span><span className="dock-label">{c.fingerprint} </span><code data-testid="desk-fingerprint" title={c.fingerprint}>{view.fingerprint ?? c.noFingerprint}</code></span>;
 }
 
 function AboutButton({ onOpen }: { onOpen: () => void }) {

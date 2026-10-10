@@ -93,7 +93,7 @@ export function ConnectionChip({ size = "md" }: { size?: "md" | "desk" }): React
   const { tone, icon, label } = chipLook(remote, age);
 
   return (
-    <span className={`inline-flex items-center gap-2 ${text} ${tone}`} data-testid="connection-chip" data-connection={remote.connection} data-problem={remote.problem ?? undefined} title={remote.lastError ?? undefined}>
+    <span className={`inline-flex items-center gap-2 transition-colors duration-200 ${text} ${tone}`} data-testid="connection-chip" data-connection={remote.connection} data-problem={remote.problem ?? undefined} title={remote.lastError ?? undefined}>
       <i className={icon} aria-hidden="true" />
       <span className={words}>{label}</span>
       {remote.connection === "connected" && remote.access && (

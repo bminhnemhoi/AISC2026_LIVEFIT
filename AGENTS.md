@@ -37,7 +37,8 @@ Everything under `next/src/lib/platform/` and `next/src/components/platform/` is
 
 - Every surface that shows simulated platform state carries the word SIMULATED (or the violet simulated token).
 - Only `update_show_item` copies Shopee's published reference. Every other call is *shape inferred*. Do not present a guess as Shopee's behaviour.
-- Never write "synced with Shopee", "connected to Shopee" or "confirmed by Shopee" in code, UI or docs. Write "SIMULATED Shopee".
+- Never write "synced with Shopee", "connected to Shopee" or "confirmed by Shopee" in code, UI or docs.
+- In the UI the platform is a generic simulated live platform: write "SIMULATED Live", never a real platform's name. Shopee is named only where a note cites its published reference (e.g. `update_show_item`).
 - Do not invent platform facts. If a brief needs one you do not have, say so in your report.
 
 ## Scope, branches, conflicts

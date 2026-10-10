@@ -6,8 +6,9 @@ import { useCurrentLive, useLiveRecap, useStartFlow } from "@/lib/livedesk/hooks
 import { IconCheck } from "./icons";
 import { duration } from "./i18n";
 import { HeroSpec } from "./HeroSpec";
+import { StepArt } from "./art";
 import { Shell, useShell } from "./Shell";
-import { SimTag } from "./ui";
+import { SimTag, TapeTitle } from "./ui";
 
 type StepState = "done" | "active" | "todo";
 
@@ -35,17 +36,31 @@ function HomeBody() {
     <div className="home">
       <div className="home-hero">
         <div className="home-intro">
-          <h1>{c.homeTitle}</h1>
+          <h1><TapeTitle text={c.homeTitle} mark={c.homeTitleMark} /></h1>
           <p className="lede">{c.homeLede}</p>
         </div>
         <HeroSpec />
       </div>
       <section className="home-flow" aria-labelledby="flow-h" data-testid="home-flow">
+        {/* The next step comes first in reading order, so on a phone it sits right under the intro. */}
+        <div className="home-status">
+          <div className="home-next">
+            <p className="label">{c.nextLabel}</p>
+            <p className="home-next-text">{next.label}</p>
+            <Link href={next.href} className="btn btn-primary btn-lg" data-testid="home-next">{next.cta}</Link>
+          </div>
+          <dl className="status-list" aria-label={c.statusLabel}>
+            <div><dt>{c.connectTitle}</dt><dd>{view.connected ? c.connected : c.notConnected}</dd></div>
+            <div><dt>{c.productsTitle}</dt><dd>{c.productsCount(view.products.length, synced)}</dd></div>
+            {live && recap && <div><dt>{c.desk}</dt><dd>{running ? c.liveRunning(duration(recap.durationSec, lang)) : c.liveEnded(duration(recap.durationSec, lang))}</dd></div>}
+          </dl>
+        </div>
         <h2 id="flow-h" className="label">{c.flowLabel}</h2>
         <ol className="flow" data-testid="loop-guide">
           {c.flow.map((title, i) => (
             <li key={title} className={`flow-step is-${states[i]}`}>
               <span className={`step-n is-${states[i]}`} aria-hidden="true">{states[i] === "done" ? <IconCheck size={18} /> : i + 1}</span>
+              <StepArt step={i} />
               <div>
                 <h3>{title}<span className="sr-only">: {stateWord(states[i])}</span></h3>
                 <p>{c.flowText[i]}</p>
@@ -53,18 +68,6 @@ function HomeBody() {
             </li>
           ))}
         </ol>
-        <div className="home-status">
-          <dl className="status-list" aria-label={c.statusLabel}>
-            <div><dt>{c.connectTitle}</dt><dd>{view.connected ? c.connected : c.notConnected}</dd></div>
-            <div><dt>{c.productsTitle}</dt><dd>{c.productsCount(view.products.length, synced)}</dd></div>
-            {live && recap && <div><dt>{c.desk}</dt><dd>{running ? c.liveRunning(duration(recap.durationSec, lang)) : c.liveEnded(duration(recap.durationSec, lang))}</dd></div>}
-          </dl>
-          <div className="home-next">
-            <p className="label">{c.nextLabel}</p>
-            <p className="home-next-text">{next.label}</p>
-            <Link href={next.href} className="btn btn-primary btn-lg" data-testid="home-next">{next.cta}</Link>
-          </div>
-        </div>
       </section>
       <section className="truth" aria-labelledby="truth-h" data-testid="truth-panel">
         <h2 id="truth-h">{c.truthTitle}</h2>

@@ -261,7 +261,7 @@ export default function HostAppGalleryPage() {
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-[#F5F7FC]">
-              Host App Gallery (SIMULATED Shopee Live)
+              Host App Gallery (SIMULATED Live)
             </h1>
             <p className="text-xs sm:text-sm text-[#CAD0DA] mt-1 max-w-2xl">
               Isolated fixture review harness for the simulated mobile host

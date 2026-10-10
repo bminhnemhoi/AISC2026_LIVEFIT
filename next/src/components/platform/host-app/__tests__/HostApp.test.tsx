@@ -29,7 +29,7 @@ const mockActions: HostAppActions = {
 };
 
 describe("HostApp: Simulation Honesty & Evidence Invariants", () => {
-  it("always displays permanent SIMULATED Shopee Live badge across all modes", () => {
+  it("always displays permanent SIMULATED Live badge across all modes", () => {
     // 1. Idle mode
     const { rerender } = render(<HostApp viewModel={fixtureIdle} actions={mockActions} />);
     expect(screen.getByTestId("host-app-simulated-badge")).toHaveTextContent(/SIMULATED SHOPEE LIVE/i);

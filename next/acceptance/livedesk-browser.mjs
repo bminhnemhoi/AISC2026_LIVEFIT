@@ -20,7 +20,7 @@ export function assertHonest(text, size) {
 }
 
 function selfTest() {
-  assertHonest('SIMULATED Shopee Live', { client: 390, scroll: 390 });
+  assertHonest('SIMULATED Live', { client: 390, scroll: 390 });
   assert.throws(() => assertHonest('connected to Shopee', { client: 390, scroll: 390 }));
   assert.throws(() => assertHonest('Đã kết nối với Shopee', { client: 390, scroll: 390 }));
   assert.throws(() => assertHonest('Create LIVE', { client: 390, scroll: 390 }));
@@ -132,6 +132,8 @@ async function journey(browser, runtime, viewport, run, axePath, report, output,
     await id(pinId).click();
     if (!stub) assert.equal(await product.getAttribute('data-showing'), 'true');
     if (!stub) {
+      // Skips live behind the clock bar's speed disclosure.
+      if (!(await id('desk-skip-300').isVisible())) await id('desk-more').click();
       await id('desk-skip-300').click();
       for (let i = 0; i < 20 && !(await page.locator('[data-testid^="desk-accept-"]:enabled').count()); i++) await id('desk-skip-60').click();
     }
@@ -183,7 +185,11 @@ async function journey(browser, runtime, viewport, run, axePath, report, output,
       await page.goto(runtime.origin + deskPath);
       await page.waitForFunction(() => document.querySelector('[data-testid="live-desk"]')?.getAttribute('data-mode') === 'ended');
     } else report.skipped.push({ label, step: 'End → recap', reason: 'Fixture actions are no-ops.' });
+    // The run fingerprint is in "About this data", not in the clock bar.
+    await id('desk-about-open').click();
     const fingerprint = await id('desk-fingerprint').innerText();
+    await page.keyboard.press('Escape');
+    await id('desk-about').waitFor({ state: 'detached' });
     await audit(stub ? 'desk-end-no-op' : 'desk-ended');
     await shot('final');
     assert.deepEqual(errors, [], 'Browser runtime errors');

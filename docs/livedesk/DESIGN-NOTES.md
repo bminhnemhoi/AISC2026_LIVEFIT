@@ -159,3 +159,32 @@ pinned brief), karpathy-guidelines (surgical, additive changes), decision-making
 (self-review of the diff). Not applicable here: 21st-ui (would add a dependency), design-taste-frontend
 (product UI with a pinned look), project-onboarding, prompt-optimizer, resolving-merge-conflicts, typesafe-ai,
 agent-introspection-debugging.
+
+## 11. Design language (owner decisions, October 2026)
+
+The owner's choices after the A+ review, applied to every Calm screen. Follow them when a screen is added or
+changed; propose departures as a mockup first, because a repaint that skipped this step was reverted.
+
+- **Palette.** Paper `#f6f3ee`, ink `#2a2522`, brick `#9e3b2b` (LIVE and the one primary action only), kraft
+  tape, the violet simulated token. No new palette (a navy repaint was rejected), no rainbow or holographic
+  colour. Every colour comes from a token, and every token has a dark value.
+- **Logo.** The team's mark redrawn flat (an L with a fold, a bar, a lift arrow, two live arcs; `docs/brand/logo`) beside
+  the L3 wordmark: “LiveLift” in one weight (600), “Lift” in brick, its i-dot replaced by a small upward wedge.
+- **Titles (T2).** One weight (500), tight tracking (-0.03em), balanced wrapping; never a light line beside a bold
+  one. Exactly one phrase per page title sits on the kraft tape: `TapeTitle` in `ui.tsx` with a `*TitleMark` copy
+  key (Home “nên ghim gì”, Recap “buổi live”, Legacy “Bản cũ”; Start sets “buổi live.” on its own line). Section
+  titles are 500 too. Big numerals stay light: their size carries the evidence weight, not their stroke.
+- **Art.** Wide-screen empty space gets a spec sheet (`art.tsx`): a bordered sheet with registration marks at the
+  corners, a kicker, a tick ruler with its caption, a faint giant word, and the brand drawings placed on it. The
+  drawings come from `docs/brand/assets` through `docs/brand/assets/source/build_tsx.py`, which writes `brand.tsx`
+  with every palette colour as a class mapped to a theme token, so they follow the dark theme; edit the SVG or the
+  script, never `brand.tsx`. Start keeps its own die-cut stickers (phone on air, shirt with a tag), which the owner preferred to the brand sheet there. Home: the suggestion spec sheet
+  (`HeroSpec`) and one drawing per step. Recap: card stack, arrow, comment chips; the “Chưa biết” sticky note on the
+  unknowns box. Legacy: card stack, clip, price tag. Empty and not-found states: the card stack. Rules: words only,
+  never digits, except the Home example that labels itself as one; `aria-hidden`; static; hidden at narrow widths.
+  The Live Desk itself has no art.
+- **Evidence first (A+).** Brick only for LIVE and the primary action; a suggestion is ink dashed, never brick;
+  numbers sized by how much evidence stands behind them; missing stays “Chưa biết”, never 0.
+- **SIMULATED.** The word marks the mode, not decoration. The approved Start keeps its stamp and per-panel tags as
+  the project rules require. The owner has floated naming SIMULATED only in the top stamp and writing “nền tảng”
+  elsewhere; that copy change is not approved yet, so ask before making it.

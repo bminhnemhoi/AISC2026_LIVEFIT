@@ -42,7 +42,7 @@ const FORBIDDEN = /synced with Shopee|connected to Shopee|confirmed by Shopee|Cr
 
 function fixtureRecap(): RecapViewModel {
   return {
-    liveId: "demo", mode: "ended", title: "LiveLift Live Desk (SIMULATED)", platformLabel: "SIMULATED Shopee Live", durationSec: 412,
+    liveId: "demo", mode: "ended", title: "LiveLift Live Desk (SIMULATED)", platformLabel: "SIMULATED Live", durationSec: 412,
     peakViewers: 437, viewerSampleSec: 10,
     viewerPoints: [{ atSec: 1, value: 31 }, { atSec: 200, value: 300 }, { atSec: 410, value: 437 }],
     cartsPerMinute: [null, null, null, null, 5, 8, 6],
@@ -104,11 +104,21 @@ describe("Routes, language and honesty", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("LiveLift đọc bình luận và giỏ hàng");
     const flow = screen.getByTestId("home-flow");
     for (const step of ["Kết nối", "Sản phẩm", "Bắt đầu live", "Live Desk"]) expect(flow).toHaveTextContent(step);
-    expect(flow).toHaveTextContent("Đã kết nối SIMULATED Shopee Live");
+    expect(flow).toHaveTextContent("Đã kết nối SIMULATED Live");
     expect(flow).toHaveTextContent("3 sản phẩm, 2 đã có trên SIMULATED");
     expect(within(flow).getByTestId("home-next")).toHaveAttribute("href", "/desk/demo");
     expect(screen.getByTestId("truth-panel")).toHaveTextContent("Cái gì là thật, cái gì không");
-    expect(screen.getByTestId("truth-panel")).toHaveTextContent("Không có gì được gửi tới Shopee");
+    expect(screen.getByTestId("truth-panel")).toHaveTextContent("Không có gì được gửi tới hay nhận từ một nền tảng live thật nào");
+    // The simulated platform is a generic live platform, not presented as any one real platform.
+    expect(screen.getByTestId("truth-panel")).toHaveTextContent("Nền tảng là SIMULATED Live: một nền tảng live mô phỏng nói chung");
+    expect(screen.getByTestId("truth-panel").textContent).not.toMatch(/Shopee/);
+  });
+
+  it("Home puts the next step before the four steps, so a phone reaches it right after the intro", () => {
+    render(<HomePage />);
+    const next = screen.getByTestId("home-next");
+    expect(next.compareDocumentPosition(screen.getByTestId("loop-guide")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("loop-guide")).toHaveTextContent("Giá thiếu là thiếu, không phải 0");
   });
 
   it("Home's spec-sheet decoration is hidden from assistive tech and says it is an example, SIMULATED, not a result", () => {
@@ -124,7 +134,7 @@ describe("Routes, language and honesty", () => {
     english();
     render(<HomePage />);
     expect(screen.getByTestId("truth-panel")).toHaveTextContent("What is real, and what is not");
-    expect(screen.getByTestId("home-flow")).toHaveTextContent("Connected to SIMULATED Shopee Live");
+    expect(screen.getByTestId("home-flow")).toHaveTextContent("Connected to SIMULATED Live");
   });
 
   it.each(["connect", "import", "start"])("Home chooses the %s step from the supplied status", step => {
@@ -132,7 +142,7 @@ describe("Routes, language and honesty", () => {
     if (step === "connect") startView.connected = false;
     if (step === "import") startView.products = [];
     render(<HomePage />);
-    const expected = { connect: "Kết nối SIMULATED Shopee Live", import: "Nhập sản phẩm của bạn", start: "Bắt đầu buổi live" }[step];
+    const expected = { connect: "Kết nối SIMULATED Live", import: "Nhập sản phẩm của bạn", start: "Bắt đầu buổi live" }[step];
     expect(screen.getByTestId("home-flow")).toHaveTextContent(expected!);
     expect(screen.getByTestId("home-next")).toHaveAttribute("href", "/start");
   });
@@ -156,6 +166,27 @@ describe("Routes, language and honesty", () => {
     render(<LegacyPage />);
     const links = within(screen.getByTestId("legacy-links")).getAllByRole("link");
     expect(links.map(link => link.getAttribute("href"))).toEqual(["/legacy/home", "/sessions", "/products", "/insights", "/simulator", "/integrations", "/live/new"]);
+  });
+
+  it.each(["vi", "en"])("page titles put one phrase on the kraft tape and read the same without it; art is hidden, sheets numberless (%s)", async lang => {
+    if (lang === "en") english();
+    const tapes = lang === "vi" ? ["nên ghim gì", "buổi live", "Bản cũ"] : ["what to pin next", "recap", "Legacy"];
+    const titles = lang === "vi" ? ["LiveLift đọc bình luận và giỏ hàng trong buổi live, rồi gợi ý bạn nên ghim gì, và vì sao.", "Tổng kết buổi live", "Bản cũ (Legacy)"]
+      : ["LiveLift reads comments and carts during your live, then suggests what to pin next, and why.", "Live recap", "Legacy"];
+    const pages = [<HomePage key="h" />, await RecapPage({ params: Promise.resolve({ liveId: "demo" }) }), <LegacyPage key="l" />];
+    pages.forEach((page, i) => {
+      const { container } = render(page);
+      const h1 = screen.getByRole("heading", { level: 1 });
+      expect(h1.textContent).toBe(titles[i]);
+      expect(h1.querySelectorAll(".tape-mark")).toHaveLength(1);
+      expect(h1.querySelector(".tape-mark")!.textContent).toBe(tapes[i]);
+      // decoration is hidden from assistive tech; the spec sheets carry words, never numbers (Home's example says so itself)
+      const art = [...container.querySelectorAll(".sheet-art, .flow-art, .unknown-sticker, [data-testid='hero-spec']")];
+      expect(art.length).toBeGreaterThan(0);
+      for (const el of art) expect(el).toHaveAttribute("aria-hidden", "true");
+      for (const el of container.querySelectorAll(".sheet-art")) expect(el.textContent).not.toMatch(/\d/);
+      cleanup();
+    });
   });
 
   it("the header links Start, Live Desk and Recap only, and offers only what exists", () => {
@@ -280,7 +311,7 @@ describe("Start actions and blocked reasons", () => {
   it("disconnected Start offers Connect, hides the import and explains why starting is blocked", () => {
     startView.connected = false;
     startView.products = [];
-    startView.startBlockedReason = "Connect SIMULATED Shopee Live first.";
+    startView.startBlockedReason = "Connect SIMULATED Live first.";
     render(<StartPage />);
     expect(screen.getByTestId("start-connect")).toBeEnabled();
     fireEvent.click(screen.getByTestId("start-connect"));
@@ -288,15 +319,15 @@ describe("Start actions and blocked reasons", () => {
     expect(screen.getByTestId("start-live")).toBeDisabled();
     expect(screen.queryByTestId("start-import")).toBeNull();
     expect(screen.queryByTestId("start-sample")).toBeNull();
-    expect(screen.getByText("Kết nối SIMULATED Shopee Live trước.")).toBeInTheDocument();
-    expect(screen.getByText("Kết nối SIMULATED Shopee Live trước khi nhập.")).toBeInTheDocument();
+    expect(screen.getByText("Kết nối SIMULATED Live trước.")).toBeInTheDocument();
+    expect(screen.getByText("Kết nối SIMULATED Live trước khi nhập.")).toBeInTheDocument();
   });
 
   it("shows the logic's blocked reason in Vietnamese, and as given in English", () => {
-    startView.startBlockedReason = "No product has synced to SIMULATED Shopee yet.";
+    startView.startBlockedReason = "No product has synced to SIMULATED Live yet.";
     render(<StartPage />);
     expect(screen.getByTestId("start-live")).toBeDisabled();
-    expect(screen.getByText("Chưa có sản phẩm nào lên SIMULATED Shopee.")).toBeInTheDocument();
+    expect(screen.getByText("Chưa có sản phẩm nào lên SIMULATED Live.")).toBeInTheDocument();
     cleanup();
     english();
     forgetDeskPrefsForTests();
@@ -416,6 +447,61 @@ describe("Desk interactions", () => {
     for (const text of ["Pin next: Zip Hoodie", "ask-price comments", "Confidence medium", "sample size 12 signals", "Source: rules"]) expect(panel).toHaveTextContent(text);
   });
 
+  it("a thin sample is said as interest, with its confidence right under the title, and the pin stays the operator's call", () => {
+    deskView!.copilot.suggestions[0].confidence = "low";
+    deskView!.copilot.suggestions[0].sampleSize = 3;
+    renderDesk();
+    const panel = screen.getByTestId("desk-copilot");
+    const title = within(panel).getByRole("heading", { level: 2 });
+    expect(title).toHaveTextContent("Có tín hiệu quan tâm tới Zip Hoodie");
+    expect(panel).not.toHaveTextContent("Nên ghim tiếp");
+    // The confidence line follows the title directly, before the lede and the numbers.
+    const confidence = screen.getByTestId("desk-confidence");
+    expect(confidence).toHaveTextContent("Độ tin cậy thấp");
+    expect(confidence).toHaveTextContent("cỡ mẫu 3 tín hiệu");
+    expect(title.compareDocumentPosition(confidence) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(confidence.compareDocumentPosition(within(panel).getByText(/Mới có 3 tín hiệu/)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("desk-announce")).toHaveTextContent("SIMULATED. Có tín hiệu quan tâm tới Zip Hoodie. Đề xuất.");
+    expect(screen.getByTestId("desk-accept-s1")).toHaveClass("btn-secondary");
+    cleanup();
+    forgetDeskPrefsForTests();
+    english();
+    renderDesk();
+    expect(within(screen.getByTestId("desk-copilot")).getByRole("heading", { level: 2 })).toHaveTextContent("Early interest in Zip Hoodie");
+  });
+
+  it("before the clock runs, the answer itself offers Run, and the header says the clock is paused", () => {
+    deskView!.copilot.suggestions = [];
+    deskView!.clock = { ...deskView!.clock, elapsedLabel: "00:00", running: false };
+    renderDesk();
+    expect(screen.getByTestId("desk-live-status")).toHaveTextContent("Đang tạm dừng");
+    const run = screen.getByTestId("desk-run-guide");
+    expect(within(screen.getByTestId("desk-copilot")).getByRole("heading", { level: 2 })).toHaveTextContent("Bấm Chạy để bắt đầu");
+    expect(run).toHaveTextContent("Chạy mô phỏng");
+    fireEvent.click(run);
+    expect(deskActions.onRun).toHaveBeenCalledExactlyOnceWith();
+    cleanup();
+    deskView!.clock = { ...deskView!.clock, running: true };
+    renderDesk();
+    expect(screen.getByTestId("desk-run-guide")).toBeDisabled();
+    expect(screen.queryByTestId("desk-paused")).toBeNull();
+  });
+
+  it("the clock bar keeps Run, Pause and the current speed; speeds, skips and Reset sit behind one disclosure", () => {
+    renderDesk();
+    const more = screen.getByTestId("desk-more");
+    expect(more.tagName).toBe("SUMMARY");
+    expect(more).toHaveTextContent("Tốc độ 15×");
+    const details = more.closest("details")!;
+    expect(details).not.toHaveAttribute("open");
+    for (const id of ["desk-speed-60", "desk-skip-30", "desk-skip-300", "desk-reset"]) expect(details).toContainElement(screen.getByTestId(id));
+    for (const id of ["desk-run", "desk-pause"]) expect(details).not.toContainElement(screen.getByTestId(id));
+    details.open = true;
+    fireEvent.keyDown(screen.getByTestId("desk-skip-60"), { key: "Escape" });
+    expect(details.open).toBe(false);
+    expect(document.activeElement).toBe(more);
+  });
+
   it.each(["accepted", "dismissed", "performed"] as const)("a %s suggestion offers no choice and says what became of it", state => {
     deskView!.copilot.suggestions[0].state = state;
     renderDesk();
@@ -431,7 +517,7 @@ describe("Desk interactions", () => {
     deskView!.copilot.suggestions[0].headline = "Show the hoodie now, viewers keep asking";
     deskView!.copilot.aiStatus = "ai_fallback";
     deskView!.copilot.statusLabel = "AI model unavailable, showing rules (SIMULATED data)";
-    deskView!.banner = { tone: "danger", text: 'Authorisation expired on SIMULATED Shopee: "token expired". The Live Desk stopped calling it. Carry on in the app by hand.' };
+    deskView!.banner = { tone: "danger", text: 'Authorisation expired on SIMULATED Live: "token expired". The Live Desk stopped calling it. Carry on in the app by hand.' };
     deskView!.viewers = null;
     deskView!.fingerprint = null;
     renderDesk();
@@ -441,11 +527,13 @@ describe("Desk interactions", () => {
     expect(panel).toHaveTextContent("Nguồn: mô hình AI");
     const banner = screen.getByTestId("desk-banner");
     expect(banner).toHaveAttribute("role", "alert");
-    expect(banner).toHaveTextContent('Hết hạn quyền truy cập trên SIMULATED Shopee: "token expired"');
+    expect(banner).toHaveTextContent('Hết hạn quyền truy cập trên SIMULATED Live: "token expired"');
     expect(banner).toHaveTextContent("SIMULATED");
     expect(screen.getByTestId("desk-viewers")).toHaveTextContent("chưa rõ");
-    expect(screen.getByTestId("desk-fingerprint")).toHaveTextContent("Chưa có sự kiện");
+    // The run fingerprint is technical: it lives in "About this data", not in the clock bar.
+    expect(screen.queryByTestId("desk-fingerprint")).toBeNull();
     fireEvent.click(screen.getByTestId("desk-about-open"));
+    expect(screen.getByTestId("desk-fingerprint")).toHaveTextContent("Chưa có sự kiện");
     expect(screen.getByTestId("desk-ai-status")).toHaveTextContent("Mô hình AI không phản hồi, đang dùng luật (dữ liệu SIMULATED)");
   });
 
@@ -469,7 +557,7 @@ describe("Desk interactions", () => {
     vi.stubGlobal("ResizeObserver", FixedResizeObserver);
     const { container } = render(<LiveDeskScreen liveId="demo" />);
     for (const id of ["desk-products", "desk-copilot", "desk-chart", "desk-comments", "desk-phone", "desk-live-status"].slice(0, 5)) expect(screen.getByTestId(id)).toHaveTextContent("SIMULATED");
-    expect(screen.getByTestId("livedesk-frame")).toHaveTextContent("SIMULATED Shopee Live");
+    expect(screen.getByTestId("livedesk-frame")).toHaveTextContent("SIMULATED Live");
     const chart = screen.getByTestId("desk-chart-live");
     expect(chart).toHaveAttribute("role", "img");
     expect(chart.getAttribute("aria-label")).toMatch(/Ghim Cargo Pants 04:00.*cho biết khi nào, không cho biết vì sao/);
@@ -578,7 +666,10 @@ describe("Recap", () => {
     expect(kpis).toHaveTextContent("19");
     expect(screen.getByTestId("recap-orders")).toHaveTextContent("Chưa biết");
     expect(screen.getByTestId("recap-orders")).not.toHaveTextContent(/\b0\b/);
-    expect(kpis).toHaveTextContent("Gợi ý bạn nhận1trên 3 gợi ý");
+    // Pins and accepted suggestions are what the operator did: they sit above the decisions, not among the KPIs.
+    expect(kpis).not.toHaveTextContent("Gợi ý bạn nhận");
+    expect(kpis).toHaveTextContent("Bình luận Live Desk còn giữ120");
+    expect(screen.getByTestId("recap-decisions-summary")).toHaveTextContent("1 lần bạn ghim · nhận 1 trên 3 gợi ý");
   });
 
   it("an unknown add-to-cart total is shown as unknown", async () => {

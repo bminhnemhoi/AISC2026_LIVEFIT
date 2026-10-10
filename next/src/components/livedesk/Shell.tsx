@@ -255,7 +255,7 @@ export function Shell({ screen, children, headerStatus, headerEnd, dockStart, do
         data-presenter={presenter ? "1" : "0"} lang={lang} data-testid="livedesk-frame" data-screen={screen}>
         <header className="hdr">
           <div className="hdr-brand">
-            <Link href="/" className="wordmark" aria-label={`LiveLift, ${c.home}`}><LogoMark /><span>Live<span className="wordmark-lift">Lift</span></span></Link>
+            <Link href="/" className="wordmark" aria-label={`LiveLift, ${c.home}`}><LogoMark />{/* L3: one weight; the dot of the i in "Lift" is a small upward wedge (the link's label carries the name) */}<span>Live<span className="wordmark-lift">L<span className="wordmark-i">ı</span>ft</span></span></Link>
           </div>
           <Nav screen={screen} c={c} />
           <div className="hdr-spacer" />

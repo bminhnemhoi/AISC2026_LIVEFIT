@@ -75,7 +75,7 @@ export default function ProductsPage() {
 
         {/* PRODUCTS TAB */}
         {activeTab === "products" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="products-grid">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 motion-safe:animate-content-in" data-testid="products-grid">
             {products.map((prod) => (
               <div
                 key={prod.id}
@@ -133,7 +133,7 @@ export default function ProductsPage() {
 
         {/* PACKS TAB */}
         {activeTab === "packs" && (
-          <div className="space-y-4" data-testid="packs-list">
+          <div className="space-y-4 motion-safe:animate-content-in" data-testid="packs-list">
             {packs.map((pack) => (
               <div
                 key={pack.id}

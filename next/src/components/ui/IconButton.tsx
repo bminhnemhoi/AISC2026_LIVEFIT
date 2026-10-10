@@ -9,7 +9,7 @@ export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ icon, label, variant = "ghost", className = "", ...props }, ref) => {
     const baseStyles =
-      "w-[44px] h-[44px] min-w-[44px] min-h-[44px] rounded-[8px] inline-flex items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-[#DFFF00] focus-visible:outline-offset-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
+      "w-[44px] h-[44px] min-w-[44px] min-h-[44px] rounded-[8px] inline-flex items-center justify-center transition-[color,background-color,opacity,scale] duration-150 ease-out motion-safe:enabled:active:scale-[0.96] focus-visible:outline-2 focus-visible:outline-[#DFFF00] focus-visible:outline-offset-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
 
     const variantStyles = {
       ghost: "bg-transparent text-[#CAD0DA] hover:text-white hover:bg-[#1E232B]",

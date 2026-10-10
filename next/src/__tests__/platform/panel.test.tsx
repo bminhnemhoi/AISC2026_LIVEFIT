@@ -24,10 +24,10 @@ describe("the platform panel", () => {
   it("says plainly that it is a simulation, and opens the live when the show is running", () => {
     mount();
     const panel = screen.getByTestId("platform-panel");
-    expect(within(panel).getByText(/SIMULATED · Shopee Live/)).toBeTruthy();
-    expect(within(panel).getByText(/Nothing is sent to Shopee/)).toBeTruthy();
+    expect(within(panel).getByText("SIMULATED Live")).toBeTruthy();
+    expect(within(panel).getByText(/Nothing is sent to any real live platform/)).toBeTruthy();
     const linked = screen.getByTestId("platform-linked").textContent ?? "";
-    expect(linked).toMatch(/Shopee session \d+ · ongoing · opened by LiveLift/);
+    expect(linked).toMatch(/Platform session \d+ · ongoing · opened by LiveLift/);
     const calls = screen.getAllByTestId("ledger-api").map((n) => n.textContent ?? "");
     expect(calls.join("|")).toContain("create_session");
     expect(calls.join("|")).toContain("start_session");
@@ -47,7 +47,7 @@ describe("the platform panel", () => {
     fireEvent.click(screen.getByTestId(`pin-${productId}`));
     expect(record).toHaveBeenCalledTimes(1);
     const command = record.mock.calls[0][0] as CommandBody;
-    expect(command).toMatchObject({ report: "performed", reason: expect.stringContaining("Shopee (SIMULATED) accepted the request · request_id") });
+    expect(command).toMatchObject({ report: "performed", reason: expect.stringContaining("SIMULATED Live accepted the request · request_id") });
     expect(screen.getAllByTestId("ledger-api")[0].textContent).toContain("update_show_item");
     expect(screen.getByTestId(`pin-${productId}`).textContent).toBe("Pinned");
   });

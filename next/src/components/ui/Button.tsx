@@ -28,7 +28,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "min-h-[44px] rounded-[8px] font-medium inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[#DFFF00] focus-visible:outline-offset-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
+      "min-h-[44px] rounded-[8px] font-medium inline-flex items-center justify-center gap-2 whitespace-nowrap transition-[color,background-color,border-color,scale] duration-150 ease-out motion-safe:enabled:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[#DFFF00] focus-visible:outline-offset-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
 
     const sizeStyles = {
       sm: "px-3 py-1.5 text-[15px]",

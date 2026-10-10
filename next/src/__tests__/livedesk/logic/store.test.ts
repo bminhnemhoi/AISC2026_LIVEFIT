@@ -64,7 +64,7 @@ describe("browser persistence", () => {
 describe("the hooks", () => {
   it("run the start flow: connect, import, start live", () => {
     const { result } = renderHook(() => useStartFlow());
-    expect(result.current.view).toMatchObject({ platformLabel: "SIMULATED Shopee Live", connected: false, products: [], importNote: null });
+    expect(result.current.view).toMatchObject({ platformLabel: "SIMULATED Live", connected: false, products: [], importNote: null });
     expect(result.current.view.startBlockedReason).toMatch(/Connect/);
     expect(result.current.actions.onStartLive()).toBeNull();
     act(() => result.current.actions.onImportText("A-1, Hat, 10 USD, 2"));

@@ -114,7 +114,7 @@ export interface DeskClockView {
 export interface LiveDeskViewModel {
   mode: DeskMode;
   title: string;
-  /** e.g. "SIMULATED Shopee Live". Always carries the word SIMULATED. */
+  /** e.g. "SIMULATED Live". Always carries the word SIMULATED. */
   platformLabel: string;
   clock: DeskClockView;
   products: DeskProduct[];

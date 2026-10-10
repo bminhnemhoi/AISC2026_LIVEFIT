@@ -141,17 +141,17 @@ export function clockLabel(ms: number): string {
 function bannerFor(condition: PlatformCondition, message: string): Banner {
   switch (condition) {
     case "auth_expired":
-      return { tone: "danger", text: `Authorisation expired on SIMULATED Shopee: "${message}". The Live Desk stopped calling it. Carry on in the app by hand.` };
+      return { tone: "danger", text: `Authorisation expired on SIMULATED Live: "${message}". The Live Desk stopped calling it. Carry on in the app by hand.` };
     case "rate_limited":
-      return { tone: "warn", text: `SIMULATED Shopee is rate limiting: "${message}". The Live Desk stopped calling it. Carry on in the app by hand.` };
+      return { tone: "warn", text: `SIMULATED Live is rate limiting: "${message}". The Live Desk stopped calling it. Carry on in the app by hand.` };
     case "region_unsupported":
     case "server_error":
-      return { tone: "danger", text: `SIMULATED Shopee server error: "${message}". The Live Desk stopped calling it. Carry on in the app by hand.` };
+      return { tone: "danger", text: `SIMULATED Live server error: "${message}". The Live Desk stopped calling it. Carry on in the app by hand.` };
     case "refused":
-      return { tone: "warn", text: `SIMULATED Shopee refused: "${message}".` };
+      return { tone: "warn", text: `SIMULATED Live refused: "${message}".` };
   }
 }
-const RECOVERED: Banner = { tone: "info", text: "SIMULATED Shopee is answering again." };
+const RECOVERED: Banner = { tone: "info", text: "SIMULATED Live is answering again." };
 
 const fold = (digest: string | null, text: string): string => fnv1a(`${digest ?? ""}|${text}`).toString(16).padStart(8, "0");
 
@@ -228,14 +228,16 @@ export const importSamplePack = (state: DeskState): DeskState => importText(stat
 export function removeProduct(state: DeskState, productId: string): DeskState {
   if (state.live?.mode === "live" || !state.products.some((p) => p.id === productId)) return state;
   const r = adapter.removeProduct(state.world, productId, state.nowMs);
-  return { ...state, world: r.world, products: state.products.filter((p) => p.id !== productId) };
+  // The import note describes an earlier import; after a removal it would contradict the list ("no products" beside
+  // "4 rows skipped: code already imported"), so it goes.
+  return { ...state, world: r.world, products: state.products.filter((p) => p.id !== productId), importNote: null };
 }
 
 export function startBlockedReason(state: DeskState): string | null {
   if (state.live?.mode === "live") return "A SIMULATED live is already running. Open the Live Desk.";
-  if (!state.connected) return "Connect SIMULATED Shopee Live first.";
+  if (!state.connected) return "Connect SIMULATED Live first.";
   if (state.products.length === 0) return "Import at least one product first.";
-  if (!state.products.some((p) => p.sync.state === "synced")) return "No product has synced to SIMULATED Shopee yet.";
+  if (!state.products.some((p) => p.sync.state === "synced")) return "No product has synced to SIMULATED Live yet.";
   return null;
 }
 
@@ -243,7 +245,7 @@ export function startLive(state: DeskState): { state: DeskState; liveId: string 
   if (startBlockedReason(state) !== null) return { state, liveId: null };
   const synced = state.products.filter((p) => p.sync.state === "synced").map((p) => p.id);
   const r = adapter.startLive(state.world, PREPARED_LIVE_TITLE, synced, state.nowMs);
-  if (!r.outcome.ok) return { state: { ...state, world: r.world, importNote: `Start live: SIMULATED Shopee refused: "${r.outcome.message}"` }, liveId: null };
+  if (!r.outcome.ok) return { state: { ...state, world: r.world, importNote: `Start live: SIMULATED Live refused: "${r.outcome.message}"` }, liveId: null };
   const id = `live-${state.nextLiveNumber}`;
   const live: LiveRecord = {
     id, title: PREPARED_LIVE_TITLE, mode: "live", startedAtMs: state.nowMs, elapsedSec: 0, running: false, speed: 1,

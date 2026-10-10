@@ -41,6 +41,13 @@ export function SimTag({ children = "SIMULATED", quiet = false }: { children?: R
   return <span className={`sim-tag${quiet ? " is-quiet" : ""}`}>{children}</span>;
 }
 
+/** A title in one weight with one deliberate phrase on a strip of kraft tape; the text reads the same without the tape. */
+export function TapeTitle({ text, mark }: { text: string; mark: string }) {
+  const at = text.indexOf(mark);
+  if (at < 0) return <>{text}</>;
+  return <>{text.slice(0, at)}<span className="tape-mark">{mark}</span>{text.slice(at + mark.length)}</>;
+}
+
 export function Meter({ level, label }: { level: "low" | "medium" | "high"; label: string }) {
   const on = level === "low" ? 1 : level === "medium" ? 2 : 3;
   return (

@@ -3,16 +3,7 @@
 import React from "react";
 import { useShell } from "./Shell";
 import { SimTag } from "./ui";
-
-/** A registration mark, as on a printed spec sheet. Decoration only. */
-function Cross({ className }: { className: string }) {
-  return (
-    <svg className={`spec-cross ${className}`} viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-      <path d="M8 1v14M1 8h14" fill="none" strokeWidth="1" />
-      <circle cx="8" cy="8" r="3.4" fill="none" strokeWidth="1" />
-    </svg>
-  );
-}
+import { Cross, SpecRuler } from "./art";
 
 /**
  * Home's one decoration: the anatomy of a suggestion as a spec sheet. The labels are the real things the desk shows with
@@ -62,15 +53,7 @@ export function HeroSpec() {
           ))}
         </dl>
       </div>
-      <div className="spec-ruler">
-        <svg viewBox="0 0 400 22" preserveAspectRatio="none" width="100%" height="22" focusable="false">
-          {Array.from({ length: 41 }, (_, i) => (
-            <line key={i} className="spec-tick" x1={i * 10} x2={i * 10} y1={22} y2={i % 10 === 0 ? 6 : i % 5 === 0 ? 12 : 17} />
-          ))}
-          <path className="spec-mark" d="M300 2 l6 0 l-3 7 z" />
-        </svg>
-        <span className="spec-kicker">{h.ruler}</span>
-      </div>
+      <SpecRuler label={h.ruler} />
       <p className="spec-fine">{h.fine}</p>
     </aside>
   );

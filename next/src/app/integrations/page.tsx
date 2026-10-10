@@ -359,7 +359,7 @@ export default function IntegrationsPage(): React.ReactElement {
           </div>
 
           {/* Structured Categories Container */}
-          <div data-testid="integrations-list" className="space-y-10">
+          <div key={selectedCategory} data-testid="integrations-list" className="space-y-10 motion-safe:animate-content-in">
             {displayedCategories.map((cat) => {
               const theme = CATEGORY_THEMES[cat.id];
               return (

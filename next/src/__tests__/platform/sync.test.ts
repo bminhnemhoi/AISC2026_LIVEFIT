@@ -3,7 +3,7 @@ import { SCENARIO_START_MS, applyCommand, createScenarioSession, currentPlan } f
 import type { Session } from "@/contracts";
 import {
   NEVER_ON_AIR, READ_LOG_LIMIT, acceptedReason, callShopee, catalogFromProducts, createShopeeLiveSim, freshWorld, logReads, readShopee, readsOf, diffSnapshots, hostAct, importableItems, inboundActions, initialSyncState,
-  linkSession, ongoingSession, pinFromLiveLift, pollPlatform, productFromItem, reconcileOutbound, reportCommand, schedulePromotions,
+  linkSession, ongoingSession, pinFromLiveLift, pollPlatform, productFromItem, reconcileOutbound, recordSource, refusedReason, reportCommand, schedulePromotions,
   syncCycle, unpinFromLiveLift, withAssumptions, withFault, type ShopeeLiveSim, type SyncState,
 } from "@/lib/platform";
 
@@ -362,5 +362,16 @@ describe("a live the host started first", () => {
     const out = syncCycle(ended, linked.sim, linked.sync, T + 1000);
     expect(out.calls.map((c) => [c.endpoint, c.ok])).toEqual([["end_session", true]]);
     expect(ongoingSession(out.sim)).toBeNull();
+  });
+});
+
+describe("record source survives the platform rename", () => {
+  it("reads both the current and the pre-rename bridge reasons back to the same source", () => {
+    expect(recordSource(acceptedReason("r1"))).toBe("request_accepted");
+    expect(recordSource(refusedReason("error_param", "r2"))).toBe("request_refused");
+    // A rehearsal saved before the rename keeps its source instead of falling back to "operator reported".
+    expect(recordSource("Shopee (SIMULATED) accepted the request · request_id r3")).toBe("request_accepted");
+    expect(recordSource("Shopee (SIMULATED) refused: error_param")).toBe("request_refused");
+    expect(recordSource("I pinned it myself")).toBe("operator_reported");
   });
 });

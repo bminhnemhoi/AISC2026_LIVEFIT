@@ -140,7 +140,7 @@ export const Dialog: React.FC<DialogProps> = ({
   if (!isOpen || typeof document === "undefined") return null;
 
   return createPortal(
-    <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+    <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 motion-safe:animate-fade-in">
       <div
         ref={dialogRef}
         role="dialog"
@@ -149,7 +149,7 @@ export const Dialog: React.FC<DialogProps> = ({
         aria-describedby={description ? descId : undefined}
         aria-busy={command.busy || undefined}
         tabIndex={-1}
-        className={`w-full ${WIDTH[size]} max-h-[calc(100dvh-2rem)] flex flex-col rounded-[14px] bg-[#1B1F27] border border-[#2F3642] shadow-2xl outline-none`}
+        className={`w-full ${WIDTH[size]} max-h-[calc(100dvh-2rem)] flex flex-col rounded-[14px] bg-[#1B1F27] border border-[#2F3642] shadow-2xl outline-none [--pop-from:6px] motion-safe:animate-pop-in`}
       >
         <div className="p-6 pb-0 shrink-0">
           <h3 id={titleId} className="text-[22px] font-medium text-[#F5F7FC]">

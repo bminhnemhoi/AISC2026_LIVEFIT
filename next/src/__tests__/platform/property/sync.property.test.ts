@@ -197,7 +197,7 @@ describe("seeded SIMULATED bridge properties", () => {
     expect(ongoingSession(result.sim)).toEqual(host);
     expect(result.calls).toEqual([]);
     expect(result.commands).toEqual([]);
-    expect(result.sync.problem).toMatch(/SIMULATED Shopee.*nothing to end.*end it there/);
+    expect(result.sync.problem).toMatch(/SIMULATED Live.*nothing to end.*end it there/);
     expect(result.notices).toEqual([{ code: "platform_problem", summary: result.sync.problem }]);
     const repeated = syncCycle(ended.session, result.sim, result.sync, T);
     expect(repeated.calls).toEqual([]);

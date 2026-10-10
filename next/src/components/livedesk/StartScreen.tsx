@@ -9,6 +9,7 @@ import { IconCheck, IconLink, IconUpload } from "./icons";
 import { tImportNote, tStartBlocked } from "./i18n";
 import { Shell, useShell } from "./Shell";
 import { Button, SimTag } from "./ui";
+import { StartArt } from "./art";
 
 type StepState = "todo" | "active" | "done";
 
@@ -25,40 +26,43 @@ function StepHead({ n, title, state, summary }: { n: number; title: string; stat
 
 function ProductTable({ products, onRemove, locked }: { products: DeskProduct[]; onRemove: (id: string) => void; locked: boolean }) {
   const { c } = useShell();
+  // A long list scrolls inside its own box, so Start live stays in reach; the header row stays on top while it scrolls.
   return (
-    <table className="ptable" data-testid="start-products">
-      <caption className="sr-only">{c.tableCaption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{c.colProduct}</th>
-          <th scope="col" className="r">{c.colPrice}</th>
-          <th scope="col" className="r">{c.colStock}</th>
-          <th scope="col">{c.colStatus} <SimTag quiet>SIMULATED</SimTag></th>
-          <th scope="col"><span className="sr-only">{c.colAction}</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        {products.map((p) => (
-          <tr key={p.id} className={`prow is-${p.sync.state}`} data-testid={`desk-product-${p.id}`}>
-            <th scope="row">
-              {p.name}
-              {p.sync.detail !== null && <span className="sync-detail">{c.platformSaid}: <code>{p.sync.detail}</code></span>}
-            </th>
-            <td className="r num" data-label={c.colPrice}>{p.priceLabel ?? <span className="missing">{c.missing}</span>}</td>
-            <td className="r num" data-label={c.colStock}>{p.stock ?? <span className="missing">{c.missing}</span>}</td>
-            <td>
-              <span className={`status is-${p.sync.state}`}>
-                {p.sync.state === "synced" && <IconCheck size={16} />}
-                {c.sync[p.sync.state]}
-              </span>
-            </td>
-            <td className="r">
-              <Button size="sm" variant="quiet" aria-label={`${c.remove} ${p.name}`} onClick={() => onRemove(p.id)} disabled={locked}>{c.remove}</Button>
-            </td>
+    <div className="ptable-scroll" tabIndex={0} role="region" aria-label={c.tableCaption}>
+      <table className="ptable" data-testid="start-products">
+        <caption className="sr-only">{c.tableCaption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{c.colProduct}</th>
+            <th scope="col" className="r">{c.colPrice}</th>
+            <th scope="col" className="r">{c.colStock}</th>
+            <th scope="col">{c.colStatus} <SimTag quiet>SIMULATED</SimTag></th>
+            <th scope="col"><span className="sr-only">{c.colAction}</span></th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {products.map((p) => (
+            <tr key={p.id} className={`prow is-${p.sync.state}`} data-testid={`desk-product-${p.id}`}>
+              <th scope="row">
+                {p.name}
+                {p.sync.detail !== null && <span className="sync-detail">{c.platformSaid}: <code>{p.sync.detail}</code></span>}
+              </th>
+              <td className="r num" data-label={c.colPrice}>{p.priceLabel ?? <span className="missing">{c.missing}</span>}</td>
+              <td className="r num" data-label={c.colStock}>{p.stock ?? <span className="missing">{c.missing}</span>}</td>
+              <td>
+                <span className={`status is-${p.sync.state}`}>
+                  {p.sync.state === "synced" && <IconCheck size={16} />}
+                  {c.sync[p.sync.state]}
+                </span>
+              </td>
+              <td className="r">
+                <Button size="sm" variant="quiet" aria-label={`${c.remove} ${p.name}`} onClick={() => onRemove(p.id)} disabled={locked}>{c.remove}</Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -77,7 +81,7 @@ function ImportForm({ connected }: { connected: boolean }) {
       <div className="row">
         <Button variant={text.trim() ? "primary" : "secondary"} size="lg" icon={<IconUpload />} disabled={reason !== null}
           onClick={() => actions.onImportText(text)} aria-describedby="import-reason" data-testid="start-import">{c.importBtn}</Button>
-        <Button variant="quiet" size="lg" disabled={!connected} onClick={() => actions.onImportSamplePack()} data-testid="start-sample">{c.sampleBtn}</Button>
+        <Button variant="secondary" size="lg" disabled={!connected} onClick={() => actions.onImportSamplePack()} data-testid="start-sample">{c.sampleBtn}</Button>
       </div>
       <p id="import-reason" className="step-note">{reason}</p>
     </div>
@@ -106,12 +110,13 @@ function StartBody() {
   return (
     <div className="setup" data-testid="start-flow">
       <div className="setup-intro">
-        <h1>{c.startTitle}</h1>
+        <h1 className="start-title">{c.startTitleLead} <span className="tape-mark">{c.startTitleMark}</span></h1>
         <p className="lede">{c.startLede}</p>
         <div className="sim-note">
           <SimTag>{c.stamp}</SimTag>
           <p>{c.simNote}</p>
         </div>
+        <StartArt />
       </div>
       <ol className="steps">
         <li className={`step is-${step1}`} data-testid="start-connect-panel">

@@ -7,7 +7,7 @@ import { buildOperateFacts } from "@/lib/ai/context";
 import { formatClock, type Forecast, type RecoveryAnalysis, type RecoveryOption } from "@/lib/domain";
 import { Button } from "@/components/ui";
 import { Signal } from "@/components/ops/StatusChips";
-import { Basis, DISCLOSURE, FactList, LayerLabel, PHASE_LABEL, StateChip, phaseMessage } from "./CopilotParts";
+import { Basis, DISCLOSURE, FactList, LayerLabel, PHASE_LABEL, StateChip, phaseMessage, useArrivalMotion } from "./CopilotParts";
 import type { AiCopilot } from "./useAiCopilot";
 
 /**
@@ -43,6 +43,7 @@ export function OperateCopilot({
 }): React.ReactElement {
   const tz = session.timezone;
   const result = copilot.result;
+  const arrival = useArrivalMotion(result);
   const stale = result !== null && result.basis.revision !== session.revision;
   const liveFacts = useMemo(() => buildOperateFacts(session, nowMs, forecast, analysis), [session, nowMs, forecast, analysis]);
   const showingResultFacts = result !== null && !stale;
@@ -108,7 +109,7 @@ export function OperateCopilot({
       )}
 
       {result && (
-        <div className={`space-y-3 ${stale ? "opacity-60" : ""}`} data-testid="copilot-result" data-stale={stale}>
+        <div className={`space-y-3 transition-opacity duration-200 ${arrival} ${stale ? "opacity-60" : ""}`} data-testid="copilot-result" data-stale={stale}>
           <section aria-label="AI interpretation" className="rounded-[8px] bg-[#14171E] border border-dashed border-[#25505F] px-3 py-2 space-y-1">
             <LayerLabel kind="interpretation" />
             <p className="text-[16px] leading-snug text-[#F5F7FC]" data-testid="ai-interpretation">{result.output.interpretation.text}</p>

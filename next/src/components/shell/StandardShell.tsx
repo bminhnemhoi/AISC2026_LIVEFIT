@@ -130,7 +130,7 @@ export const StandardShell: React.FC<StandardShellProps> = ({
 
           <div
             id={menuId}
-            className={`${open ? "flex" : "hidden"} lg:flex basis-full lg:basis-auto lg:flex-1 min-w-0 flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-4 pt-2 pb-3 lg:py-0 max-h-[calc(100dvh-64px)] overflow-y-auto lg:max-h-none lg:overflow-visible`}
+            className={`${open ? "flex max-lg:motion-safe:animate-fade-in" : "hidden"} lg:flex basis-full lg:basis-auto lg:flex-1 min-w-0 flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-4 pt-2 pb-3 lg:py-0 max-h-[calc(100dvh-64px)] overflow-y-auto lg:max-h-none lg:overflow-visible`}
           >
             {/* Primary navigation: the work loop, then rehearse and connect */}
             <nav className="flex flex-col lg:flex-row lg:items-center gap-1 lg:ml-3" aria-label="Main Navigation">

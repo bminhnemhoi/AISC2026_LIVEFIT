@@ -53,7 +53,7 @@ function LedgerRow({ entry, tz }: { entry: LedgerEntry | ReadEntry; tz: string }
 }
 
 /**
- * Two-way sync between this rehearsal and a SIMULATED Shopee Live. LiveLift's own calls go through the same bridge a real
+ * Two-way sync between this rehearsal and a SIMULATED Live. LiveLift's own calls go through the same bridge a real
  * connection would use; the host's app is a second pair of hands that LiveLift can only learn about by reading.
  * Nothing here is sent to Shopee, and nothing recorded from it is more than "simulated".
  */
@@ -118,7 +118,7 @@ export function PlatformSyncPanel({
   const link = (): void => {
     const id = Number(linkText.trim());
     if (!Number.isSafeInteger(id) || id <= 0) {
-      notice("link_invalid", "Enter the session ID shown in the Shopee app.");
+      notice("link_invalid", "Enter the session ID shown in the live app.");
       return;
     }
     update((w) => ({ ...w, sync: linkSession(w.sync, id) }));
@@ -157,9 +157,9 @@ export function PlatformSyncPanel({
     <div className="space-y-4" data-testid="platform-panel" aria-label="Platform sync">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0 max-w-[560px]">
-          <Signal tone="violet" icon="ri-flask-line" size="desk" className="font-semibold">SIMULATED · Shopee Live</Signal>
+          <Signal tone="violet" icon="ri-flask-line" size="desk" className="font-semibold">SIMULATED Live</Signal>
           <p className="text-[14px] text-[#B7C1CE] mt-1">
-            LiveLift is talking to a simulation of Shopee&apos;s API. Nothing is sent to Shopee. Only <span className="font-mono">update_show_item</span> copies
+            LiveLift is talking to a simulation of Shopee&apos;s API. Nothing is sent to any real live platform. Only <span className="font-mono">update_show_item</span> copies
             Shopee&apos;s published page; the other calls are marked <em>shape inferred</em>.
           </p>
         </div>
@@ -191,7 +191,7 @@ export function PlatformSyncPanel({
         <p className={label}>Linked live</p>
         <p className="text-[16px] text-[#F5F7FC] mt-1" data-testid="platform-linked" role="status">
           {linked ? (
-            <>Shopee session <span className="font-mono">{linked.sessionId}</span> · {linked.status}{linked.origin === "shopee_app" ? " · started in the app" : " · opened by LiveLift"}</>
+            <>Platform session <span className="font-mono">{linked.sessionId}</span> · {linked.status}{linked.origin === "shopee_app" ? " · started in the app" : " · opened by LiveLift"}</>
           ) : (
             "No live is linked yet. LiveLift opens one when the show starts."
           )}
@@ -215,8 +215,8 @@ export function PlatformSyncPanel({
         )}
       </section>
 
-      <section className={card} aria-label="From LiveLift to Shopee">
-        <p className={label}>LiveLift → Shopee</p>
+      <section className={card} aria-label="From LiveLift to the platform">
+        <p className={label}>LiveLift → SIMULATED Live</p>
         <ul className="mt-1 divide-y divide-[#1F2530]" data-testid="platform-products">
           {products.length === 0 && <li className="py-2 text-[15px] text-[#9AA5B5]">The run of show uses no products.</li>}
           {products.map(({ product, link: l }) => {
@@ -227,11 +227,11 @@ export function PlatformSyncPanel({
                 <div className="min-w-0">
                   <p className="text-[16px] text-[#F5F7FC] truncate">{product.name}</p>
                   <p className="text-[14px] text-[#9AA5B5]">
-                    item {l.itemId} · {pinned ? "pinned on Shopee" : inBag ? "in the live bag" : "not in the live bag"}
+                    item {l.itemId} · {pinned ? "pinned on the platform" : inBag ? "in the live bag" : "not in the live bag"}
                   </p>
                 </div>
                 <Button variant={pinned ? "ghost" : "secondary"} size="desk" icon="ri-pushpin-line" disabled={!canPin || pinned} onClick={() => pin(product.id)} data-testid={`pin-${product.id}`}>
-                  {pinned ? "Pinned" : "Pin on Shopee"}
+                  {pinned ? "Pinned" : "Pin on the platform"}
                 </Button>
               </li>
             );
@@ -254,8 +254,8 @@ export function PlatformSyncPanel({
         </div>
       </section>
 
-      <section className={`${card} border-[#3A3358]`} aria-label="The host's Shopee app (simulated)">
-        <p className={`${label} text-[#C8B2FF]`}>The host&apos;s Shopee app (simulated)</p>
+      <section className={`${card} border-[#3A3358]`} aria-label="The host's live app (simulated)">
+        <p className={`${label} text-[#C8B2FF]`}>The host&apos;s live app (simulated)</p>
         {!live ? (
           <div className="mt-2 flex items-center gap-3 flex-wrap">
             <Button variant="secondary" size="desk" icon="ri-live-line" onClick={() => host({ type: "start_live", title: `${session.title} (host app)` })} data-testid="host-go-live">Go live in the app</Button>
@@ -345,7 +345,7 @@ export function PlatformSyncPanel({
           </label>
           <p className="text-[14px] text-[#9AA5B5]">Each condition returns the error text from Shopee&apos;s page. LiveLift stops, says so once, and the operator continues by hand.</p>
           <fieldset className="space-y-1">
-            <legend className="text-[14px] text-[#F6C875]">Not verified on real Shopee. Switch to see how LiveLift copes either way.</legend>
+            <legend className="text-[14px] text-[#F6C875]">Not verified on a real platform. Switch to see how LiveLift copes either way.</legend>
             <label className="flex items-start gap-3 min-h-[44px] text-[15px] text-[#CAD0DA] cursor-pointer">
               <input type="checkbox" checked={appLiveControllable} onChange={(e) => update((w) => ({ ...w, sim: withAssumptions(w.sim, { appLiveControllable: e.target.checked }) }))} className="w-5 h-5 mt-0.5 accent-[#DFFF00]" data-testid="assume-app-live" />
               <span>A1 · The API can control a live the host started in the app</span>

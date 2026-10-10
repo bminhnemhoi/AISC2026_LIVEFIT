@@ -3,6 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { Shell, useShell } from "./Shell";
+import { TapeTitle } from "./ui";
+import { LegacyArt } from "./art";
 
 /** The way back to the V3 screens. They keep their own URLs and their own look; only this index is new. */
 function LegacyBody() {
@@ -19,7 +21,7 @@ function LegacyBody() {
   ];
   return (
     <div className="legacy">
-      <h1>{c.legacyTitle}</h1>
+      <h1><TapeTitle text={c.legacyTitle} mark={c.legacyTitleMark} /></h1>
       <p className="lede">{c.legacyIntro}</p>
       <ul className="legacy-list" data-testid="legacy-links">
         {links.map((link) => (
@@ -29,6 +31,7 @@ function LegacyBody() {
           </li>
         ))}
       </ul>
+      <LegacyArt />
     </div>
   );
 }

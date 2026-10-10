@@ -50,7 +50,7 @@ function selfTest() {
   assertSimulatedSurfaces({ desk: 'SIMULATED clock', phone: 'SIMULATED' });
   assert.throws(() => assertSimulatedSurfaces({ phone: 'Shopee' }));
   assert(forbidden.test('connected to Shopee'));
-  assert(!forbidden.test('SIMULATED Shopee'));
+  assert(!forbidden.test('SIMULATED Live'));
   console.log('LAB HARNESS SELF-CHECK: PASS');
 }
 

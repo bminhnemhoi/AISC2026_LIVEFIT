@@ -36,14 +36,14 @@ const stepAll = (): void => {
 describe("the Platform Lab page", () => {
   it("shows the desk, the wire and the host's app, each marked SIMULATED, with the assumptions on the page", () => {
     mount();
-    expect(within(screen.getByTestId("lab-desk")).getByText(/Pin on SIMULATED Shopee/)).toBeTruthy();
-    expect(screen.getByTestId("lab-wire").textContent).toContain("SIMULATED Shopee");
-    expect(screen.getByRole("region", { name: "Host's Shopee app (SIMULATED)" })).toContainElement(screen.getByTestId("host-app"));
+    expect(within(screen.getByTestId("lab-desk")).getByText(/Pin on SIMULATED Live/)).toBeTruthy();
+    expect(screen.getByTestId("lab-wire").textContent).toContain("SIMULATED Live");
+    expect(screen.getByRole("region", { name: "Host's live app (SIMULATED)" })).toContainElement(screen.getByTestId("host-app"));
     expect(screen.getByTestId("host-app-simulated-badge").textContent).toMatch(/SIMULATED/);
     expect(screen.getByTestId("environment-badge-simulated")).toBeTruthy();
     expect(screen.getByTestId("lab-run-note").textContent).toMatch(/nothing is saved/);
     const strip = screen.getByTestId("assumptions");
-    expect(strip.textContent).toContain("Not verified on real Shopee");
+    expect(strip.textContent).toContain("Not verified on a real platform");
     expect(within(strip).getByLabelText(/A1 ·/)).toBeChecked();
     expect(within(strip).getByLabelText(/A2 ·/)).toBeChecked();
   });
@@ -53,7 +53,7 @@ describe("the Platform Lab page", () => {
     expect(screen.getByTestId("director-caption").textContent).toMatch(/Press Play/);
     fireEvent.click(screen.getByTestId("director-step"));
     fireEvent.click(screen.getByTestId("director-step"));
-    expect(screen.getByTestId("director-caption").textContent).toMatch(/LiveLift opens a live on SIMULATED Shopee.*20:12 flash sale/);
+    expect(screen.getByTestId("director-caption").textContent).toMatch(/LiveLift opens a live on SIMULATED Live.*20:12 flash sale/);
     expect(screen.getAllByTestId("wire-call").map((n) => n.getAttribute("data-endpoint"))).toEqual(["create_session", "add_item_list", "start_session", "create_promotion"]);
     expect(screen.getByTestId("host-app-mode-live")).toBeTruthy();
     stepAll();
@@ -132,7 +132,7 @@ describe("the Platform Lab page", () => {
     fireEvent.click(screen.getByTestId("lab-lang-vi"));
     expect(screen.getByTestId("platform-lab")).toHaveAttribute("lang", "vi");
     expect(screen.getByTestId("director-caption").textContent).toMatch(/Nhấn Phát/);
-    expect(screen.getByTestId("assumptions").textContent).toContain("Chưa kiểm chứng trên Shopee thật");
+    expect(screen.getByTestId("assumptions").textContent).toContain("Chưa kiểm chứng trên nền tảng thật");
     fireEvent.click(screen.getByTestId("director-step"));
     expect(screen.getByTestId("director-caption").textContent).toMatch(/Buổi live bắt đầu/);
     fireEvent.click(screen.getByTestId("lab-lang-en"));

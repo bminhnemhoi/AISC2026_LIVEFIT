@@ -67,7 +67,7 @@ export function QuickReports({ onReport }: { onReport: (noteText: string, cue: Q
           role="group"
           aria-label="Quick operator reports"
           data-testid="quick-report-panel"
-          className="z-50 rounded-[12px] border border-[#2A303A] bg-[#161B22] p-2 shadow-[0_10px_28px_rgba(0,0,0,0.5)] max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 sm:absolute sm:right-0 sm:top-full sm:mt-1 sm:w-[460px]"
+          className="z-50 rounded-[12px] border border-[#2A303A] bg-[#161B22] p-2 shadow-[0_10px_28px_rgba(0,0,0,0.5)] origin-top-right motion-safe:animate-pop-in max-sm:origin-bottom max-sm:[--pop-from:6px] max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 sm:absolute sm:right-0 sm:top-full sm:mt-1 sm:w-[460px]"
         >
           <p className="px-2 pb-1 pt-0.5 text-[14px] font-semibold uppercase tracking-[0.8px] text-[#CAD0DA]">Operator reported</p>
           <ul className="sm:grid sm:grid-cols-2 sm:gap-x-1">

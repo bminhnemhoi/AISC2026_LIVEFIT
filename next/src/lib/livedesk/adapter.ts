@@ -1,5 +1,5 @@
 /**
- * The Live Desk's one door to a live platform, and its SIMULATED Shopee Live implementation.
+ * The Live Desk's one door to a live platform, and its SIMULATED Live implementation.
  *
  * `LivePlatformAdapter` is platform-neutral: products in, live started, pin, unpin, what is showing, metrics. The
  * only implementation is `simulatedShopeeAdapter`, which wraps the existing simulated platform (`shopeeLive.ts`) and
@@ -16,7 +16,7 @@
  *   pack. There is no catalog call in the simulation, so adding to it is not a platform call and is not logged.
  * - `add_item_list` needs a live, so the first product sync opens one (`create_session`, status "created", not on
  *   air). `startLive` then starts it, opening one first when none is waiting.
- * - `readMetrics` is the seeded generator (`engine.ts`). SIMULATED Shopee serves no live metrics of its own.
+ * - `readMetrics` is the seeded generator (`engine.ts`). SIMULATED Live serves no live metrics of its own.
  */
 import {
   SIM_SHOP_ID, callShopee, createShopeeLiveSim, diffSnapshots, logReads, pinFromLiveLift, pollPlatform,
@@ -24,7 +24,7 @@ import {
 } from "@/lib/platform";
 import { simulateSecond, type EngineWorld, type SecondEvents } from "./engine";
 
-export const PLATFORM_LABEL = "SIMULATED Shopee Live";
+export const PLATFORM_LABEL = "SIMULATED Live";
 /** The title of the live the adapter opens while products sync, before Start live. */
 export const PREPARED_LIVE_TITLE = "LiveLift Live Desk (SIMULATED)";
 
@@ -141,7 +141,7 @@ function showingOf(snapshot: PlatformSnapshot, sync: SyncState): ShowingNow {
 
 const noLive: PlatformOutcome = { ok: false, condition: "refused", message: "No SIMULATED live is open yet.", requestId: null };
 
-// ---- The SIMULATED Shopee Live adapter ----------------------------------------------------------------------------------
+// ---- The SIMULATED Live adapter ----------------------------------------------------------------------------------
 
 export const simulatedShopeeAdapter: LivePlatformAdapter<PlatformWorld> = {
   label: PLATFORM_LABEL,
@@ -215,7 +215,7 @@ export const simulatedShopeeAdapter: LivePlatformAdapter<PlatformWorld> = {
 
   schedulePromotion(world, productId, startMs, endMs, name, nowMs) {
     const link = world.sync.links.find((l) => l.productId === productId);
-    if (!link) return { world, outcome: { ok: false, condition: "refused", message: "This product is not on SIMULATED Shopee.", requestId: null }, promotionId: null };
+    if (!link) return { world, outcome: { ok: false, condition: "refused", message: "This product is not on SIMULATED Live.", requestId: null }, promotionId: null };
     const r = call(world, nowMs, "create_promotion", {
       name, start_time: Math.floor(startMs / 1000), end_time: Math.floor(endMs / 1000), item_list: [{ item_id: link.itemId, shop_id: link.shopId }],
     });

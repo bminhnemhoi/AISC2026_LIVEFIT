@@ -15,6 +15,9 @@ const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   reactStrictMode: true,
   allowedDevOrigins,
+  // The SIMULATED competition launcher runs `next dev`; the route indicator is framework chrome, not LiveLift UI.
+  // Compile and runtime errors still surface in the error overlay.
+  devIndicators: false,
 };
 
 export default nextConfig;

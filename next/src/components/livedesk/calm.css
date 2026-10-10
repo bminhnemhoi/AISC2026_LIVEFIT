@@ -204,7 +204,7 @@
 
   --chart-line: #2a2522;
   --chart-area: rgba(42, 37, 34, 0.05);
-  --chart-bar: #9e3b2b;
+  --chart-bar: #6e6359; /* graphite: brick stays for LIVE and the one primary action */
   --chart-grid: #d8d0c4;
   --hatch: #cfc5b6;
   --band-a: rgba(42, 37, 34, 0.045);
@@ -256,7 +256,7 @@
   --chip-order-ink: #ebc27a;
   --chart-line: #f3ece1;
   --chart-area: rgba(243, 236, 225, 0.06);
-  --chart-bar: #c45a42;
+  --chart-bar: #b9a891;
   --chart-grid: #3d342d;
   --hatch: #5a4e44;
   --band-a: rgba(243, 236, 225, 0.05);
@@ -2905,7 +2905,7 @@
   .ld .flash-main {
     flex: 0 0 auto;
   }
-  .ld .live-time + .live-sep,
+  .ld .live-time ~ .live-sep,
   .ld .live-viewers {
     display: none;
   }
@@ -3035,13 +3035,6 @@
   padding: 0 var(--s-8);
   color: var(--ink);
   font-weight: var(--w-medium);
-}
-.ld .dock-print {
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-.ld .dock-print code {
-  color: var(--ink);
 }
 .ld .clock {
   border-right: 0;
@@ -3471,7 +3464,7 @@
   .ld .hdr.has-modes .nav-home,
   .ld .hdr.has-modes .nav-legacy,
   .ld .hdr.has-modes .live-viewers,
-  .ld .hdr.has-modes .live-time + .live-sep,
+  .ld .hdr.has-modes .live-time ~ .live-sep,
   .ld .clock-now {
     display: none;
   }
@@ -3551,7 +3544,7 @@
 .ld.is-presenter .hdr.has-modes .nav-home,
 .ld.is-presenter .hdr.has-modes .nav-legacy,
 .ld.is-presenter .hdr.has-modes .live-viewers,
-.ld.is-presenter .hdr.has-modes .live-time + .live-sep {
+.ld.is-presenter .hdr.has-modes .live-time ~ .live-sep {
   display: none;
 }
 .ld.is-presenter .journey-toggle span {
@@ -3651,6 +3644,498 @@
   --w-light: 400;
 }
 
+/* ---------- clock: Run, Pause and the current speed stay in reach; speeds, skips and reset sit behind one disclosure ---------- */
+.ld .clock-more {
+  position: relative;
+}
+.ld .clock-more > summary,
+.ld .fold > .fold-summary {
+  list-style: none;
+  cursor: pointer;
+}
+.ld .clock-more > summary::-webkit-details-marker,
+.ld .fold > .fold-summary::-webkit-details-marker {
+  display: none;
+}
+.ld .fold-chev {
+  transition: rotate var(--t-fast) var(--ease);
+}
+.ld .clock-more .fold-chev {
+  rotate: -90deg;
+}
+.ld .clock-more[open] > summary {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.ld .clock-more[open] .fold-chev {
+  rotate: 90deg;
+}
+.ld .clock-more-panel {
+  position: absolute;
+  bottom: calc(100% + var(--s-8));
+  left: 50%;
+  translate: -50% 0;
+  z-index: 40;
+  display: grid;
+  gap: var(--s-4);
+  width: max-content;
+  padding: var(--s-8);
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow);
+}
+.ld .clock-more-panel .speed,
+.ld .clock-more-panel .skips {
+  display: flex;
+  flex-wrap: wrap;
+}
+.ld .clock-more-panel .skips {
+  border-top: 1px solid var(--line);
+  padding-top: var(--s-4);
+}
+
+/* ---------- a secondary panel folded behind its title on a phone ---------- */
+.ld .fold > .fold-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  min-height: 44px;
+}
+.ld .fold > .fold-summary > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.ld .fold > .fold-summary .panel-head {
+  padding-bottom: 0;
+}
+.ld .fold[open] > .fold-summary {
+  margin-bottom: var(--s-12);
+}
+.ld .fold .fold-chev {
+  rotate: 90deg;
+  color: var(--ink-2);
+}
+.ld .fold[open] .fold-chev {
+  rotate: -90deg;
+}
+.ld details.chart-panel:not([open]) {
+  min-height: 0;
+}
+
+/* ---------- phones: the clock stays on screen; the three reasons sit in one row ---------- */
+@media (max-width: 1023px) {
+  .ld.screen-desk:not(.is-presenter) {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  .ld.screen-desk .dock-middle {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    justify-content: center;
+    padding: var(--s-4) var(--s-16) calc(var(--s-4) + env(safe-area-inset-bottom));
+    background: var(--bg);
+    border-top: 1px solid var(--line-strong);
+  }
+  .ld.screen-desk .clock-more-panel {
+    position: fixed;
+    left: var(--s-16);
+    right: var(--s-16);
+    bottom: calc(60px + env(safe-area-inset-bottom));
+    width: auto;
+    translate: none;
+  }
+}
+@media (max-width: 640px) {
+  .ld .reasons {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ld .reasons > div {
+    padding: var(--s-12) var(--s-8) var(--s-12) 0;
+  }
+  .ld .reasons > div + div {
+    padding-left: var(--s-8);
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+  .ld .reasons dd {
+    font-size: var(--fs-28);
+  }
+  .ld .reasons dt {
+    font-size: var(--fs-13);
+  }
+  .ld.screen-desk .clock-now {
+    padding: 0 var(--s-4);
+  }
+  /* The SIMULATED host phone stays visible with its label, just shorter. */
+  .ld .phone-wrap {
+    height: 380px;
+  }
+}
+
+/* ---------- a stopped clock is said beside the time; LIVE alone would overstate it ---------- */
+.ld .live-status.is-paused .live-dot {
+  background: var(--ink-3);
+}
+.ld .live-status.is-paused .live-dot::after {
+  display: none;
+}
+.ld .paused-chip {
+  padding: 1px var(--s-8);
+  border: 1px solid var(--line-strong);
+  color: var(--ink-2);
+  font-size: var(--fs-13);
+}
+/* A thin sample reads as a lead, not an order: smaller title, confidence directly under it. */
+.ld .answer-title.is-tentative {
+  font-size: var(--fs-40);
+}
+.ld .why > .confidence {
+  padding-bottom: var(--s-8);
+}
+@media (max-width: 640px) {
+  .ld .answer-title.is-tentative {
+    font-size: var(--fs-20);
+  }
+}
+
+/* ---------- Home: the next step leads on a phone; at desk width the steps come first, status and next below ---------- */
+@media (min-width: 641px) {
+  .ld .home-flow > .home-status {
+    order: 2;
+  }
+  .ld .home-status > .home-next {
+    order: 2;
+  }
+}
+@media (max-width: 640px) {
+  .ld .home-status {
+    padding-top: 0;
+  }
+}
+
+/* Start: the imported list has a fixed height and scrolls inside, with its header row pinned */
+.ld .ptable-scroll {
+  width: 100%;
+  max-height: min(420px, 55vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-bottom: 1px solid var(--line);
+}
+.ld .ptable-scroll .ptable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+}
+.ld .ptable-scroll:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .ld .ptable-scroll {
+    max-height: min(480px, 60vh);
+  }
+}
+
+/* =====================================================================================================================
+   A+ (Calm Studio refined): brick only for LIVE and the one primary action; numbers sized by how much they are worth.
+   Every simulated surface still says SIMULATED (project rule); the tags stay quiet.
+   ===================================================================================================================== */
+/* a proposal is ink dashed, never brick: red would read as an error */
+.ld .pin-state.is-suggested {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+/* a thin sample is not shouted: the title and its confidence lead, the counts sit in a modest row */
+.ld .why.is-low .reasons dd {
+  font-size: var(--fs-28);
+  font-weight: var(--w-regular);
+}
+/* comment intent counters are context for the answer, not a rival to it */
+.ld .intent-count {
+  font-size: var(--fs-20);
+  font-weight: var(--w-regular);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+  .ld .why.is-low .reasons dd {
+    font-size: var(--fs-20);
+  }
+}
+
+/* Tablet (stage 680-939 px): two columns instead of the phone's one long column. The answer and chart lead on the
+   left; products (with a shorter SIMULATED phone) and comments stack on the right. Phones keep one column. */
+@container stage (min-width: 680px) and (max-width: 939px) {
+  .ld .desk-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-areas: "center left" "center right";
+    align-items: start;
+  }
+  .ld .col-center {
+    grid-area: center;
+    order: 0;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+  }
+  .ld .col-left {
+    grid-area: left;
+    border-right: 0;
+  }
+  .ld .col-right {
+    grid-area: right;
+    grid-column: auto;
+    border-top: 1px solid var(--line);
+  }
+  .ld .col {
+    padding: var(--s-16) var(--s-24);
+  }
+  .ld .phone-wrap {
+    height: 300px;
+    flex: none;
+  }
+  .ld .comments {
+    max-height: 520px;
+  }
+}
+/* Tablet header: the journey button shows its icon only (as on a phone), so End live stays on the first row. */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .ld .journey-toggle span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+/* Tablet header, continued: as on a phone, the step trail takes its own row under the brand, so End live stays on the
+   first row beside LIVE and SIMULATED instead of dropping alone onto a second line. */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .ld .trail {
+    order: 10;
+    width: 100%;
+  }
+  .ld .trail ol {
+    flex-wrap: wrap;
+    column-gap: var(--s-16);
+    row-gap: 0;
+  }
+  .ld .hdr > .jtarget {
+    margin-left: auto;
+  }
+  /* the SIMULATED phone on the desk still shows the viewer count */
+  .ld .live-time ~ .live-sep,
+  .ld .live-viewers {
+    display: none;
+  }
+}
+
+/* Recap (A+): the page scrolls like a page, so the whole recap can be read and shared; four KPIs, measured first and
+   the unknown orders last; what the operator did sits in one line above the decisions. */
+.ld.screen-recap {
+  height: auto;
+  min-height: 100vh;
+}
+.ld.screen-recap .stage,
+.ld.screen-recap .screen-wrap {
+  overflow: visible;
+  height: auto;
+}
+.ld .kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.ld .decisions-sum {
+  margin: calc(-1 * var(--s-4)) 0 var(--s-12);
+  color: var(--ink-2);
+  font-size: var(--fs-14);
+}
+@media (max-width: 1023px) {
+  .ld .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- brand and Start (A+): one-weight wordmark with a lifted i, one-weight title with a tape mark ---------- */
+.ld .wordmark {
+  font-weight: var(--w-semibold, 600);
+  letter-spacing: -0.025em;
+}
+.ld .wordmark-i {
+  position: relative;
+  display: inline-block;
+}
+/* the dot of the i in "Lift" becomes a small upward wedge */
+.ld .wordmark-i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0.02em;
+  translate: -50% 0;
+  border-left: 0.11em solid transparent;
+  border-right: 0.11em solid transparent;
+  border-bottom: 0.19em solid currentColor;
+}
+.ld .setup h1.start-title {
+  font-weight: var(--w-medium);
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.ld .tape-mark {
+  position: relative;
+  display: inline-block;
+  z-index: 0;
+}
+/* a strip of kraft tape behind the second half: the same tape as the pinned card on the Live Desk */
+.ld .tape-mark::before {
+  content: "";
+  position: absolute;
+  left: -0.12em;
+  right: -0.12em;
+  top: 0.5em;
+  height: 0.42em;
+  background: var(--kraft);
+  rotate: -1.2deg;
+  z-index: -1;
+}
+.ld .step-head h2 {
+  font-size: 24px;
+  font-weight: var(--w-medium);
+}
+.ld .start-art {
+  margin-top: var(--s-24);
+  max-width: 440px;
+}
+.ld .art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.ld .art .art-dot { fill: var(--line); }
+.ld .art .art-giant { font: 700 112px/1 ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", Menlo, monospace; letter-spacing: -0.04em; fill: var(--surface-3); opacity: 0.55; }
+.ld .art .art-reg { fill: none; stroke: var(--ink-3); stroke-width: 1; opacity: 0.55; }
+.ld .art .art-label { font: 500 8.5px/1 ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", Menlo, monospace; letter-spacing: 0.12em; fill: var(--ink-3); }
+.ld .art .art-label.is-big { font-size: 12px; letter-spacing: 0.04em; fill: var(--ink-2); }
+.ld .art .art-chips circle, .ld .art .art-pill rect { fill: none; stroke: var(--ink-3); stroke-width: 1; opacity: 0.75; }
+.ld .art .art-chips text, .ld .art .art-pill text { font: 600 8.5px/1 ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", Menlo, monospace; fill: var(--ink-2); text-anchor: middle; letter-spacing: 0.06em; }
+.ld .art .art-ruler path { stroke: var(--ink-3); stroke-width: 1; fill: none; opacity: 0.7; }
+.ld .art .art-ruler .art-mark { fill: var(--ink-2); stroke: none; }
+/* die-cut stickers in the site's own materials: paper for the phone, kraft (the tape) for the shirt, ink lines, brick
+   only for the LIVE dot and the hearts. Tokens below switch with the theme and serve every drawing in art.tsx. */
+.ld .art {
+  --stk-cut: #d8d0c4;
+  --stk-margin: #fffdf8;
+  --stk-line: #5a5047;
+  --stk-paper-a: #fbf7ef;
+  --stk-paper-b: #ece3d4;
+  --stk-kraft-a: #e6d6b6;
+  --stk-kraft-b: #cdb68a;
+  --stk-screen: #f6f3ee;
+  --stk-sheen: #ffffff;
+  --stk-heart: #f0d9d0;
+}
+.ld[data-theme="dark"] .art {
+  --stk-cut: #5a4e44;
+  --stk-margin: #3a312b;
+  --stk-line: #e2d8ca;
+  --stk-paper-a: #3b332d;
+  --stk-paper-b: #2c2520;
+  --stk-kraft-a: #8f7a58;
+  --stk-kraft-b: #6c5a3f;
+  --stk-screen: #241e1a;
+  --stk-sheen: #f3ece1;
+  --stk-heart: #4a2a22;
+}
+.ld .art .stop-paper-a { stop-color: var(--stk-paper-a); }
+.ld .art .stop-paper-b { stop-color: var(--stk-paper-b); }
+.ld .art .stop-kraft-a { stop-color: var(--stk-kraft-a); }
+.ld .art .stop-kraft-b { stop-color: var(--stk-kraft-b); }
+.ld .art .stop-sheen { stop-color: var(--stk-sheen); }
+.ld .art .stk-cut { fill: none; stroke: var(--stk-cut); stroke-width: 15; stroke-linejoin: round; }
+.ld .art .stk-margin { fill: var(--stk-margin); stroke: var(--stk-margin); stroke-width: 12; stroke-linejoin: round; }
+.ld .art .stk-ink { stroke: var(--stk-line); stroke-width: 2.4; stroke-linejoin: round; }
+.ld .art .stk-screen { fill: var(--stk-screen); stroke: var(--stk-line); stroke-width: 2; }
+.ld .art .stk-line { stroke: var(--stk-line); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ld .art .stk-line.is-soft { stroke-width: 1.5; opacity: 0.45; }
+.ld .art .stk-line-fill { fill: var(--stk-line); }
+.ld .art .stk-live { fill: var(--stk-margin); stroke: var(--stk-line); stroke-width: 1.6; }
+.ld .art .stk-live-dot { fill: var(--signal); }
+.ld .art .stk-live-text { font: 700 8.5px/1 ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", Menlo, monospace; fill: var(--stk-line); text-anchor: middle; letter-spacing: 0.04em; }
+.ld .art .stk-heart { fill: var(--stk-heart); stroke: var(--signal-text); stroke-width: 1.8; stroke-linejoin: round; }
+.ld .art .stk-heart.is-small { stroke-width: 1.5; }
+.ld .art .stk-tag { fill: var(--stk-margin); stroke: var(--stk-line); stroke-width: 1.6; stroke-linejoin: round; }
+@media (max-width: 1023px) {
+  .ld .start-art {
+    display: none;
+  }
+}
+/* the title's second half takes its own line, so the tape marks one deliberate phrase */
+.ld .start-title .tape-mark {
+  display: block;
+  width: fit-content;
+}
+/* Recap: a suggestion tag is a proposal, drawn like the desk's: ink dashed, never brick */
+.ld .row-kind {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+/* ---------- design language, every Calm screen ----------
+   Titles: one weight (500) and tight tracking, never a light line beside a bold one; one deliberate phrase per page
+   title sits on the kraft tape. Big numerals stay light: their size carries the evidence, not their weight.
+   Art (art.tsx): spec-sheet drawings only in empty space on wide screens, in paper, kraft, ink and brick. */
+.ld .home-intro h1,
+.ld .recap h1,
+.ld .legacy h1,
+.ld .empty h1,
+.ld .answer-title,
+.ld .flash-title,
+.ld .home-next-text,
+.ld .truth h2,
+.ld .unknowns h2,
+.ld .sheet-head h2,
+.ld .confirm h2,
+.ld .journey-head h2 {
+  font-weight: var(--w-medium);
+  letter-spacing: -0.02em;
+}
+.ld .home-intro h1,
+.ld .recap h1,
+.ld .legacy h1,
+.ld .empty h1 {
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.ld .recap-art,
+.ld .legacy-art {
+  display: none;
+}
+/* Recap: a small sheet between the title and the next action */
+@container stage (min-width: 1280px) {
+  .ld .recap-art {
+    display: grid;
+    width: 320px;
+    margin-left: auto;
+  }
+}
+/* Legacy: the list on the left, the sheet beside it */
+@container stage (min-width: 1440px) {
+  .ld .legacy {
+    max-width: 1360px;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    column-gap: 96px;
+  }
+  .ld .legacy > :not(.legacy-art) {
+    grid-column: 1;
+  }
+  .ld .legacy-art {
+    display: grid;
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: start;
+    position: sticky;
+    top: var(--s-48);
+  }
+}
 /* The logo mark beside the wordmark. Colours follow the theme tokens. */
 .ld .wordmark {
   gap: 8px;
@@ -3808,4 +4293,134 @@
   .ld .spec {
     display: none;
   }
+}
+
+/* ---------- brand drawings (brand.tsx, from docs/brand/assets) ----------
+   Every palette colour in a drawing is a class (bf-* fill, bs-* stroke) mapped here to a theme token, so the drawings
+   follow light and dark. They sit on spec sheets (art.tsx): corner marks, a kicker, a ruler, a faint giant word. */
+.ld {
+  --brand-kraft: #c9b48a;
+  --brand-note: #efe5cb;
+}
+.ld[data-theme="dark"] {
+  --brand-kraft: #8f7a58;
+  --brand-note: #3b332d;
+}
+.ld .brand { display: block; width: 100%; height: auto; overflow: visible; }
+.ld .bf-ink { fill: var(--ink); }
+.ld .bs-ink { stroke: var(--ink); }
+.ld .bf-paper { fill: var(--paper); }
+.ld .bs-paper { stroke: var(--paper); }
+.ld .bf-brick { fill: var(--signal); }
+.ld .bs-brick { stroke: var(--signal); }
+.ld .bf-kraft { fill: var(--brand-kraft); }
+.ld .bs-kraft { stroke: var(--brand-kraft); }
+.ld .bf-photo { fill: var(--surface-3); }
+.ld .bs-photo { stroke: var(--surface-3); }
+.ld .bf-line { fill: var(--line); }
+.ld .bs-line { stroke: var(--line); }
+.ld .bf-cream { fill: var(--bg); }
+.ld .bs-cream { stroke: var(--bg); }
+.ld .bf-violet { fill: var(--sim); }
+.ld .bs-violet { stroke: var(--sim); }
+.ld .bf-brick-soft { fill: var(--signal-soft); }
+.ld .bs-brick-soft { stroke: var(--signal-soft); }
+.ld .bf-note { fill: var(--brand-note); }
+.ld .bs-note { stroke: var(--brand-note); }
+.ld .brand-note-text { font: 500 22px/1 var(--font); fill: var(--ink); }
+
+/* a spec sheet with drawings on it */
+.ld .sheet-art {
+  position: relative;
+  gap: var(--s-12);
+  padding: var(--s-24) var(--s-32) var(--s-16);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.ld .sheet-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+}
+.ld .sheet-spot {
+  position: absolute;
+  display: block;
+}
+/* the faint giant word is SVG text: a mark on the paper, not a line to read */
+.ld .sheet-giant {
+  position: absolute;
+  left: -4px;
+  top: -8px;
+  width: 72%;
+  overflow: visible;
+}
+.ld .sheet-giant text {
+  font: 700 104px/1 ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", Menlo, monospace;
+  letter-spacing: -0.04em;
+  fill: var(--surface-3);
+  opacity: 0.6;
+}
+.ld .recap-art {
+  padding: var(--s-12) var(--s-32) var(--s-8);
+  gap: var(--s-4);
+}
+.ld .recap-art .sheet-stage { aspect-ratio: 4 / 1; }
+.ld .legacy-art .sheet-stage { aspect-ratio: 4 / 3; }
+
+/* Home: each of the four steps carries its drawing on a wide screen */
+.ld .flow-art {
+  display: none;
+}
+@container stage (min-width: 1280px) {
+  .ld .flow-step {
+    position: relative;
+    padding-right: 120px;
+  }
+  .ld .flow-art {
+    position: absolute;
+    top: var(--s-24);
+    right: var(--s-24);
+    display: block;
+    height: 80px;
+  }
+  .ld .flow-art .brand {
+    width: auto;
+    height: 100%;
+  }
+}
+
+/* Recap: the brand's sticky note on the "what we do not know" box */
+.ld .unknowns {
+  position: relative;
+}
+.ld .unknown-sticker {
+  display: none;
+}
+@container stage (min-width: 1024px) {
+  .ld .unknown-sticker {
+    position: absolute;
+    top: -28px;
+    right: var(--s-24);
+    display: block;
+    width: 120px;
+    rotate: 4deg;
+  }
+  /* the heading keeps clear of the note, in either language */
+  .ld .unknowns h2 {
+    padding-right: 136px;
+  }
+}
+
+/* empty and not-found states */
+.ld .empty-art {
+  display: block;
+  width: 96px;
+  margin-bottom: var(--s-8);
+}
+
+/* crisp on a 1x screen: straight 1 px ticks and cross-hairs snap to whole pixels instead of smearing across two */
+.ld .spec-tick,
+.ld .spec-cross path,
+.ld .art .art-reg path,
+.ld .art .art-ruler path:not(.art-mark) {
+  shape-rendering: crispEdges;
 }

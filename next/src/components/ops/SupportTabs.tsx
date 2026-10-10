@@ -102,7 +102,7 @@ export function SupportTabs({
         ))}
       </div>
 
-      <div tabIndex={0} className="flex-1 min-h-0 overflow-y-auto pt-2" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+      <div key={tab} tabIndex={0} className="flex-1 min-h-0 overflow-y-auto pt-2 motion-safe:animate-content-in" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "history" && (
           <ol className="divide-y divide-[#1F2530]" data-testid="history-list">
             {events.length === 0 && <li className="py-3 text-[16px] text-[#9AA5B5]">Nothing has been recorded yet.</li>}

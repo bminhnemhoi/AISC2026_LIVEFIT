@@ -27,9 +27,9 @@ export const num = (n: number, lang: DeskLang): string => n.toLocaleString(lang 
 
 const START_BLOCKED: Record<string, string> = {
   "A SIMULATED live is already running. Open the Live Desk.": "Một buổi live SIMULATED đang chạy. Mở Live Desk.",
-  "Connect SIMULATED Shopee Live first.": "Kết nối SIMULATED Shopee Live trước.",
+  "Connect SIMULATED Live first.": "Kết nối SIMULATED Live trước.",
   "Import at least one product first.": "Nhập ít nhất một sản phẩm trước.",
-  "No product has synced to SIMULATED Shopee yet.": "Chưa có sản phẩm nào lên SIMULATED Shopee.",
+  "No product has synced to SIMULATED Live yet.": "Chưa có sản phẩm nào lên SIMULATED Live.",
 };
 
 export function tStartBlocked(reason: string | null, lang: DeskLang): string | null {
@@ -50,8 +50,8 @@ function tSkipReason(reason: string): string {
 export function tImportNote(note: string | null, lang: DeskLang): string | null {
   if (note === null || lang === "en") return note;
   if (note === "Nothing to import: the text has no rows.") return "Không có gì để nhập: văn bản không có dòng nào.";
-  const refused = /^Start live: SIMULATED Shopee refused: "(.*)"$/.exec(note);
-  if (refused) return `Bắt đầu live: SIMULATED Shopee từ chối: "${refused[1]}"`;
+  const refused = /^Start live: SIMULATED Live refused: "(.*)"$/.exec(note);
+  if (refused) return `Bắt đầu live: SIMULATED Live từ chối: "${refused[1]}"`;
   const m = /^(\d+) imported, (\d+) rows? skipped(?:: (.*))?$/.exec(note);
   if (!m) return note;
   const reasons = m[3] ? `: ${m[3].split("; ").map(tSkipReason).join("; ")}` : "";
@@ -60,17 +60,17 @@ export function tImportNote(note: string | null, lang: DeskLang): string | null 
 
 export function tBanner(text: string, lang: DeskLang): string {
   if (lang === "en") return text;
-  if (text === "SIMULATED Shopee is answering again.") return "SIMULATED Shopee đã trả lời trở lại.";
+  if (text === "SIMULATED Live is answering again.") return "SIMULATED Live đã trả lời trở lại.";
   const tail = "The Live Desk stopped calling it. Carry on in the app by hand.";
   const tailVi = "Live Desk đã ngừng gọi nền tảng. Bạn tiếp tục thao tác bằng tay trong ứng dụng.";
-  let m = new RegExp(`^Authorisation expired on SIMULATED Shopee: "(.*)"\\. ${tail.replace(/\./g, "\\.")}$`).exec(text);
-  if (m) return `Hết hạn quyền truy cập trên SIMULATED Shopee: "${m[1]}". ${tailVi}`;
-  m = new RegExp(`^SIMULATED Shopee is rate limiting: "(.*)"\\. ${tail.replace(/\./g, "\\.")}$`).exec(text);
-  if (m) return `SIMULATED Shopee đang giới hạn tần suất gọi: "${m[1]}". ${tailVi}`;
-  m = new RegExp(`^SIMULATED Shopee server error: "(.*)"\\. ${tail.replace(/\./g, "\\.")}$`).exec(text);
-  if (m) return `SIMULATED Shopee báo lỗi máy chủ: "${m[1]}". ${tailVi}`;
-  m = /^SIMULATED Shopee refused: "(.*)"\.$/.exec(text);
-  if (m) return `SIMULATED Shopee từ chối: "${m[1]}".`;
+  let m = new RegExp(`^Authorisation expired on SIMULATED Live: "(.*)"\\. ${tail.replace(/\./g, "\\.")}$`).exec(text);
+  if (m) return `Hết hạn quyền truy cập trên SIMULATED Live: "${m[1]}". ${tailVi}`;
+  m = new RegExp(`^SIMULATED Live is rate limiting: "(.*)"\\. ${tail.replace(/\./g, "\\.")}$`).exec(text);
+  if (m) return `SIMULATED Live đang giới hạn tần suất gọi: "${m[1]}". ${tailVi}`;
+  m = new RegExp(`^SIMULATED Live server error: "(.*)"\\. ${tail.replace(/\./g, "\\.")}$`).exec(text);
+  if (m) return `SIMULATED Live báo lỗi máy chủ: "${m[1]}". ${tailVi}`;
+  m = /^SIMULATED Live refused: "(.*)"\.$/.exec(text);
+  if (m) return `SIMULATED Live từ chối: "${m[1]}".`;
   return text;
 }
 
@@ -86,8 +86,8 @@ const ASSUMPTIONS_VI: Record<string, string> = {
     "SIMULATED: khoảng một phần ba lượt thêm giỏ thành lượt mua ngay. Lượt mua chỉ làm giảm tồn kho khi tồn kho đã được nhập.",
   "SIMULATED: a few comments carry obviously fake phone numbers and emails so the PII mask is visible.":
     "SIMULATED: một số bình luận chứa số điện thoại và email giả rõ ràng, để thấy được việc che thông tin cá nhân.",
-  "SIMULATED: these are assumptions written into the simulation, not findings about real viewers or about Shopee.":
-    "SIMULATED: đây là giả định viết vào bản mô phỏng, không phải phát hiện về người xem thật hay về Shopee.",
+  "SIMULATED: these are assumptions written into the simulation, not findings about real viewers or about any real platform.":
+    "SIMULATED: đây là giả định viết vào bản mô phỏng, không phải phát hiện về người xem thật hay về nền tảng thật nào.",
 };
 
 export const tAssumption = (text: string, lang: DeskLang): string => (lang === "en" ? text : ASSUMPTIONS_VI[text] ?? text);
@@ -155,8 +155,12 @@ export function readSignal(signal: { label: string; value: string }, lang: DeskL
  * The suggestion's headline. The rules' headline is a fixed sentence about the product, so it is written in the
  * viewer's language here; a model's headline is its own wording and is shown as given.
  */
-export function headline(s: Pick<CopilotSuggestion, "kind" | "source" | "headline">, productName: string, lang: DeskLang): string {
+export function headline(
+  s: Pick<CopilotSuggestion, "kind" | "source" | "headline"> & Partial<Pick<CopilotSuggestion, "confidence">>, productName: string, lang: DeskLang,
+): string {
   if (s.source === "ai") return s.headline;
+  // A thin sample is said as interest, not as an instruction; the pin stays the operator's call.
+  if (s.kind === "show_next" && s.confidence === "low") return lang === "vi" ? `Có tín hiệu quan tâm tới ${productName}` : `Early interest in ${productName}`;
   if (s.kind === "show_next") return lang === "vi" ? `Nên ghim tiếp: ${productName}` : `Pin next: ${productName}`;
   return lang === "vi" ? `Nên chạy flash sale cho ${productName} trong 1 phút` : `Run a flash sale on ${productName} in the next minute`;
 }

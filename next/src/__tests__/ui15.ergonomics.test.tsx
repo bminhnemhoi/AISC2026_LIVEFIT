@@ -84,6 +84,15 @@ describe("UI-15: desk sizes", () => {
     expect(primary.className).toContain("text-[18px]");
   });
 
+  it("Button eases its colours but never fades opacity, so a button that becomes enabled is at full contrast at once", () => {
+    render(<Button disabled>Pin</Button>);
+    const button = screen.getByRole("button", { name: "Pin" });
+    const transition = button.className.match(/transition-\[([^\]]*)\]/)?.[1] ?? "";
+    expect(transition).toContain("color");
+    expect(transition.split(",")).not.toContain("opacity");
+    expect(button.className).toContain("disabled:opacity-50");
+  });
+
   it("Button keeps its existing sizes for the other screens", () => {
     render(<Button size="sm">Compact</Button>);
     expect(screen.getByRole("button", { name: "Compact" }).className).toContain("text-[15px]");

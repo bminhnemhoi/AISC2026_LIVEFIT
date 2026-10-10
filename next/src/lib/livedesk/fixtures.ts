@@ -26,7 +26,7 @@ export function fixtureDeskView(): LiveDeskViewModel {
   return {
     mode: "live",
     title: "Fall collection rehearsal",
-    platformLabel: "SIMULATED Shopee Live",
+    platformLabel: "SIMULATED Live",
     clock: { running: false, speed: 15, speeds: [1, 5, 15, 60], elapsedLabel: "06:52", virtualNowLabel: "20:06:52" },
     products: PRODUCTS,
     showingProductId: "p2",
@@ -59,7 +59,7 @@ export function fixtureDeskView(): LiveDeskViewModel {
 }
 
 export function fixtureStartView(): StartViewModel {
-  return { platformLabel: "SIMULATED Shopee Live", connected: true, products: PRODUCTS, startBlockedReason: null, importNote: "3 imported, 0 rows skipped" };
+  return { platformLabel: "SIMULATED Live", connected: true, products: PRODUCTS, startBlockedReason: null, importNote: "3 imported, 0 rows skipped" };
 }
 
 const noop = (): void => undefined;

@@ -1,5 +1,5 @@
 /**
- * The Platform Lab's run: a copy of a SIMULATED show as planned, plus a fresh SIMULATED Shopee, held in memory.
+ * The Platform Lab's run: a copy of a SIMULATED show as planned, plus a fresh SIMULATED Live, held in memory.
  *
  * Everything the Lab does is a `LabCommand` applied by `applyLabCommand`: the desk, the host's phone, the clock and the
  * Demo Director all go through it, and every platform read is an explicit `sync`. Same commands, same call log.
@@ -94,7 +94,7 @@ export function pinAndRecord(sim: ShopeeLiveSim, sync: SyncState, session: Sessi
     return {
       ...base,
       command: reportCommand(session, "pin_product", productId, "attempted", refusedReason(r.outcome.message, r.outcome.requestId)),
-      notice: { code: "pin_refused", summary: `Shopee refused the pin: ${r.outcome.message}`, data: { message: r.outcome.message } },
+      notice: { code: "pin_refused", summary: `The platform refused the pin: ${r.outcome.message}`, data: { message: r.outcome.message } },
       requestId: r.outcome.requestId ?? null,
     };
   }

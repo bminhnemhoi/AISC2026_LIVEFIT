@@ -124,7 +124,7 @@ export function NowPanel({
         </Signal>
       </div>
 
-      <div className="mt-3 [@media(max-height:800px)]:mt-2 flex items-center gap-4 min-w-0">
+      <div key={segment.id} className="mt-3 [@media(max-height:800px)]:mt-2 flex items-center gap-4 min-w-0 motion-safe:animate-content-in">
         <SegmentTile segment={segment} product={product} size={64} active />
         <div className="min-w-0">
           <h2 className="text-[24px] leading-tight font-medium tracking-tight text-[#F5F7FC] truncate" data-testid="now-title">

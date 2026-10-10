@@ -5,7 +5,7 @@ import type { Session } from "@/contracts";
 import type { AiFact, ReviewAvailable } from "@/contracts/ai";
 import { formatClock } from "@/lib/domain";
 import { Button } from "@/components/ui";
-import { Basis, DISCLOSURE, FactList, LayerLabel, PHASE_LABEL, StateChip, isProviderFact, phaseMessage } from "./CopilotParts";
+import { Basis, DISCLOSURE, FactList, LayerLabel, PHASE_LABEL, StateChip, isProviderFact, phaseMessage, useArrivalMotion } from "./CopilotParts";
 import type { AiCopilot } from "./useAiCopilot";
 
 /**
@@ -47,6 +47,7 @@ export function ReviewCopilot({
 }): React.ReactElement {
   const tz = session.timezone;
   const result = copilot.result;
+  const arrival = useArrivalMotion(result);
   const stale = result !== null && result.basis.revision !== session.revision;
   const asking = copilot.phase === "generating";
   const unopened = !archive && !opened;
@@ -137,7 +138,7 @@ export function ReviewCopilot({
 
       <div className={`grid grid-cols-1 gap-4 ${result ? "xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]" : ""}`}>
         {result && (
-          <div className={`space-y-4 min-w-0 ${stale ? "opacity-60" : ""}`} data-testid="copilot-result" data-stale={stale}>
+          <div className={`space-y-4 min-w-0 transition-opacity duration-200 ${arrival} ${stale ? "opacity-60" : ""}`} data-testid="copilot-result" data-stale={stale}>
             <div className="rounded-[8px] bg-[#14171E] border border-dashed border-[#25505F] px-3 py-2 space-y-1">
               <LayerLabel kind="interpretation" extra="summary · can be wrong" />
               {known && restsOnLater(result.output.summary.cites) ? (

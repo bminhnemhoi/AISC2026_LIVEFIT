@@ -218,7 +218,7 @@ export function reconcileOutbound(sim: ShopeeLiveSim, session: Session, syncIn: 
     if (!canCallApi("shopee_live", "start_live")) return { sim: cur, sync, calls, blocked, reads: [] };
     let createdNow = false;
     if (sync.providerSessionId === null) {
-      const created = step("create_session", { title: session.title }, "The show started: open a live on Shopee");
+      const created = step("create_session", { title: session.title }, "The show started: open a live on the platform");
       if (created && typeof created.session_id === "number") {
         sync = { ...sync, providerSessionId: created.session_id, openedByLiveLift: true };
         createdNow = true;
@@ -235,7 +235,7 @@ export function reconcileOutbound(sim: ShopeeLiveSim, session: Session, syncIn: 
       if (createdNow || resume) step("start_session", { session_id: sid }, createdNow ? "Go live" : "Products loaded: go live");
     }
   } else if (session.lifecycle === "ended" && sync.providerSessionId !== null && sync.last?.status === "ongoing") {
-    step("end_session", { session_id: sync.providerSessionId }, "The show ended: end the live on Shopee");
+    step("end_session", { session_id: sync.providerSessionId }, "The show ended: end the live on the platform");
   }
 
   // Nothing was changed, so there is nothing to re-read: the baseline stays as the last poll left it.
@@ -346,8 +346,11 @@ export function reportCommand(
   return { type: "report_manual_action", action, productId, report, reason };
 }
 
-const ACCEPTED_PREFIX = "Shopee (SIMULATED) accepted the request";
-const REFUSED_PREFIX = "Shopee (SIMULATED) refused";
+const ACCEPTED_PREFIX = "SIMULATED Live accepted the request";
+const REFUSED_PREFIX = "SIMULATED Live refused";
+// Rehearsals saved before the platform was renamed still carry these; they keep their source when read back.
+const LEGACY_ACCEPTED_PREFIX = "Shopee (SIMULATED) accepted the request";
+const LEGACY_REFUSED_PREFIX = "Shopee (SIMULATED) refused";
 /** How a record of something the host did in the app begins. */
 export const OBSERVED_PREFIX = "Provider observed (SIMULATED)";
 
@@ -358,8 +361,8 @@ export const refusedReason = (message: string, requestId?: string): string => `$
 export type RecordSource = "request_accepted" | "request_refused" | "provider_observed" | "operator_reported";
 
 export function recordSource(reason: string | null): RecordSource {
-  if (reason?.startsWith(ACCEPTED_PREFIX)) return "request_accepted";
-  if (reason?.startsWith(REFUSED_PREFIX)) return "request_refused";
+  if (reason?.startsWith(ACCEPTED_PREFIX) || reason?.startsWith(LEGACY_ACCEPTED_PREFIX)) return "request_accepted";
+  if (reason?.startsWith(REFUSED_PREFIX) || reason?.startsWith(LEGACY_REFUSED_PREFIX)) return "request_refused";
   if (reason?.startsWith(OBSERVED_PREFIX)) return "provider_observed";
   return "operator_reported";
 }
@@ -460,7 +463,7 @@ export const promotionWords = (sim: ShopeeLiveSim, nowMs: number): Array<{ id: n
 
 /** Said once when the show ends and the live LiveLift opened never started. */
 export const NEVER_ON_AIR =
-  "The live LiveLift opened never went on air on SIMULATED Shopee, so LiveLift has nothing to end. If a live is still running in the Shopee app, end it there.";
+  "The live LiveLift opened never went on air on SIMULATED Live, so LiveLift has nothing to end. If a live is still running in the live app, end it there.";
 
 export interface CycleResult {
   sim: ShopeeLiveSim;
@@ -512,7 +515,7 @@ export function syncCycle(session: Session, simIn: ShopeeLiveSim, syncIn: SyncSt
     sync = out.sync;
     calls.push(...out.calls);
     reads.push(...out.reads);
-    if (out.blocked) problem = `Shopee refused ${out.blocked.endpoint}: ${out.blocked.message}`;
+    if (out.blocked) problem = `The platform refused ${out.blocked.endpoint}: ${out.blocked.message}`;
   }
   if (session.lifecycle === "active") {
     const out = schedulePromotions(sim, session, sync, nowMs);
@@ -520,7 +523,7 @@ export function syncCycle(session: Session, simIn: ShopeeLiveSim, syncIn: SyncSt
     sync = out.sync;
     calls.push(...out.calls);
     reads.push(...out.reads);
-    if (out.blocked) notices.push({ code: "promotion_refused", summary: `Shopee refused the promotion: ${out.blocked.message}. It will not be retried until you ask.`, data: { message: out.blocked.message } });
+    if (out.blocked) notices.push({ code: "promotion_refused", summary: `The platform refused the promotion: ${out.blocked.message}. It will not be retried until you ask.`, data: { message: out.blocked.message } });
   }
 
   // The live LiveLift opened never went on air (another live held the account, most likely). LiveLift cannot find or end

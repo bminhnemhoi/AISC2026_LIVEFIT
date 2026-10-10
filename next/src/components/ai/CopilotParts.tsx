@@ -6,6 +6,15 @@ import { Signal, type Tone } from "@/components/ops/StatusChips";
 import type { CopilotPhase } from "./useAiCopilot";
 
 /**
+ * Entrance motion for an AI result: only a result that arrives while this view is on screen eases in. Re-showing one
+ * that was already there (a tab or perspective switch remounts the view) appears at once, at full contrast.
+ */
+export function useArrivalMotion(result: unknown): string {
+  const [shownAtMount] = React.useState(result);
+  return result !== null && result !== shownAtMount ? "motion-safe:animate-content-in" : "";
+}
+
+/**
  * Shared pieces of the AI Copilot surfaces. The product's three-way distinction lives here so it looks the same
  * everywhere:
  *

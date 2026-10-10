@@ -2,7 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { randomBytes, randomUUID } from "node:crypto";
 export function proxy(request: NextRequest): NextResponse {
   const nonce = randomBytes(16).toString("base64");
-  const policy = ["default-src 'self'", `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`, `style-src 'self' 'nonce-${nonce}'`, "style-src-attr 'unsafe-inline'", "img-src 'self' data:", "font-src 'self'", "connect-src 'self'", "object-src 'none'", "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'"].join("; ");
+  // React needs eval only in development (debug callstacks); the production policy never allows it.
+  const devEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
+  const policy = ["default-src 'self'", `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${devEval}`, `style-src 'self' 'nonce-${nonce}'`, "style-src-attr 'unsafe-inline'", "img-src 'self' data:", "font-src 'self'", "connect-src 'self'", "object-src 'none'", "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'"].join("; ");
   const headers = new Headers(request.headers);
   headers.set("x-nonce", nonce);
   headers.set("content-security-policy", policy);
