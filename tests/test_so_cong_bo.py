@@ -15,9 +15,13 @@ hồ sơ tuyên bố là nguồn sự thật duy nhất) ở ba chỗ:
 Ba con số ấy sửa tay được trong hai phút; cái không sửa được bằng tay là việc
 chúng sẽ lệch lại sau lô đo tới. Nên: gate.
 
+Từ bản showcase: README trong các gate này là ``docs/legacy/ORIGIN-README.vi.md``.
+FACT-SHEET vẫn là nguồn công bố nghiên cứu; README gốc là bản lưu trữ, không đồng bộ
+số test hiện tại vào đó hay vào README sản phẩm.
+
 Nguyên tắc của tệp: **không hằng số chép tay**. Mỗi kiểm tra so README với
-NGUỒN của con số (đếm hàng sổ sự cố, đọc tiêu đề báo cáo live-fire), để khi lô
-đo mới về, sửa nguồn là gate tự đòi sửa README.
+NGUỒN nghiên cứu gốc (đếm hàng sổ sự cố, đọc tiêu đề báo cáo live-fire).
+FACT-SHEET cũng phải khớp nguồn; bằng chứng mới của next/ không thuộc các số này.
 
 Kiểm tra thứ tư canh một lớp lỗi khác cùng gốc: sự cố 27/08 (console Windows
 cp1252 làm mọi CLI in tiếng Việt chết bằng ``UnicodeEncodeError``). Kho mã đã có
@@ -36,7 +40,9 @@ from pathlib import Path
 import pytest
 
 GOC = Path(__file__).resolve().parents[1]
-README = GOC / "README.md"
+# README hiện tại mô tả next/; các công bố nghiên cứu thuộc bản gốc lưu trữ.
+README = GOC / "docs" / "legacy" / "ORIGIN-README.vi.md"
+FACT_SHEET = GOC / "docs" / "competition" / "FACT-SHEET.md"
 SO_SU_CO = GOC / "docs" / "incident-log.md"
 LIVE_FIRE = GOC / "docs" / "benchmarks" / "live-fire-da-nguon.md"
 
@@ -50,8 +56,10 @@ def readme() -> str:
     return README.read_text(encoding="utf-8")
 
 
-def test_so_su_co_trong_readme_khop_so_hang_cua_so_su_co(readme: str) -> None:
-    """README trích số sự cố; nguồn là số hàng bảng trong sổ sự cố."""
+@pytest.mark.parametrize("document", [README, FACT_SHEET], ids=lambda p: p.name)
+def test_so_su_co_trong_readme_khop_so_hang_cua_so_su_co(document: Path) -> None:
+    """Các công bố nghiên cứu trích số sự cố từ số hàng bảng trong sổ gốc."""
+    readme = document.read_text(encoding="utf-8")
     that = len(HANG_SU_CO_RE.findall(SO_SU_CO.read_text(encoding="utf-8")))
     assert that > 0, "không đọc được hàng nào từ docs/incident-log.md"
 
@@ -63,8 +71,10 @@ def test_so_su_co_trong_readme_khop_so_hang_cua_so_su_co(readme: str) -> None:
     )
 
 
-def test_so_binh_luan_live_fire_trong_readme_khop_bao_cao_lo_do(readme: str) -> None:
+@pytest.mark.parametrize("document", [README, FACT_SHEET], ids=lambda p: p.name)
+def test_so_binh_luan_live_fire_trong_readme_khop_bao_cao_lo_do(document: Path) -> None:
     """Số bình luận live-fire phải là lô ĐANG hiệu lực, không phải lô cũ."""
+    readme = document.read_text(encoding="utf-8")
     tieu_de = LIVE_FIRE.read_text(encoding="utf-8")[:600]
     m = re.search(r"\*\*([\d.]+) bình luận thật\*\*", tieu_de)
     assert m, "không đọc được số bình luận ở đầu docs/benchmarks/live-fire-da-nguon.md"
@@ -79,8 +89,9 @@ def test_so_binh_luan_live_fire_trong_readme_khop_bao_cao_lo_do(readme: str) -> 
         for i, d in enumerate(readme.splitlines(), 1)
         if (so := set(re.findall(r"(\d{1,3}\.\d{3}) bình luận", d)))
         and so - {hien_hanh}
-        and "cũ" not in d
+        and "cũ" not in d.lower()
     ]
+    assert any(hien_hanh in d for d in dong_co_so), f"{document.name} phải trích lô đang hiệu lực"
     assert not vi_pham, (
         f"README trích số bình luận không phải lô đang hiệu lực ({hien_hanh}) "
         f"và không nói rõ đó là lô cũ: " + " | ".join(vi_pham)
@@ -227,7 +238,7 @@ def test_readme_khong_con_bo_so_hieu_chuan_cu_khong_tai_lap_duoc(readme: str) ->
     # README, FACT-SHEET, TONG-KET vẫn trình bày 96,50% như bằng chứng thứ hai. Dòng nào nêu
     # 96,50% phải nói nó không độc lập.
     for ten, van_ban in (
-        ("README.md", readme),
+        ("ORIGIN-README.vi.md", readme),
         ("FACT-SHEET.md", FACT_SHEET.read_text(encoding="utf-8")),
         ("TONG-KET-DU-AN.md", (GOC / "docs" / "TONG-KET-DU-AN.md").read_text(encoding="utf-8")),
     ):
@@ -242,7 +253,6 @@ def test_readme_khong_con_bo_so_hieu_chuan_cu_khong_tai_lap_duoc(readme: str) ->
 # ---------------------------------------------------------------------------
 # Tích hợp 25/09/2026 tối: tài liệu nộp phải khớp NGUỒN, không chỉ README
 # ---------------------------------------------------------------------------
-FACT_SHEET = GOC / "docs" / "competition" / "FACT-SHEET.md"
 HO_SO = GOC / "docs" / "competition" / "sang-tao-tre-2026" / "noi-dung.md"
 KE_KHAI = GOC / "docs" / "competition" / "sang-tao-tre-2026" / "05-BAN-KE-KHAI.md"
 KICH_BAN = GOC / "docs" / "competition" / "sang-tao-tre-2026" / "07-KICH-BAN-2-VIDEO.md"

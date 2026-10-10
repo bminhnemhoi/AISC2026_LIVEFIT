@@ -1,0 +1,24 @@
+{
+  "name": "livelift-mockup-v2",
+  "private": true,
+  "version": "2.0.0",
+  "description": "LiveLift clickable mockup for AISC'26 round 2. Static, offline, scripted sample data.",
+  "type": "module",
+  "scripts": {
+    "build": "node app/build.mjs",
+    "typecheck": "tsc -p app/tsconfig.json --noEmit",
+    "check:story": "node app/scripts/check-story.mjs",
+    "shots": "node app/scripts/shoot.mjs",
+    "shots:presenter": "node app/scripts/shoot.mjs --presenter",
+    "verify": "node app/scripts/verify.mjs",
+    "serve": "npx serve dist"
+  },
+  "devDependencies": {
+    "@fontsource/be-vietnam-pro": "5.2.8",
+    "axe-core": "4.11.0",
+    "esbuild": "0.25.10",
+    "playwright-core": "1.56.1",
+    "preact": "10.27.2",
+    "typescript": "5.9.3"
+  }
+}

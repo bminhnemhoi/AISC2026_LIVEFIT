@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiveLift style tiles</title>
+<style>
+/*FONTS*/
+*{box-sizing:border-box;margin:0}
+body{font-family:'Be Vietnam Pro',system-ui,sans-serif;background:#E9EBEF;color:#171A21;font-feature-settings:"tnum";-webkit-font-smoothing:antialiased;padding:48px}
+h1{font-size:28px;font-weight:600;letter-spacing:-.01em}
+.lede{font-size:16px;line-height:1.5;color:#4A5060;margin-top:8px;max-width:76ch}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:32px}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.tile{border-radius:20px;padding:32px;display:flex;flex-direction:column;gap:24px;border:1px solid rgba(0,0,0,.06)}
+.tile header{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.tile h2{font-size:20px;font-weight:600}
+.verdict{font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px}
+.sw{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.sw div{height:56px;border-radius:10px;display:flex;align-items:flex-end;padding:6px;font-size:12px}
+.spec .big{font-size:56px;line-height:1;letter-spacing:-.03em}
+.spec .h{font-size:28px;line-height:1.2;margin-top:12px}
+.spec p{font-size:14px;line-height:1.55;margin-top:8px;max-width:46ch}
+.card{padding:24px;display:flex;flex-direction:column;gap:16px}
+.card .k{font-size:13px}
+.card .t{font-size:28px;line-height:1.15;letter-spacing:-.01em}
+.nums{display:flex;gap:24px}
+.nums b{display:block;font-size:28px;letter-spacing:-.02em}
+.nums span{font-size:13px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.btn{font:inherit;font-size:14px;font-weight:600;padding:12px 18px;border-radius:10px;border:0}
+.chip{font-size:13px;padding:4px 10px;border-radius:999px}
+.why{font-size:13px;line-height:1.5}
+.meter{display:flex;gap:4px}.meter i{width:24px;height:6px;border-radius:3px;background:currentColor;opacity:.25}.meter i.on{opacity:1}
+.note{font-size:13px;line-height:1.55;margin-top:auto}
+/* A: Calm Studio */
+.a{background:#F6F3EE;color:#2A2522;box-shadow:0 0 0 2px #9E3B2B}
+.a h2,.a .t,.a .h,.a .big{font-weight:400}
+.a .card{border-top:1px solid #2A2522;border-bottom:1px solid #D8D0C4;padding:24px 0}
+.a .btn{background:#9E3B2B;color:#FFF9F2;border-radius:0}
+.a .ghost{background:transparent;color:#2A2522;text-decoration:underline}
+.a .chip{background:#EAE3D8;color:#5A5047;border-radius:0}
+.a .sim{background:#E7E0F2;color:#4F3D86}
+.a .verdict{background:#9E3B2B;color:#FFF9F2}
+.a .meter{color:#8A5A00}
+/* B: Control Room */
+.b{background:#16191F;color:#E8EBF0;border-color:#2B303A}
+.b h2,.b .t,.b .h,.b .big{font-weight:600}
+.b .card{background:#1F232B;border:1px solid #2B303A;border-radius:10px}
+.b .btn{background:#FF4D5E;color:#16191F;border-radius:6px}
+.b .ghost{background:#2B303A;color:#E8EBF0}
+.b .chip{background:#2B303A;color:#B7BECA;border-radius:6px}
+.b .sim{background:#2E2650;color:#C3B5FF}
+.b .why,.b .nums span,.b .k,.b p{color:#A3ABB9}
+.b .verdict{background:#2B303A;color:#D9DDE4}
+.b .meter{color:#F0B44C}
+/* C: Soft Commerce (chosen) */
+.c{background:#F3F4F7;color:#171A21}
+.c h2,.c .t,.c .h,.c .big{font-weight:600}
+.c .card{background:#FCFCFD;border:1px solid #E1E4EA;border-radius:20px;box-shadow:0 1px 2px rgba(23,26,33,.04),0 12px 32px rgba(23,26,33,.07)}
+.c .btn{background:#D61F45;color:#fff;border-radius:14px}
+.c .ghost{background:#EEF0F4;color:#171A21}
+.c .chip{background:#EEF0F4;color:#4A5060}
+.c .sim{background:#EEEAFD;color:#5A3FC4}
+.c .why,.c .nums span,.c .k,.c p{color:#4A5060}
+.c .verdict{background:#EEF0F4;color:#4A5060}
+.c .meter{color:#A15C00}
+</style>
+</head>
+<body>
+<h1>LiveLift: ba hướng thẩm mỹ</h1>
+<p class="lede">Cùng một nội dung (gợi ý ghim, lý do, độ tin cậy, nhãn SIMULATED) đặt vào ba hướng. Vòng 3 (09/10): nhóm chọn Calm Studio, thêm thẻ sản phẩm đang ghim nghiêng có băng dính kraft và con dấu SIMULATED; giao diện tối là nâu mực ấm. Mọi con số ở đây là dữ liệu mẫu.</p>
+<div class="grid">
+
+<section class="tile a">
+  <header><h2>Calm Studio</h2><span class="verdict">Nhóm chọn (vòng 3), thêm thẻ ghim băng dính</span></header>
+  <div class="sw">
+    <div style="background:#F6F3EE;border:1px solid #D8D0C4">nền</div>
+    <div style="background:#EAE3D8">bề mặt</div>
+    <div style="background:#2A2522;color:#F6F3EE">chữ</div>
+    <div style="background:#9E3B2B;color:#fff">tín hiệu</div>
+    <div style="background:#4F3D86;color:#fff">SIM</div>
+    <div style="background:#3D6B4F;color:#fff">ổn</div>
+  </div>
+  <div class="spec"><div class="big">438</div><div class="h">Nên ghim tiếp: Áo hoodie zip</div><p>Kiểu trang báo: chữ nét mảnh, đường kẻ, nền giấy ấm. Đọc trên màn hình riêng thì dễ chịu, nhưng chữ 400 bị nhạt khi chiếu lên màn hội trường, và nhãn LIVE khó nổi bật trên nền giấy.</p></div>
+  <div class="card">
+    <div class="k">Gợi ý trong 2 phút qua</div>
+    <div class="t">Nên ghim tiếp: Áo hoodie zip</div>
+    <div class="nums"><div><b>7</b><span>hỏi giá</span></div><div><b>8</b><span>thêm giỏ, trước 3</span></div><div><b>24</b><span>còn hàng</span></div></div>
+    <div class="row"><span class="meter"><i class="on"></i><i class="on"></i><i></i></span><span class="why">Độ tin cậy trung bình, dựa trên 12 bình luận</span></div>
+    <div class="row"><button class="btn">Ghim Áo hoodie zip</button><button class="btn ghost">Bỏ qua</button></div>
+    <div class="row"><span class="chip">hỏi giá</span><span class="chip">chốt đơn</span><span class="chip sim">SIMULATED Shopee Live</span></div>
+  </div>
+  <p class="note">Vì sao nhóm chọn: ấm, bình tĩnh, ít rối mắt; số lớn nét mảnh đọc rõ. Đi kèm điểm nhận diện riêng: thẻ đang ghim nghiêng có băng dính kraft và con dấu SIMULATED. Lo ngại cũ (chữ mảnh trên máy chiếu) được xử lý bằng chế độ trình chiếu chữ to.</p>
+</section>
+
+<section class="tile b">
+  <header><h2>Control Room</h2><span class="verdict">Dùng cho giao diện tối</span></header>
+  <div class="sw">
+    <div style="background:#16191F;border:1px solid #2B303A">nền</div>
+    <div style="background:#1F232B">bề mặt</div>
+    <div style="background:#E8EBF0;color:#16191F">chữ</div>
+    <div style="background:#FF4D5E;color:#16191F">tín hiệu</div>
+    <div style="background:#C3B5FF;color:#16191F">SIM</div>
+    <div style="background:#4CC38A;color:#16191F">ổn</div>
+  </div>
+  <div class="spec"><div class="big">438</div><div class="h">Nên ghim tiếp: Áo hoodie zip</div><p>Giống phần mềm phát sóng chuyên nghiệp: tối, gọn, một màu nhấn. Hợp người vận hành ngồi cả buổi tối, nhưng tối trên máy chiếu hội trường và ngốn mực khi in vào slide hay poster.</p></div>
+  <div class="card">
+    <div class="k">Gợi ý trong 2 phút qua</div>
+    <div class="t">Nên ghim tiếp: Áo hoodie zip</div>
+    <div class="nums"><div><b>7</b><span>hỏi giá</span></div><div><b>8</b><span>thêm giỏ, trước 3</span></div><div><b>24</b><span>còn hàng</span></div></div>
+    <div class="row"><span class="meter"><i class="on"></i><i class="on"></i><i></i></span><span class="why">Độ tin cậy trung bình, dựa trên 12 bình luận</span></div>
+    <div class="row"><button class="btn">Ghim Áo hoodie zip</button><button class="btn ghost">Bỏ qua</button></div>
+    <div class="row"><span class="chip">hỏi giá</span><span class="chip">chốt đơn</span><span class="chip sim">SIMULATED Shopee Live</span></div>
+  </div>
+  <p class="note">Vì sao không làm mặc định: người chấm muốn “thân thiện, sạch”, còn phòng điều khiển tối đọc là “dành cho chuyên gia”. Giữ lại làm giao diện tối cho người ngồi live buổi đêm.</p>
+</section>
+
+<section class="tile c">
+  <header><h2>Soft Commerce</h2><span class="verdict">Bản vòng 1–2, nhóm không chọn</span></header>
+  <div class="sw">
+    <div style="background:#F3F4F7;border:1px solid #E1E4EA">nền</div>
+    <div style="background:#FCFCFD;border:1px solid #E1E4EA">bề mặt</div>
+    <div style="background:#171A21;color:#fff">chữ</div>
+    <div style="background:#D61F45;color:#fff">tín hiệu</div>
+    <div style="background:#5A3FC4;color:#fff">SIM</div>
+    <div style="background:#17804A;color:#fff">ổn</div>
+  </div>
+  <div class="spec"><div class="big">438</div><div class="h">Nên ghim tiếp: Áo hoodie zip</div><p>Sáng, bo tròn, chữ đậm vừa, và một màu đỏ “đang phát” dành riêng cho LIVE và nút chính. Đọc rõ từ cuối phòng; in lên slide và poster vẫn giữ màu.</p></div>
+  <div class="card">
+    <div class="k">Gợi ý trong 2 phút qua</div>
+    <div class="t">Nên ghim tiếp: Áo hoodie zip</div>
+    <div class="nums"><div><b>7</b><span>hỏi giá</span></div><div><b>8</b><span>thêm giỏ, trước 3</span></div><div><b>24</b><span>còn hàng</span></div></div>
+    <div class="row"><span class="meter"><i class="on"></i><i class="on"></i><i></i></span><span class="why">Độ tin cậy trung bình, dựa trên 12 bình luận</span></div>
+    <div class="row"><button class="btn">Ghim Áo hoodie zip</button><button class="btn ghost">Bỏ qua</button></div>
+    <div class="row"><span class="chip">hỏi giá</span><span class="chip">chốt đơn</span><span class="chip sim">SIMULATED Shopee Live</span></div>
+  </div>
+  <p class="note">Dùng ở vòng 1–2. Nhóm không chọn: xám lạnh, giống một bảng điều khiển phổ thông, thiếu nét riêng.</p>
+</section>
+</div>
+</body>
+</html>

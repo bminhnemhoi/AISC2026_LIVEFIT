@@ -1,0 +1,115 @@
+
+ RUN  v4.1.11 /home/towfienes/Projects/livelift-wp3/next
+
+ ↓ src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > 2,048 seeded presentation schedules produce the same full Director state and ledger
+ ↓ src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > duplicate due ticks and reset do not duplicate evidence, and replay matches byte for byte
+ ↓ src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > accepted and provider-observed records from the real bridge stay distinct through JSON round trips
+ × src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L01: operator reason can spoof 'provider-observed' provenance (known reason-marker limitation) 25ms
+   → expected 'provider_observed' to be 'operator_reported' // Object.is equality
+ × src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L01: operator reason can spoof 'accepted request' provenance (known reason-marker limitation) 1ms
+   → expected 'request_accepted' to be 'operator_reported' // Object.is equality
+ × src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L02: director has no SIMULATED label of its own before playback 44ms
+   → expected 'PlayStepReset0.5×1×2×Step 0 of 12Pres…' to match /\bSIMULATED\b/
+ × src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L02: assumptions has no SIMULATED label of its own before playback 14ms
+   → expected 'Assumptions· Not verified on real Sho…' to match /\bSIMULATED\b/
+ × src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L06: Vietnamese mode leaves LiveLift's generated host-pin notice in English 63ms
+   → expected '20:05:10Host vừa thao tác trên ứng dụ…' not to contain 'Host pinned Cargo Pants on the platfo…'
+ ↓ src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > restores valid preferences and ignores damaged values
+ ↓ src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > storage refusal keeps language and Presenter usable in memory
+ ↓ src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > P ignores input/select/textarea, modifiers and repeated keys; the listener is removed on unmount
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 skipped (11)
+   Start at  20:10:08
+   Duration  811ms (transform 186ms, setup 44ms, import 271ms, tests 148ms, environment 241ms)
+
+npm notice run livelift-next@0.1.0 npx
+npm notice run 'vitest' run src/__tests__/platform/property/lab.property.test.tsx -t L0[126]: --reporter=verbose
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L01: operator reason can spoof 'provider-observed' provenance (known reason-marker limitation)
+AssertionError: expected 'provider_observed' to be 'operator_reported' // Object.is equality
+
+Expected: "operator_reported"
+Received: "provider_observed"
+
+ ❯ src/__tests__/platform/property/lab.property.test.tsx:71:52
+     69|     expect(reported.world.sim.ledger).toEqual([]);
+     70|     expect(reported.trace).toEqual([]);
+     71|     expect(labRecords(reported.session)[0].source).toBe("operator_repo…
+       |                                                    ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L01: operator reason can spoof 'accepted request' provenance (known reason-marker limitation)
+AssertionError: expected 'request_accepted' to be 'operator_reported' // Object.is equality
+
+Expected: "operator_reported"
+Received: "request_accepted"
+
+ ❯ src/__tests__/platform/property/lab.property.test.tsx:71:52
+     69|     expect(reported.world.sim.ledger).toEqual([]);
+     70|     expect(reported.trace).toEqual([]);
+     71|     expect(labRecords(reported.session)[0].source).toBe("operator_repo…
+       |                                                    ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L02: director has no SIMULATED label of its own before playback
+AssertionError: expected 'PlayStepReset0.5×1×2×Step 0 of 12Pres…' to match /\bSIMULATED\b/
+
+- Expected:
+/\bSIMULATED\b/
+
++ Received:
+"PlayStepReset0.5×1×2×Step 0 of 12Press Play for the 90 second story, or Step through it."
+
+ ❯ src/__tests__/platform/property/lab.property.test.tsx:76:53
+     74|   it.each(["director", "assumptions"])("L02: %s has no SIMULATED label…
+     75|     render(<PlatformLab show={createScenarioSession("buffered")} />);
+     76|     expect(screen.getByTestId(surface).textContent).toMatch(/\bSIMULAT…
+       |                                                     ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L02: assumptions has no SIMULATED label of its own before playback
+AssertionError: expected 'Assumptions· Not verified on real Sho…' to match /\bSIMULATED\b/
+
+- Expected:
+/\bSIMULATED\b/
+
++ Received:
+"Assumptions· Not verified on real ShopeeA1 · The API can control a live the host started in the appA2 · Reading the live shows which product is pinned"
+
+ ❯ src/__tests__/platform/property/lab.property.test.tsx:76:53
+     74|   it.each(["director", "assumptions"])("L02: %s has no SIMULATED label…
+     75|     render(<PlatformLab show={createScenarioSession("buffered")} />);
+     76|     expect(screen.getByTestId(surface).textContent).toMatch(/\bSIMULAT…
+       |                                                     ^
+     77|   });
+     78|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/__tests__/platform/property/lab.property.test.tsx > Lab reducer and preference properties > L06: Vietnamese mode leaves LiveLift's generated host-pin notice in English
+AssertionError: expected '20:05:10Host vừa thao tác trên ứng dụ…' not to contain 'Host pinned Cargo Pants on the platfo…'
+
+Expected: "Host pinned Cargo Pants on the platform"
+Received: "20:05:10Host vừa thao tác trên ứng dụngHost pinned Cargo Pants on the platform"
+
+ ❯ src/__tests__/platform/property/lab.property.test.tsx:84:63
+     82|     expect(screen.getByTestId("platform-lab").getAttribute("lang")).to…
+     83|     for (let step = 0; step < 6; step++) fireEvent.click(screen.getByT…
+     84|     expect(screen.getByTestId("lab-notices").textContent).not.toContai…
+       |                                                               ^
+     85|   });
+     86|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯

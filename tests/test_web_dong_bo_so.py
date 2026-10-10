@@ -18,7 +18,6 @@ trên TỆP THẬT của kho: mẫu nào không khớp tệp thật là đỏ ng
 from __future__ import annotations
 
 import importlib.util
-import re
 import sys
 from pathlib import Path
 
@@ -27,6 +26,7 @@ import pytest
 GOC = Path(__file__).resolve().parents[1]
 SCRIPT = GOC / "scripts" / "dong_bo_so_test.py"
 README = GOC / "README.md"
+ORIGIN_README = GOC / "docs" / "legacy" / "ORIGIN-README.vi.md"
 TRANG_CHU = GOC / "web" / "src" / "app" / "page.tsx"
 FACT_SHEET = GOC / "docs" / "competition" / "FACT-SHEET.md"
 HO_SO_DIR = GOC / "docs" / "competition" / "sang-tao-tre-2026"
@@ -41,7 +41,6 @@ HO_SO = (
 )
 #: Nhóm theo nguồn mà tệp chép số: ba tệp nộp đi cùng FACT-SHEET, tệp chúng trích.
 NHOM = {
-    "README.md": (README,),
     "page.tsx": (TRANG_CHU,),
     "FACT-SHEET+ho-so": (FACT_SHEET, *HO_SO),
 }
@@ -86,7 +85,7 @@ def test_khong_noi_dau_con_goi_17_cong_cham_la_monte_carlo(db):
     dong = db.mo_ta(so)
     assert "Monte-Carlo" not in dong.split("(")[0], dong
     assert "17 cổng chậm (13 mô phỏng/thống kê · 1 đánh giá NLP · 3 cổng build CSS)" in dong
-    for tep in (README, TRANG_CHU, FACT_SHEET):
+    for tep in (ORIGIN_README, TRANG_CHU, FACT_SHEET):
         noi_dung = _doc(tep)
         assert "cổng Monte-Carlo" not in noi_dung, (
             f"{tep.name} còn gọi nhóm chậm là cổng Monte-Carlo"
@@ -113,9 +112,8 @@ def test_doi_so_thi_tep_that_doi_theo(db, nhom):
         moi, _ = db.ap_dung(cu, luat, so, "01/01/2099")
         assert moi != cu, tep.name
         assert "4242" in moi or "4.242" in moi, tep.name
-        if tep in (README, FACT_SHEET):
-            assert "38 cổng chậm (31 mô phỏng/thống kê · 2 đánh giá NLP · 5 cổng build CSS)" in moi
         if tep is FACT_SHEET:
+            assert "38 cổng chậm (31 mô phỏng/thống kê · 2 đánh giá NLP · 5 cổng build CSS)" in moi
             assert "01/01/2099" in moi, "FACT-SHEET đổi số thì phải đổi luôn ngày đếm"
             assert "4.242 test nhanh" in moi, "FACT-SHEET dùng số vi-VN"
             assert "4.291" in moi, "FACT-SHEET dùng số vi-VN"
@@ -125,26 +123,56 @@ def test_doi_so_thi_tep_that_doi_theo(db, nhom):
             # cộng ra tổng: script không được tự sửa số đạt, phải báo để người chạy lại.
             assert db.lech_ket_qua_chay(moi, so), f"{tep.name}: kết quả chạy cũ không bị báo"
             assert not db.lech_ket_qua_chay("chạy: 4.289 đạt, 2 bỏ qua", so)
-        if tep is README:
-            # README viết lại 27/09/2026: bảng "Bộ số chuẩn" nêu tổng số test (được đồng bộ)
-            # và kết quả một lần chạy (không tự sửa được, nên phải bị báo khi tổng đổi).
-            assert "4.291 test thu thập được, gồm 4.242 nhanh, 38 chậm" in moi
-            assert "README.md" in db.TEP_KET_QUA_CHAY
-            assert db.lech_ket_qua_chay(moi, so), "README: kết quả chạy cũ không bị báo"
         # Áp lại cùng bộ số lần hai: không đổi gì nữa (idempotent).
         lai, _ = db.ap_dung(moi, luat, so, "02/02/2099")
         assert lai == moi, f"{tep.name}: ngày đếm chỉ đổi khi con số đổi"
 
 
-def test_badge_giu_mau_va_khong_bi_khoa_vao_brightgreen(db):
-    luat = db.LUAT["README.md"]
-    so = db.SoTest(nhanh=7, thong_ke=1, nlp=1, css=1, trinh_duyet=1)
-    for mau in ("brightgreen", "blue"):
-        t = f"[![Tests](https://img.shields.io/badge/tests-1%20nhanh-{mau})](tests/)"
-        moi, _ = db.ap_dung(t, luat, so, "01/01/2099")
-        assert re.search(
-            rf"badge/tests-7%20nhanh%20%2B%203%20c%E1%BB%95ng%20ch%E1%BA%ADm-{mau}\)", moi
-        ), moi
+def test_thieu_mau_bat_buoc_la_loi(db):
+    so = db.SoTest(nhanh=4242, thong_ke=31, nlp=2, css=5, trinh_duyet=11)
+    for luat in db.LUAT.values():
+        _, thieu = db.ap_dung("không có mẫu đồng bộ", luat, so, "01/01/2099")
+        assert thieu == [lu.ten for lu in luat if lu.bat_buoc]
+
+
+def test_dong_bo_khong_ghi_readme_san_pham_hay_ban_luu_tru(db, monkeypatch, tmp_path):
+    """Chạy đường --ghi thật: chỉ cập nhật nguồn nghiên cứu, không viết lại lịch sử."""
+    bao_ve = (README, ORIGIN_README)
+    for tep in (*bao_ve, *(GOC / rel for rel in db.LUAT)):
+        dich = tmp_path / tep.relative_to(GOC)
+        dich.parent.mkdir(parents=True, exist_ok=True)
+        dich.write_bytes(tep.read_bytes())
+    for tep in bao_ve:
+        rel = tep.relative_to(GOC).as_posix()
+        assert rel not in db.LUAT
+        assert rel not in db.TEP_KET_QUA_CHAY
+    monkeypatch.setattr(db, "GOC", tmp_path)
+    monkeypatch.setattr(
+        db,
+        "dem_theo_tep",
+        lambda marker: {
+            "not slow": {"tests/test_a.py": 4242},
+            "slow and not browser": {
+                "tests/test_sim_validation.py": 31,
+                db.TEP_NLP: 2,
+                db.TEP_CSS: 5,
+            },
+            "browser": {"tests/test_browser.py": 11},
+        }[marker],
+    )
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--ghi"])
+    # Không bịa số đạt: kết quả chạy cũ phải được báo lỗi khi tổng thu thập đổi.
+    assert db.main() == 1
+    for tep in bao_ve:
+        assert (tmp_path / tep.relative_to(GOC)).read_bytes() == tep.read_bytes()
+    for tep in (FACT_SHEET, *HO_SO):
+        moi = _doc(tmp_path / tep.relative_to(GOC))
+        assert "4.291" in moi
+        assert db.KET_QUA_CHAY_RE.findall(moi) == db.KET_QUA_CHAY_RE.findall(_doc(tep))
+    # Cùng số thu thập: lần ghi thứ hai không đổi ngày hay nội dung.
+    truoc = {rel: (tmp_path / rel).read_bytes() for rel in db.LUAT}
+    assert db.main() == 1
+    assert truoc == {rel: (tmp_path / rel).read_bytes() for rel in db.LUAT}
 
 
 def test_loi_thu_thap_la_loi_khong_dem_thieu(db, monkeypatch):

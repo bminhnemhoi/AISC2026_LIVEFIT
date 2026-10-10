@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>AISC26-0039 LiveLift Poster</title>
+<style>
+  :root {
+    --red: #B50100;
+    --ink: #14161C;
+    --grey: #4A4F5A;
+    --line: #D5D8DE;
+    --paper: #FFFFFF;
+    --tint: #F4F5F7;
+    --violet: #5B3FD1;
+    --violet-tint: #EEEAFD;
+    --amber: #8A5A00;
+    --amber-tint: #FFF4D6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1233px; height: 1275px; background: var(--paper); }
+  body { font-family: "Inter", "DejaVu Sans", sans-serif; color: var(--ink); font-size: 16px; line-height: 1.38; position: relative; overflow: hidden; }
+  .mono { font-family: "DejaVu Sans Mono", monospace; }
+
+  /* Frame: 48px side margins, rows placed by absolute top */
+  .row { position: absolute; left: 48px; right: 48px; }
+
+  /* 1. Title */
+  #title { top: 18px; height: 142px; display: grid; grid-template-columns: 430px 1fr; column-gap: 36px; align-items: end; }
+  .kicker { font-size: 15px; font-weight: 700; letter-spacing: .08em; color: var(--red); text-transform: uppercase; margin-bottom: 4px; }
+  h1 { font-size: 104px; line-height: .95; font-weight: 800; letter-spacing: -0.035em; }
+  h1 span { color: var(--red); }
+  .thesis { font-size: 24px; line-height: 1.3; font-weight: 600; padding-bottom: 8px; border-left: 5px solid var(--red); padding-left: 22px; }
+  .thesis em { font-style: normal; color: var(--red); }
+
+  /* section heads */
+  h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+  h2 small { font-size: 15px; font-weight: 600; color: var(--grey); letter-spacing: 0; margin-left: 8px; }
+  .num { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--red); color: #fff; font-size: 18px; font-weight: 800; margin-right: 10px; vertical-align: 2px; }
+  .pill { display: inline-block; font-size: 14px; font-weight: 800; letter-spacing: .06em; color: var(--violet); background: var(--violet-tint); border: 2px solid var(--violet); border-radius: 6px; padding: 1px 9px; vertical-align: 3px; margin-left: 10px; }
+
+  /* 2. Loop + evidence */
+  #top { top: 174px; height: 258px; display: grid; grid-template-columns: 470px 1fr; column-gap: 40px; }
+  .loop-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 14px; border: 2px solid var(--ink); }
+  .loop-steps div { padding: 10px 6px 11px; text-align: center; font-weight: 800; font-size: 16px; border-right: 2px solid var(--ink); background: var(--paper); }
+  .loop-steps div:last-child { border-right: 0; background: var(--ink); color: #fff; }
+  .loop-steps div small { display: block; font-size: 12px; font-weight: 600; color: var(--grey); margin-top: 2px; }
+  .loop-steps div:last-child small { color: #C9CCD4; }
+  .operate { margin-top: 10px; background: var(--tint); padding: 10px 14px; font-size: 16px; }
+  .operate b.mono { font-size: 15px; color: var(--red); letter-spacing: .02em; }
+  .loop p.note { margin-top: 10px; font-size: 16px; color: var(--grey); }
+
+  .ev-grid { display: grid; grid-template-columns: 1fr; margin-top: 8px; }
+  .ev { display: grid; grid-template-columns: 215px 40px 1fr; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 17px; line-height: 1.2; }
+  .ev .ne { text-align: center; font-weight: 800; color: var(--red); font-size: 24px; line-height: 1; }
+  .ev .l { text-align: right; font-weight: 700; }
+  .ev .r { font-weight: 700; }
+    .ev-caption { margin-top: 6px; font-size: 13.5px; color: var(--grey); }
+
+  /* 3. Hero */
+  #hero { top: 452px; height: 464px; }
+  #hero-head { height: 34px; display: flex; align-items: center; }
+  #hero-head h2 { flex: 1; }
+  #hero-body { display: grid; grid-template-columns: 760px 1fr; column-gap: 22px; height: 428px; }
+  .shot { position: relative; height: 428px; border: 3px solid var(--ink); background: #0b0d12; overflow: hidden; }
+  .shot img { display: block; width: 100%; }
+  .shot .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 7px 10px 8px; font-size: 13.5px; line-height: 1.25; color: #E6E8EE; background: #0b0d12; border-top: 1px solid #2A2E3A; }
+  .shot .cap b { color: #C9B8FF; }
+  .mk { position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--red); color: #fff; font-weight: 800; font-size: 20px; display: grid; place-items: center; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--red); }
+
+  /* 4. Legend under hero */
+  #legend { top: 922px; height: 56px; display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 28px; }
+  #legend div { font-size: 15.5px; line-height: 1.3; display: grid; grid-template-columns: 30px 1fr; column-gap: 9px; align-items: start; }
+  #legend .mk2 { width: 28px; height: 28px; border-radius: 50%; background: var(--red); color: #fff; font-weight: 800; font-size: 16px; display: grid; place-items: center; }
+  #legend b { font-weight: 800; }
+
+  /* 5. Three columns */
+  #cols { top: 992px; height: 200px; display: grid; grid-template-columns: 1.05fr 1fr 1fr; column-gap: 30px; }
+  .col { border-top: 5px solid var(--ink); padding-top: 8px; }
+  .col.unknown { border-top-color: var(--amber); }
+  .col.proof { border-top-color: var(--red); }
+  .col h3 { font-size: 21px; font-weight: 800; line-height: 1.15; margin-bottom: 6px; }
+  .col ul { list-style: none; }
+  .col li { font-size: 14.8px; line-height: 1.3; padding: 3px 0 3px 16px; position: relative; }
+  .col li::before { content: ""; position: absolute; left: 0; top: 11px; width: 7px; height: 7px; background: var(--ink); }
+  .col.unknown li::before { background: var(--amber); }
+  .col.proof li::before { background: var(--red); }
+
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin-top: 2px; }
+  .kpi b { display: block; font-size: 38px; line-height: 1; font-weight: 800; letter-spacing: -0.02em; color: var(--red); }
+  .kpi span { display: block; font-size: 13.5px; line-height: 1.2; color: var(--ink); margin-top: 2px; }
+
+  /* 6. Footer strip inside content area */
+  #foot { top: 1204px; height: 62px; border-top: 2px solid var(--line); padding-top: 8px; display: grid; grid-template-columns: 1fr 190px; column-gap: 24px; font-size: 13.6px; line-height: 1.3; }
+  #foot b { font-weight: 800; }
+  #foot .team { text-align: right; }
+</style>
+</head>
+<body>
+
+<section class="row" id="title">
+  <div>
+    <div class="kicker">AISC'26 · Mã hồ sơ AISC26-0039</div>
+    <h1>Live<span>Lift</span></h1>
+  </div>
+  <p class="thesis">Bàn điều hành bên cạnh người dẫn live: lên kế hoạch, vận hành, ghi lại <em>điều thực sự đã xảy ra</em> — và luôn ghi rõ mỗi con số là thật, mô phỏng hay chưa biết.</p>
+</section>
+
+<section class="row" id="top">
+  <div class="loop">
+    <h2>Vòng lặp vận hành<small>operations loop</small></h2>
+    <div class="loop-steps">
+      <div>Create<small>Tạo</small></div>
+      <div>Prepare<small>Chuẩn bị</small></div>
+      <div>Operate<small>Vận hành</small></div>
+      <div>Review<small>Đối chiếu</small></div>
+      <div>Next LIVE<small>Buổi sau</small></div>
+    </div>
+    <div class="operate"><b class="mono">NOW → NEXT → WHY → ACTION</b><br>Trong 5 giây, operator biết đang bán gì, tiếp theo là gì, vì sao, và cần làm gì.</div>
+    <p class="note">Review so sánh <b>kế hoạch</b> với <b>hành động đã ghi</b>; Next LIVE chỉ mang theo thay đổi mà operator chọn.</p>
+  </div>
+  <div class="evidence">
+    <h2>Mô hình bằng chứng<small>Evidence model</small></h2>
+    <div class="ev-grid">
+      <div class="ev"><span class="l">Thiếu số liệu</span><span class="ne">≠</span><span class="r">bằng 0</span></div>
+      <div class="ev"><span class="l">Chưa biết</span><span class="ne">≠</span><span class="r">thất bại</span></div>
+      <div class="ev"><span class="l">Kế hoạch (planned)</span><span class="ne">≠</span><span class="r">thực tế (actual)</span></div>
+      <div class="ev"><span class="l">REAL</span><span class="ne">≠</span><span class="r">SIMULATED</span></div>
+      <div class="ev"><span class="l">Quan sát</span><span class="ne">≠</span><span class="r">nhân quả</span></div>
+      <div class="ev"><span class="l">Khuyến nghị</span><span class="ne">≠</span><span class="r">đã chấp nhận ≠ đã thực hiện</span></div>
+      <div class="ev"><span class="l">Operator báo cáo</span><span class="ne">≠</span><span class="r">nền tảng quan sát ≠ nền tảng xác nhận</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="row" id="hero">
+  <div id="hero-head">
+    <h2><span class="num">★</span>Platform Lab — Shopee Live hai chiều, bản mô phỏng<span class="pill">SIMULATED</span></h2>
+  </div>
+  <div id="hero-body">
+    <div class="shot">
+      <img src="assets/hero-step6.png" alt="Platform Lab ở bước 6 trên 12 của Demo Director">
+      <div class="mk" style="left: 704px; top: 106px;">1</div>
+      <div class="mk" style="left: 350px; top: 154px;">2</div>
+    </div>
+    <div class="shot">
+      <img src="assets/phone-step6-top.png" alt="Ứng dụng host SIMULATED với sản phẩm đang ghim và flash sale đếm ngược">
+      <div class="mk" style="left: 6px; top: 238px;">3</div>
+      <div class="cap"><b>SIMULATED Shopee Live</b> · ứng dụng host. Dữ liệu chat là chat tổng hợp, không phải người xem thật.</div>
+    </div>
+  </div>
+</section>
+
+<section class="row" id="legend">
+  <div><span class="mk2">1</span><span><b>Giả định A1 · A2</b> bật tắt công khai, ghi "chưa kiểm chứng trên Shopee thật".</span></div>
+  <div><span class="mk2">2</span><span><b>Đường truyền:</b> mỗi lệnh gọi hiện từng dòng; lệnh đoán gắn nhãn "dạng suy đoán".</span></div>
+  <div><span class="mk2">3</span><span><b>Ứng dụng host SIMULATED:</b> sản phẩm đang ghim, flash sale đếm ngược.</span></div>
+</section>
+
+<section class="row" id="cols">
+  <div class="col">
+    <h3>Lab đã chứng minh</h3>
+    <ul>
+      <li>LiveLift ghi <b>Provider observed (SIMULATED)</b> tách khỏi <b>Operator reported</b>.</li>
+      <li>Mất quyền truy cập: chuyển sang thao tác tay, cảnh báo <b>một lần</b>.</li>
+      <li>Chạy lại cùng kịch bản cho <b>cùng nhật ký</b>: 39 lệnh gọi, dấu vân tay <span class="mono">9d723008</span> ở cả 6 lần chạy.</li>
+    </ul>
+  </div>
+  <div class="col unknown">
+    <h3>Điều chưa biết, nói thẳng</h3>
+    <ul>
+      <li>Shopee: chỉ <span class="mono">update_show_item</span> có tài liệu; lệnh khác <b>chỉ biết tên</b>.</li>
+      <li>Chưa rõ: API điều khiển được live mở trên app (A1)? Đọc được sản phẩm đang ghim (A2)?</li>
+      <li>TikTok: không có API công khai mở live hay ghim; operator làm tay rồi báo lại.</li>
+    </ul>
+  </div>
+  <div class="col proof">
+    <h3>Kiểm chứng <small style="font-size:13px;font-weight:600;color:var(--grey)">trình duyệt thật</small></h3>
+    <div class="kpis">
+      <div class="kpi"><b>357 / 0</b><span>kiểm tra đạt / lỗi, 3 khung hình × 2 lượt</span></div>
+      <div class="kpi"><b>0 / 84</b><span>vi phạm trên 84 lần quét axe</span></div>
+      <div class="kpi"><b>1.248</b><span>test đạt, 57 bỏ qua</span></div>
+      <div class="kpi"><b>0 px</b><span>khung điện thoại xê dịch giữa các bước</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="row" id="foot">
+  <div><b>Lộ trình:</b> xin quyền Shopee / TikTok Shop Partner → chạy một buổi thật kiểm chứng A1, A2 → thay SIMULATED bằng provider thật.<br><b>Hiện không có gì được gửi tới Shopee hay TikTok.</b> axe chỉ là kiểm tra tự động; chưa audit thủ công.</div>
+  <div class="team"><b>Nhóm LiveLift</b><br>Đại diện: Ngô Bình Minh</div>
+</section>
+
+</body>
+</html>

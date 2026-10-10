@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>LiveLift mockup</title>
+<style>
+  :root{
+    --bg:#F6F5F2; --surface:#FFFFFF; --ink:#16181D; --ink-2:#4B515C; --ink-3:#8A909B;
+    --line:#E6E4DE; --line-2:#EFEDE8;
+    --live:#E5372F; --live-tint:#FDECEA;
+    --sim:#5B3FD1; --sim-tint:#EEEAFD;
+    --ok:#1F8A5B; --ok-tint:#E4F4EC; --warn:#A8620A; --warn-tint:#FCF1DC;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1440px;height:900px;background:var(--bg);color:var(--ink);font-family:"Inter","DejaVu Sans",sans-serif;font-size:15px;line-height:1.4;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .screen{display:none;width:1440px;height:900px;position:relative}
+  body[data-s="prepare"] #prepare, body[data-s="desk"] #desk, body[data-s="recap"] #recap{display:block}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* top bar */
+  .bar{height:68px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 28px;gap:20px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:21px;letter-spacing:-.02em}
+  .logo i{display:inline-flex;gap:3px;align-items:flex-end;height:20px}
+  .logo i b{display:block;width:5px;border-radius:2px;background:var(--ink)}
+  .logo i b:nth-child(1){height:9px}.logo i b:nth-child(2){height:20px;background:var(--live)}.logo i b:nth-child(3){height:14px}
+  .logo span em{font-style:normal;color:var(--live)}
+  .sp{flex:1}
+  .pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;letter-spacing:.01em}
+  .pill.live{background:var(--live-tint);color:var(--live)}
+  .pill.live::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--live)}
+  .pill.sim{background:var(--sim-tint);color:var(--sim)}
+  .pill.ok{background:var(--ok-tint);color:var(--ok)}
+  .pill.warn{background:var(--warn-tint);color:var(--warn)}
+  .pill.mute{background:#F0EEE9;color:var(--ink-2)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border-radius:12px;font-weight:700;font-size:15px;border:1.5px solid var(--ink);background:var(--surface);color:var(--ink)}
+  .btn.primary{background:var(--live);border-color:var(--live);color:#fff}
+  .btn.dark{background:var(--ink);color:#fff}
+  .btn.ghost{border-color:transparent;color:var(--ink-2)}
+  .btn.sm{height:36px;padding:0 14px;font-size:14px;border-radius:10px}
+  .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .seg span{padding:0 14px;height:40px;display:flex;align-items:center;font-weight:600;font-size:14px;color:var(--ink-2);border-right:1px solid var(--line)}
+  .seg span:last-child{border-right:0}.seg span.on{background:var(--ink);color:#fff}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+  .card h2{font-size:15px;font-weight:700;letter-spacing:.01em;color:var(--ink-2)}
+  .tile{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:15px;flex:none}
+  .t1{background:#E8EEFB;color:#2F55B8}.t2{background:#FBEBDD;color:#B4571B}.t3{background:#E3F3EA;color:#1E7A50}.t4{background:#F5E6F1;color:#9A2F7B}
+
+  /* ===== DESK ===== */
+  #desk .grid{display:grid;grid-template-columns:344px 1fr 360px;gap:20px;padding:22px 28px;height:calc(900px - 68px)}
+  #desk .col{display:flex;flex-direction:column;gap:20px;min-height:0}
+  .prod{display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid var(--line-2)}
+  .prod:first-of-type{border-top:0}
+  .prod .meta{flex:1;min-width:0}
+  .prod .name{font-weight:700;font-size:16px}
+  .prod .sub{color:var(--ink-3);font-size:13px;margin-top:1px}
+  .prod .chips{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+  .chip{font-size:12px;font-weight:600;color:var(--ink-2);background:#F2F0EB;border-radius:7px;padding:3px 8px}
+  .prod.on{background:#FEF4F2;border-left:4px solid var(--live);padding-left:12px}
+  .showing-tag{font-size:11.5px;font-weight:800;color:var(--live);letter-spacing:.06em}
+
+  .suggest{padding:24px 26px}
+  .suggest .eyebrow{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-size:13px;font-weight:600}
+  .suggest h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:10px 0 16px}
+  .why{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+  .why div{background:#F8F7F4;border:1px solid var(--line-2);border-radius:12px;padding:12px 14px}
+  .why b{display:block;font-size:26px;letter-spacing:-.02em}
+  .why span{display:block;font-size:13px;color:var(--ink-2);margin-top:2px}
+  .conf{display:flex;align-items:center;gap:12px;color:var(--ink-2);font-size:13.5px;margin-bottom:18px}
+  .conf .bars{display:flex;gap:4px}.conf .bars i{width:26px;height:7px;border-radius:4px;background:#E2DFD8}.conf .bars i.f{background:var(--warn)}
+  .acts{display:flex;gap:12px;align-items:center}
+  .second{margin-top:18px;padding-top:14px;border-top:1px dashed var(--line);color:var(--ink-3);font-size:13.5px;display:flex;gap:8px}
+
+  .chart{padding:18px 22px 14px;flex:1;min-height:0;display:flex;flex-direction:column}
+  .chart .hd{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .legend{display:flex;gap:16px;font-size:13px;color:var(--ink-2);margin-left:auto}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .chart svg{flex:1;min-height:0;width:100%;display:block}
+  .note{font-size:12.5px;color:var(--ink-3);margin-top:4px}
+
+  .cm{padding:12px 18px;border-top:1px solid var(--line-2)}
+  .cm:first-of-type{border-top:0}
+  .cm .who{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-3)}
+  .cm .who b{color:var(--ink);font-size:13.5px}
+  .cm p{margin-top:3px;font-size:14.5px}
+  .tag{font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 7px}
+  .tg-p{background:#E8EEFB;color:#2F55B8}.tg-s{background:#F5E6F1;color:#9A2F7B}.tg-b{background:var(--ok-tint);color:var(--ok)}.tg-o{background:#F0EEE9;color:var(--ink-2)}
+  .filters{display:flex;gap:8px;padding:12px 18px 12px;flex-wrap:wrap}
+  .filters span{font-size:13px;font-weight:600;border:1.5px solid var(--line);border-radius:999px;padding:5px 11px;color:var(--ink-2)}
+  .filters span.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .foot{font-size:12px;color:var(--ink-3);padding:10px 18px;border-top:1px solid var(--line-2)}
+
+  /* ===== PREPARE ===== */
+  #prepare .wrap{width:860px;margin:0 auto;padding-top:38px}
+  .stepper{display:flex;align-items:center;gap:0;margin-bottom:26px}
+  .step{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--ink-3)}
+  .step i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);font-style:normal;font-size:14px}
+  .step.done{color:var(--ok)}.step.done i{background:var(--ok);border-color:var(--ok);color:#fff}
+  .step.cur{color:var(--ink)}.step.cur i{background:var(--ink);border-color:var(--ink);color:#fff}
+  .step-line{flex:1;height:2px;background:var(--line);margin:0 14px}
+  .step-line.done{background:var(--ok)}
+  #prepare h1{font-size:30px;letter-spacing:-.02em;margin-bottom:6px}
+  .lead{color:var(--ink-2);margin-bottom:22px;font-size:16px}
+  .plat{display:flex;align-items:center;gap:14px;padding:16px 20px;margin-bottom:18px}
+  .plat .tile{background:var(--sim-tint);color:var(--sim)}
+  .imp{padding:0;overflow:hidden}
+  .imp .hd{display:flex;align-items:center;padding:16px 20px;gap:12px;border-bottom:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:12.5px;text-align:left;color:var(--ink-3);font-weight:700;padding:10px 20px;letter-spacing:.03em;background:#FAF9F6}
+  td{padding:13px 20px;border-top:1px solid var(--line-2);font-size:15px;vertical-align:middle}
+  td.n{font-variant-numeric:tabular-nums}
+  .missing{color:var(--warn);font-weight:600}
+  .ctaRow{display:flex;align-items:center;gap:16px;margin-top:22px}
+  .ctaRow .sp{flex:1}.ctaRow small{color:var(--ink-3);font-size:13.5px}
+
+  /* ===== RECAP ===== */
+  #recap .wrap{padding:26px 28px;display:grid;grid-template-columns:1fr 430px;gap:20px;height:calc(900px - 68px)}
+  #recap .wrap>div{display:flex;flex-direction:column;min-height:0}
+  #recap h1{font-size:28px;letter-spacing:-.02em}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:16px 0 20px}
+  .stat{padding:16px 18px}.stat b{display:block;font-size:34px;letter-spacing:-.03em}.stat span{color:var(--ink-2);font-size:13.5px}
+  .rec{display:flex;gap:12px;padding:14px 18px;border-top:1px solid var(--line-2);align-items:flex-start}
+  .rec:first-of-type{border-top:0}.rec time{width:48px;color:var(--ink-3);font-size:13px;padding-top:2px}
+  .rec .b{flex:1}.rec .b b{font-size:15px}.rec .b p{font-size:13.5px;color:var(--ink-2);margin-top:2px}
+  .unknown{padding:18px 20px;background:var(--warn-tint);border-color:#F1DFB9}
+  .unknown h2{color:var(--warn)}.unknown li{margin:8px 0 0 18px;font-size:14px;color:#5a3a08}
+</style>
+</head>
+<body data-s="desk">
+
+<!-- ================= LIVE DESK ================= -->
+<section class="screen" id="desk">
+  <div class="bar">
+    <div class="logo"><i><b></b><b></b><b></b></i><span>Live<em>Lift</em></span></div>
+    <span class="pill live">ĐANG LIVE</span>
+    <div><b style="font-size:16px">Buổi live thu đông</b> <span class="num" style="color:var(--ink-3);margin-left:8px">12:40</span></div>
+    <div class="sp"></div>
+    <span class="pill sim">SIMULATED Shopee Live</span>
+    <div class="seg"><span>▶︎</span><span class="on num">15×</span><span class="num">60×</span><span>+1 phút</span></div>
+    <span class="btn">Kết thúc live</span>
+  </div>
+  <div class="grid">
+    <!-- products -->
+    <div class="col">
+      <div class="card" style="overflow:hidden">
+        <div style="padding:18px 18px 12px;display:flex;align-items:center"><h2>SẢN PHẨM · 4</h2><span class="pill mute" style="margin-left:auto;font-size:12px">Ghim tự do</span></div>
+        <div class="prod on">
+          <div class="tile t2">QC</div>
+          <div class="meta"><div class="showing-tag">ĐANG GHIM</div><div class="name">Quần cargo</div><div class="sub num">249.000 ₫ · còn 9</div>
+            <div class="chips"><span class="chip">Thêm giỏ 6</span><span class="chip">Hỏi size 4</span></div></div>
+          <span class="btn sm">Bỏ ghim</span>
+        </div>
+        <div class="prod">
+          <div class="tile t1">AH</div>
+          <div class="meta"><div class="name">Áo hoodie zip</div><div class="sub num">199.000 ₫ · còn 24</div>
+            <div class="chips"><span class="chip">Hỏi giá 7</span><span class="chip">Thêm giỏ 8</span></div></div>
+          <span class="btn sm dark">Ghim</span>
+        </div>
+        <div class="prod">
+          <div class="tile t3">SM</div>
+          <div class="meta"><div class="name">Áo sơ mi linen</div><div class="sub num">229.000 ₫ · còn 15</div>
+            <div class="chips"><span class="chip">Hỏi giá 1</span></div></div>
+          <span class="btn sm dark">Ghim</span>
+        </div>
+        <div class="prod">
+          <div class="tile t4">TV</div>
+          <div class="meta"><div class="name">Túi vải tote</div><div class="sub"><span class="missing">Giá chưa nhập</span> · tồn kho chưa nhập</div></div>
+          <span class="btn sm dark">Ghim</span>
+        </div>
+      </div>
+      <div class="card" style="padding:16px 18px;flex:1;display:flex;flex-direction:column">
+        <h2>VỀ DỮ LIỆU NÀY</h2>
+        <ul style="margin:10px 0 0 18px;color:var(--ink-2);font-size:13.5px;line-height:1.55">
+          <li>Người xem, bình luận, thêm giỏ đều do mô phỏng tạo ra.</li>
+          <li>Bình luận qua lọc thông tin cá nhân.</li>
+          <li>Gợi ý chỉ đọc tín hiệu, không nói nguyên nhân.</li>
+          <li>Chạy lại cùng hành động cho cùng kết quả (dấu vân tay <b class="num">e8d00fb0</b>).</li>
+        </ul>
+        <div style="margin-top:auto;padding-top:12px;font-weight:700;font-size:13.5px;color:var(--sim)">Xem các giả định →</div>
+      </div>
+    </div>
+
+    <!-- center -->
+    <div class="col">
+      <div class="card suggest">
+        <div class="eyebrow"><span class="pill ok" style="padding:4px 10px;font-size:12px">Gợi ý</span><span>Trợ lý đọc tín hiệu 2 phút gần nhất · bằng luật</span></div>
+        <h1>Nên ghim tiếp: Áo hoodie zip</h1>
+        <div class="why">
+          <div><b class="num">7</b><span>người hỏi giá</span></div>
+          <div><b class="num">8</b><span>lượt thêm giỏ, trước đó 3</span></div>
+          <div><b class="num">24</b><span>còn hàng</span></div>
+        </div>
+        <div class="conf"><span class="bars"><i class="f"></i><i class="f"></i><i></i></span><span><b style="color:var(--ink)">Độ tin cậy trung bình</b> · dựa trên 12 sự kiện</span></div>
+        <div class="acts"><span class="btn primary">Ghim Áo hoodie zip</span><span class="btn ghost">Bỏ qua</span></div>
+        <div class="second"><span>◔</span><span>Flash sale: <b style="color:var(--ink-2)">chưa đủ tín hiệu</b> để gợi ý. Trợ lý sẽ báo khi có.</span></div>
+      </div>
+
+      <div class="card chart">
+        <div class="hd"><h2>NGƯỜI XEM VÀ THÊM GIỎ · 10 PHÚT</h2>
+          <div class="legend"><span><i style="background:#16181D"></i>Người xem</span><span><i style="background:#E5372F"></i>Thêm giỏ / phút</span></div></div>
+        <svg id="chartsvg"></svg>
+        <div class="note">Vạch đứng là lúc bạn ghim hoặc bỏ ghim. Chúng cho biết <b>khi nào</b>, không chứng minh <b>vì sao</b> số thay đổi.</div>
+      </div>
+    </div>
+
+    <!-- comments -->
+    <div class="col">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:18px 18px 4px;display:flex;align-items:center"><h2>BÌNH LUẬN</h2><span class="num" style="margin-left:auto;color:var(--ink-3);font-size:13px">437 người xem</span></div>
+        <div class="filters"><span class="on">Tất cả</span><span>Hỏi giá 7</span><span>Hỏi size 4</span><span>Chốt đơn 3</span></div>
+        <div style="flex:1;overflow:hidden">
+          <div class="cm"><div class="who"><b>viewer_8812</b><span class="tag tg-s">hỏi size</span><span class="num">12:31</span></div><p>Mình cao 1m65 nặng 52kg lấy size nào ạ</p></div>
+          <div class="cm"><div class="who"><b>viewer_1203</b><span class="tag tg-b">chốt đơn</span><span class="tag tg-o">đã che</span><span class="num">12:24</span></div><p>Chốt đơn quần này, sđt ●●●●●●●●●●</p></div>
+          <div class="cm"><div class="who"><b>viewer_7081</b><span class="tag tg-p">hỏi giá</span><span class="num">12:19</span></div><p>Áo hoodie giá bao nhiêu vậy shop</p></div>
+          <div class="cm"><div class="who"><b>viewer_3340</b><span class="tag tg-o">khác</span><span class="num">12:11</span></div><p>Shop live đẹp quá, chị xinh ghê</p></div>
+          <div class="cm"><div class="who"><b>viewer_5527</b><span class="tag tg-p">hỏi giá</span><span class="num">12:06</span></div><p>Hoodie còn màu xám không ạ, giá sao</p></div>
+          <div class="cm"><div class="who"><b>viewer_9014</b><span class="tag tg-b">chốt đơn</span><span class="num">11:58</span></div><p>Lên đơn giúp mình 2 cái hoodie nha</p></div>
+          <div class="cm"><div class="who"><b>viewer_2271</b><span class="tag tg-s">hỏi size</span><span class="num">11:49</span></div><p>Quần này có size L không shop</p></div>
+          <div class="cm"><div class="who"><b>viewer_6602</b><span class="tag tg-o">khác</span><span class="num">11:40</span></div><p>Xin chào shop, mình mới vào</p></div>
+          
+        </div>
+        <div class="foot">Bình luận mô phỏng. Thông tin cá nhân đã được che trước khi hiển thị.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PREPARE ================= -->
+<section class="screen" id="prepare">
+  <div class="bar"><div class="logo"><i><b></b><b></b><b></b></i><span>Live<em>Lift</em></span></div><div class="sp"></div><span class="pill sim">SIMULATED Shopee Live</span></div>
+  <div class="wrap">
+    <div class="stepper">
+      <div class="step done"><i>✓</i>Kết nối</div><div class="step-line done"></div>
+      <div class="step cur"><i>2</i>Sản phẩm</div><div class="step-line"></div>
+      <div class="step"><i>3</i>Bắt đầu live</div>
+    </div>
+    <h1>Thêm sản phẩm, rồi bắt đầu live</h1>
+    <p class="lead">Sản phẩm bạn thêm sẽ đồng bộ sang buổi live mô phỏng ngay. Bạn có thể ghim hoặc bỏ ghim bất cứ lúc nào.</p>
+    <div class="card plat"><div class="tile">S</div><div><b style="font-size:16px">SIMULATED Shopee Live</b><div style="color:var(--ink-3);font-size:13.5px">Chưa kết nối Shopee thật. Mọi lệnh chỉ chạy trong mô phỏng.</div></div><span class="pill ok" style="margin-left:auto">Đã kết nối mô phỏng</span></div>
+    <div class="card imp">
+      <div class="hd"><b style="font-size:16px">Sản phẩm</b><span class="pill mute">4</span><span class="sp"></span><span class="btn sm">Dán từ CSV</span><span class="btn sm">Dùng bộ mẫu</span></div>
+      <table>
+        <tr><th>TÊN</th><th>GIÁ</th><th>TỒN KHO</th><th>ĐỒNG BỘ</th></tr>
+        <tr><td><b>Áo hoodie zip</b></td><td class="n">199.000 ₫</td><td class="n">24</td><td><span class="pill ok">Đã đồng bộ</span></td></tr>
+        <tr><td><b>Quần cargo</b></td><td class="n">249.000 ₫</td><td class="n">9</td><td><span class="pill ok">Đã đồng bộ</span></td></tr>
+        <tr><td><b>Áo sơ mi linen</b></td><td class="n">229.000 ₫</td><td class="n">15</td><td><span class="pill ok">Đã đồng bộ</span></td></tr>
+        <tr><td><b>Túi vải tote</b></td><td><span class="missing">Chưa nhập</span></td><td><span class="missing">Chưa nhập</span></td><td><span class="pill warn">Đồng bộ thiếu giá</span></td></tr>
+      </table>
+    </div>
+    <div class="ctaRow"><small>4 sản phẩm sẵn sàng · 1 sản phẩm thiếu giá (không bị coi là 0)</small><span class="sp"></span><span class="btn ghost">Quay lại</span><span class="btn primary" style="height:50px;padding:0 26px;font-size:16px">Bắt đầu live</span></div>
+  </div>
+</section>
+
+<!-- ================= RECAP ================= -->
+<section class="screen" id="recap">
+  <div class="bar"><div class="logo"><i><b></b><b></b><b></b></i><span>Live<em>Lift</em></span></div><span class="pill mute">Đã kết thúc</span><div class="sp"></div><span class="pill sim">SIMULATED</span><span class="btn">Xuất báo cáo</span></div>
+  <div class="wrap">
+    <div>
+      <h1>Tổng kết: Buổi live thu đông</h1>
+      <div style="color:var(--ink-2);margin-top:4px">30 phút · 3 sản phẩm đã ghim · dữ liệu mô phỏng</div>
+      <div class="stats">
+        <div class="card stat"><b class="num">612</b><span>người xem cao nhất</span></div>
+        <div class="card stat"><b class="num">118</b><span>lượt thêm giỏ</span></div>
+        <div class="card stat"><b class="num">4 / 6</b><span>gợi ý bạn nhận</span></div>
+        <div class="card stat"><b class="num">7</b><span>lần ghim, bỏ ghim</span></div>
+      </div>
+      <div class="card chart">
+        <div class="hd"><h2>DIỄN BIẾN BUỔI LIVE · SẢN PHẨM ĐANG GHIM</h2></div>
+        <svg id="recapsvg"></svg>
+        <div class="note">Màu nền là sản phẩm đang ghim. Quan sát chung, chưa kết luận nguyên nhân.</div>
+      </div>
+    </div>
+    <div style="gap:18px">
+      <div class="card" style="overflow:hidden">
+        <div style="padding:18px 18px 8px"><h2>GỢI Ý CỦA TRỢ LÝ VÀ BẠN ĐÃ LÀM GÌ</h2></div>
+        <div class="rec"><time class="num">08:20</time><div class="b"><b>Ghim Áo hoodie zip</b><p>Bạn nhận · thêm giỏ 3 → 8 trong 3 phút sau</p></div><span class="pill ok">Nhận</span></div>
+        <div class="rec"><time class="num">14:05</time><div class="b"><b>Ghim Quần cargo</b><p>Bạn nhận · thêm giỏ 2 → 6</p></div><span class="pill ok">Nhận</span></div>
+        <div class="rec"><time class="num">19:40</time><div class="b"><b>Flash sale Áo sơ mi</b><p>Bạn bỏ qua</p></div><span class="pill mute">Bỏ qua</span></div>
+        <div class="rec"><time class="num">24:10</time><div class="b"><b>Ghim Áo sơ mi linen</b><p>Bạn tự ghim trước khi gợi ý xuất hiện</p></div><span class="pill warn">Tự làm</span></div>
+      </div>
+      <div class="card" style="padding:18px 20px">
+        <h2>BÌNH LUẬN THEO Ý ĐỊNH</h2>
+        <div style="margin-top:12px;display:grid;gap:9px;font-size:13.5px;color:var(--ink-2)">
+          <div style="display:grid;grid-template-columns:78px 1fr 28px;gap:10px;align-items:center">Hỏi giá<i style="height:9px;border-radius:5px;background:#2F55B8;width:62%"></i><b class="num" style="color:var(--ink)">31</b></div>
+          <div style="display:grid;grid-template-columns:78px 1fr 28px;gap:10px;align-items:center">Hỏi size<i style="height:9px;border-radius:5px;background:#9A2F7B;width:36%"></i><b class="num" style="color:var(--ink)">18</b></div>
+          <div style="display:grid;grid-template-columns:78px 1fr 28px;gap:10px;align-items:center">Chốt đơn<i style="height:9px;border-radius:5px;background:#1F8A5B;width:24%"></i><b class="num" style="color:var(--ink)">12</b></div>
+          <div style="display:grid;grid-template-columns:78px 1fr 28px;gap:10px;align-items:center">Khác<i style="height:9px;border-radius:5px;background:#B5B2AA;width:80%"></i><b class="num" style="color:var(--ink)">40</b></div>
+        </div>
+      </div>
+      <div class="card unknown" style="margin-top:0"><h2>ĐIỀU CHƯA BIẾT</h2><ul><li>Thêm giỏ tăng sau khi ghim, nhưng có thể do người xem vào thêm.</li><li>Đây là dữ liệu mô phỏng, không phải kết quả bán hàng thật.</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const q=new URLSearchParams(location.search).get('s')||'desk';document.body.dataset.s=q;
+  const NS='http://www.w3.org/2000/svg';
+  function size(svg){const r=svg.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);return [r.width,r.height]}
+  function deskChart(){
+    const svg=document.getElementById('chartsvg');const [W,H]=size(svg);const P={l:44,r:30,t:22,b:24};
+    const v=[210,240,270,300,330,360,380,410,430,437];const a=[1,1,2,3,3,5,4,8,6,8];
+    const n=v.length;const x=i=>P.l+16+i*(W-P.l-P.r-16)/(n-1);
+    const gap=30;const h1=Math.round((H-P.t-P.b-gap)*0.55),h2=H-P.t-P.b-gap-h1;
+    const y1=d=>P.t+(1-(d-150)/(480-150))*h1;const y2base=P.t+h1+gap+h2;const y2=d=>y2base-d/10*h2;
+    let s='';
+    [200,300,400].forEach(d=>{s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y1(d)}" y2="${y1(d)}" stroke="#EDEBE6"/><text x="${P.l-8}" y="${y1(d)+4}" font-size="12" fill="#8A909B" text-anchor="end">${d}</text>`});
+    s+=`<path d="M${v.map((d,i)=>x(i)+','+y1(d)).join(' L')} L${x(n-1)},${P.t+h1} L${x(0)},${P.t+h1}Z" fill="#16181D" opacity=".06"/>`;
+    s+=`<path d="M${v.map((d,i)=>x(i)+','+y1(d)).join(' L')}" fill="none" stroke="#16181D" stroke-width="2.5" stroke-linejoin="round"/>`;
+    s+=`<text x="${P.l}" y="${P.t-8}" font-size="12" font-weight="700" fill="#4B515C">Người xem</text><text x="${P.l}" y="${P.t+h1+gap-4}" font-size="12" font-weight="700" fill="#4B515C">Thêm giỏ mỗi phút</text>`;
+    [0,5,10].forEach(d=>{s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y2(d)}" y2="${y2(d)}" stroke="#EDEBE6"/><text x="${P.l-8}" y="${y2(d)+4}" font-size="12" fill="#8A909B" text-anchor="end">${d}</text>`});
+    a.forEach((d,i)=>{s+=`<rect x="${x(i)-10}" y="${y2(d)}" width="20" height="${y2base-y2(d)}" rx="3" fill="#E5372F" opacity=".88"/>`});
+    [[2.5,'Ghim Hoodie'],[7.2,'Ghim Quần']].forEach(([i,t])=>{const xx=P.l+16+i*(W-P.l-P.r-16)/(n-1);s+=`<line x1="${xx}" x2="${xx}" y1="${P.t}" y2="${y2base}" stroke="#16181D" stroke-dasharray="4 4"/><rect x="${xx+4}" y="${P.t-1}" width="${t.length*6.8+12}" height="19" rx="5" fill="#16181D"/><text x="${xx+10}" y="${P.t+12.5}" font-size="12" font-weight="700" fill="#fff">${t}</text>`});
+    ['2:40','4:40','6:40','8:40','10:40','12:40'].forEach((t,i)=>{const xx=P.l+16+i*(W-P.l-P.r-16)/5;s+=`<text x="${xx}" y="${H-6}" font-size="12" fill="#8A909B" text-anchor="middle">${t}</text>`});
+    svg.innerHTML=s;
+  }
+  function recapChart(){
+    const svg=document.getElementById('recapsvg');const [W,H]=size(svg);const P={l:44,r:40,t:12,b:26};
+    const n=30;const v=Array.from({length:n},(_,i)=>Math.round(180+i*14+Math.sin(i/2)*22));
+    const x=i=>P.l+i*(W-P.l-P.r)/(n-1);const y=d=>P.t+(1-(d-100)/(650-100))*(H-P.t-P.b);
+    let s='';
+    [[0,8,'#F0EEE9',''],[8,14,'#E8EEFB','Hoodie'],[14,24,'#FBEBDD','Quần cargo'],[24,29,'#E3F3EA','Sơ mi']].forEach(([a,b,c,t])=>{s+=`<rect x="${x(a)}" y="${P.t}" width="${x(b)-x(a)}" height="${H-P.t-P.b}" fill="${c}"/><text x="${x(a)+10}" y="${P.t+20}" font-size="13" font-weight="700" fill="#4B515C">${t}</text>`});
+    [200,400,600].forEach(d=>{s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(d)}" y2="${y(d)}" stroke="#fff" opacity=".8"/><text x="${P.l-8}" y="${y(d)+4}" font-size="12" fill="#8A909B" text-anchor="end">${d}</text>`});
+    s+=`<path d="M${v.map((d,i)=>x(i)+','+y(d)).join(' L')}" fill="none" stroke="#16181D" stroke-width="2.6" stroke-linejoin="round"/>`;
+    [8,14,24].forEach(i=>{s+=`<line x1="${x(i)}" x2="${x(i)}" y1="${P.t}" y2="${H-P.b}" stroke="#16181D" stroke-dasharray="4 4"/>`});
+    [0,10,20,29].forEach(m=>{s+=`<text x="${x(m)}" y="${H-8}" font-size="12" fill="#8A909B" text-anchor="middle">${m===29?30:m} phút</text>`});
+    svg.innerHTML=s;
+  }
+  window.addEventListener('load',()=>{ if(q==='desk')deskChart(); if(q==='recap')recapChart(); });
+</script>
+</body>
+</html>
