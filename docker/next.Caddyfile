@@ -1,0 +1,10 @@
+{$LIVELIFT_HOST} {
+  header Strict-Transport-Security "max-age=31536000"
+  reverse_proxy next:3000 {
+    # Override client input. Only Caddy can reach the application network.
+    header_up X-LiveLift-Client-IP {remote_host}
+    header_up -X-Forwarded-For
+    header_up -Forwarded
+  }
+  # Access logs are disabled: URLs and headers can contain sensitive user input.
+}
