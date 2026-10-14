@@ -5,7 +5,9 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { ProductionConfig } from "./config";
 
-export function syncDirectory(path: string): void { const fd = openSync(path, "r"); try { fsyncSync(fd); } finally { closeSync(fd); } }
+// Windows refuses fsync on a directory handle (EPERM); NTFS journals the rename
+// metadata itself, so the POSIX directory flush has no Windows counterpart.
+export function syncDirectory(path: string): void { if (process.platform === "win32") return; const fd = openSync(path, "r"); try { fsyncSync(fd); } finally { closeSync(fd); } }
 export function durableJson(path: string, value: unknown): void {
   const temp = `${path}.${randomUUID()}.tmp`;
   const fd = openSync(temp, "wx", 0o600);

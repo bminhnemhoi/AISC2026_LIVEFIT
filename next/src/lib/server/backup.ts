@@ -19,7 +19,8 @@ export async function sha256(path: string): Promise<string> {
   for await (const chunk of createReadStream(path)) hash.update(chunk);
   return hash.digest("hex");
 }
-function syncFile(path: string): void { const fd = openSync(path, "r"); try { fsyncSync(fd); } finally { closeSync(fd); } }
+// Windows flushes a file only through a writable handle (FlushFileBuffers), so a read-only fd fails with EPERM there.
+function syncFile(path: string): void { const fd = openSync(path, process.platform === "win32" ? "r+" : "r"); try { fsyncSync(fd); } finally { closeSync(fd); } }
 
 export async function createBackup(db: DatabaseSync, config: ProductionConfig, appCommit: string): Promise<string> {
   assertNotRetired(config);

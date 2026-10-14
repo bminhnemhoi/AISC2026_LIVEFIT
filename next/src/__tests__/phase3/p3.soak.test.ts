@@ -65,6 +65,10 @@ describe("Live-only release CLI", () => {
     for (const args of [["--mode", "simulation"], ["--password", CANARY_SECRETS.password], ["--duration", "1s", "--duration", "2s"], ["extra"]]) expect(() => parseSoakArgs(args)).toThrow();
   });
 
+  // The release CLI is a Linux operations tool: it insists on owned mode-0600
+  // password files and on POSIX signal exit codes (130/143). Windows has
+  // neither, so these run on POSIX hosts (CI, the deployment box) only.
+  describe.skipIf(process.platform === "win32")("POSIX-only: password files, live peer and signals", () => {
   it("requires owned mode-0600 password files and preserves spaces", () => {
     const dir = mkdtempSync(join(tmpdir(), "soak-password-test-"));
     const path = join(dir, "password");
@@ -206,4 +210,5 @@ describe("Live-only release CLI", () => {
     expect(result.final).toMatchObject({ event: "final", result: "STOPPED", committed: 1 });
     expect(result.final.elapsedMs).toBeLessThan(5000);
   }, 10_000);
+  });
 });
