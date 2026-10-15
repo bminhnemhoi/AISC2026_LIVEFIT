@@ -34,7 +34,7 @@ export function HostView({ sessionId }: { sessionId: string }) {
           <p className="ph-clock-num" style={{ fontSize: "var(--fs-40)" }}>{state?.pinned_product ?? "Chưa ghim sản phẩm nào"}</p>
           {state?.price != null && <p className="ph-muted">{state.price.toLocaleString("vi-VN")} đ{state.stock != null ? ` · còn ${state.stock}` : ""}</p>}
         </section>
-        <p className="ph-muted">Đã phát {mmss(state?.elapsed_s ?? 0)}</p>
+        <p className="ph-muted" style={{ marginTop: "var(--s-12)" }}>Đã phát {mmss(state?.elapsed_s ?? 0)}</p>
       </div>
     </div>
   );

@@ -1,6 +1,11 @@
 /* Chế độ Thí nghiệm + phòng xem — dùng token của calm.css (.ld), không thêm màu mới ngoài BẬT/TẮT. */
 
 .ld.ph {
+  /* calm.css makes .ld the Live Desk app shell: a 3-row grid (header / stage / dock) at 100dvh
+     with inner panes scrolling. These pages scroll as documents; under that grid their content
+     sat in the fixed-height header row and spilled onto the dark body below the first screen. */
+  display: block;
+  height: auto;
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);

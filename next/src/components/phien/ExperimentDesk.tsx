@@ -86,16 +86,24 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
             <section className="ph-card ph-paper" aria-labelledby="h-now">
               <h2 id="h-now">Bây giờ</h2>
               {cb ? (
-                <div className="ph-clock">
-                  <span className="ph-clock-num" aria-label="thời gian còn lại của khối">{mmss(cb.seconds_remaining)}</span>
-                  {arm ? <span className="ph-arm" data-arm={arm}>Khối {cb.index + 1} · {ARM_TEXT[arm]}</span> : <span className="ph-arm">Khoảng trôi</span>}
-                </div>
+                <>
+                  <div className="ph-clock">
+                    <span className="ph-clock-num" aria-label="thời gian còn lại của khối">{mmss(cb.seconds_remaining)}</span>
+                    {arm ? <span className="ph-arm" data-arm={arm}>Khối {cb.index + 1} · {ARM_TEXT[arm]}</span> : <span className="ph-arm">Khoảng trôi</span>}
+                  </div>
+                  <p className="ph-small" style={{ margin: 0 }}>còn lại trong khối</p>
+                </>
               ) : (
                 <p className="ph-muted">Ngoài khung khối thí nghiệm.</p>
               )}
               <p style={{ marginTop: 12 }}>
                 Đang ghim: <strong>{state.pinned_product ? `${state.pinned_product.name}` : "chưa có"}</strong>
               </p>
+              {arm === "OFF" && state.pinned_product && (
+                <p className="ph-small" data-testid="off-block-carryover" style={{ margin: 0 }}>
+                  Còn từ khối trước. Khối TẮT không can thiệp: hệ thống không tự gỡ ghim, đội làm theo cách thường lệ.
+                </p>
+              )}
               {canPin && (
                 <div className="xem-actions" style={{ marginTop: 8 }}>
                   <button type="button" className="ph-btn ph-btn-primary" disabled={busy} onClick={() => void pin(topCard?.product_id)}>

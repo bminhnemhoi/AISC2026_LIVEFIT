@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { estimateState, summaryLines } from "../desk";
+import { estimateState, fmtFixed, summaryLines } from "../desk";
 import { BaoCaoSchema } from "../types";
 
 /**
@@ -30,5 +30,17 @@ describe("hợp đồng /bao-cao với lõi Python", () => {
   it("feeds the estimate card from the same payload", () => {
     const s = estimateState(report);
     expect(s.kind).toBe("estimate");
+  });
+
+  it("the card and the server's summary print the same p and interval (soát giao diện 15/10)", () => {
+    const s = estimateState(report);
+    if (s.kind !== "estimate") throw new Error("fixture must be estimable");
+    const [cau1, cau2] = report.tom_tat_3_cau.map(c => c.text);
+    expect(s.pText).not.toBeNull();
+    expect(cau2).toContain(s.pText as string);
+    expect(cau1).toContain(fmtFixed(s.estimate, 3));
+    expect(cau1).toContain(fmtFixed(s.ciLow, 3));
+    expect(cau1).toContain(fmtFixed(s.ciHigh, 3));
+    expect(cau1).toContain("1.000 giây");
   });
 });

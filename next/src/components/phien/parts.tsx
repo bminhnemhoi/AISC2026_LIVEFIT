@@ -1,5 +1,5 @@
 import type { EstimateState, SourceLabel } from "@/lib/livelift-api/desk";
-import { fmtNum, verdict } from "@/lib/livelift-api/desk";
+import { fmtFixed, fmtNum, verdict } from "@/lib/livelift-api/desk";
 
 /** The seller-facing decision (đổi / giữ / đo thêm) above the numbers it rests on. */
 export function VerdictBanner({ state }: { state: EstimateState }) {
@@ -42,10 +42,10 @@ export function EstimateCard({ state }: { state: EstimateState }) {
     case "estimate":
       return (
         <div data-testid="estimate-card">
-          <div className="ph-est-num">{state.estimate >= 0 ? "+" : ""}{fmtNum(state.estimate, 3)}</div>
+          <div className="ph-est-num">{state.estimate >= 0 ? "+" : ""}{fmtFixed(state.estimate, 3)}</div>
           <p className="ph-muted" style={{ margin: 0 }}>
-            click / 1.000 giây·người xem · KTC 95% [{fmtNum(state.ciLow, 3)}; {fmtNum(state.ciHigh, 3)}]
-            {state.pValue != null && ` · p = ${fmtNum(state.pValue, 3)}`}
+            click / 1.000 giây·người xem · KTC 95% [{fmtFixed(state.ciLow, 3)}; {fmtFixed(state.ciHigh, 3)}]
+            {state.pText && ` · ${state.pText}`}
           </p>
           <CiLine lo={state.ciLow} hi={state.ciHigh} est={state.estimate} />
           <p className="ph-small">

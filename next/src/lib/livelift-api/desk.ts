@@ -79,7 +79,7 @@ export type EstimateState =
   | { kind: "locked"; reason: string }
   | { kind: "observational"; reason: string }
   | { kind: "not_enough"; nBlocks: number; message: string }
-  | { kind: "estimate"; estimate: number; ciLow: number; ciHigh: number; pValue: number | null; nBlocks: number; nOn: number; nOff: number; crossesZero: boolean };
+  | { kind: "estimate"; estimate: number; ciLow: number; ciHigh: number; pValue: number | null; pText: string | null; nBlocks: number; nOn: number; nOff: number; crossesZero: boolean };
 
 /** The estimate card: an honest state for every case, never a number the server did not give. */
 export function estimateState(report: Pick<BaoCao, "loai_phien" | "ket_qua_thi_nghiem" | "nhan"> | null): EstimateState {
@@ -98,6 +98,7 @@ export function estimateState(report: Pick<BaoCao, "loai_phien" | "ket_qua_thi_n
     ciLow: k.ci_low,
     ciHigh: k.ci_high,
     pValue: k.p_value ?? null,
+    pText: fmtP(k.p_value ?? null, k.n_draws ?? null),
     nBlocks: k.n_blocks,
     nOn: k.n_on,
     nOff: k.n_off,
@@ -261,4 +262,20 @@ export function mmss(totalSeconds: number): string {
 
 export function fmtNum(n: number, digits = 2): string {
   return n.toLocaleString("vi-VN", { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+}
+
+/** Exactly `digits` decimals ("-0,490", not "-0,49"): the card and the summary sentence print the same string. */
+export function fmtFixed(n: number, digits = 3): string {
+  return n.toLocaleString("vi-VN", { maximumFractionDigits: digits, minimumFractionDigits: digits });
+}
+
+/**
+ * p-value with the honest permutation floor, the same rule as narrate._p_text on the server:
+ * a test with N redraws cannot report p below 1/(N+1), so at the floor it prints "p < floor".
+ */
+export function fmtP(p: number | null, nDraws: number | null): string | null {
+  if (p == null) return null;
+  const floor = nDraws ? 1 / (nDraws + 1) : null;
+  if (floor != null && p <= floor * 1.001) return `p < ${fmtFixed(floor, 3)}`;
+  return `p = ${fmtFixed(p, 3)}`;
 }

@@ -10,7 +10,7 @@ import type { Tick } from "../types";
  */
 
 const est = (lo: number, hi: number): EstimateState => ({
-  kind: "estimate", estimate: (lo + hi) / 2, ciLow: lo, ciHigh: hi, pValue: 0.01, nBlocks: 16, nOn: 8, nOff: 8,
+  kind: "estimate", estimate: (lo + hi) / 2, ciLow: lo, ciHigh: hi, pValue: 0.01, pText: "p = 0,010", nBlocks: 16, nOn: 8, nOff: 8,
   crossesZero: lo <= 0 && hi >= 0,
 });
 

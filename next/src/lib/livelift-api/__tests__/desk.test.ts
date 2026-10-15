@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockStrip, estimateState, funnel, mmss, sourceLabel } from "../desk";
+import { blockStrip, estimateState, fmtFixed, fmtP, funnel, mmss, sourceLabel } from "../desk";
 import type { BaoCao, Block, Tick } from "../types";
 
 const block = (i: number, arm: "ON" | "OFF" | null, start: number, end: number): Block => ({
@@ -88,6 +88,14 @@ describe("estimateState — never a number the server did not give", () => {
   });
   it("no report yet", () => {
     expect(estimateState(null).kind).toBe("not_enough");
+  });
+  it("p prints the permutation floor like the server summary, and decimals are fixed", () => {
+    expect(fmtP(1 / 1001, 1000)).toBe("p < 0,001");
+    expect(fmtP(1 / 201, 200)).toBe("p < 0,005");
+    expect(fmtP(0.3147, 1000)).toBe("p = 0,315");
+    expect(fmtP(null, 1000)).toBeNull();
+    expect(fmtFixed(-0.49, 3)).toBe("-0,490");
+    expect(fmtFixed(1.2235, 3)).toBe("1,224");
   });
 });
 

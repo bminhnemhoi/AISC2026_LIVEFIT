@@ -63,7 +63,7 @@ export function RecapExperiment({ sessionId }: { sessionId: string }) {
               </table>
             </section>
             <section className="ph-card">
-              <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}`}>Quay lại bàn trợ live</Link></p>
+              <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}`}>Quay lại bàn thí nghiệm</Link></p>
             </section>
           </aside>
         </div>
