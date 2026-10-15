@@ -63,6 +63,13 @@ def test_build_cards_never_emit_ci():
     assert all(c.product_id != "D" for c in cards)
 
 
+def test_card_rationale_uses_vietnamese_thousands():
+    """Soát giao diện 15/10/2026: bàn thí nghiệm in "53,000đ" (kiểu Anh) ngay cạnh "1.657"."""
+    products = [{"product_id": "A", "name": "SP A", "price": 99_000, "margin": 53_000, "stock": 80}]
+    (card,) = build_cards(build_candidates(products, {}), {"A": products[0]})
+    assert card.rationale == "Biên lợi nhuận 53.000đ/sản phẩm, còn 80 trong kho"
+
+
 def test_candidates_intervals_shrink_with_evidence():
     products = [
         {"product_id": "A", "name": "SP A", "price": 100, "margin": 50, "stock": 5},

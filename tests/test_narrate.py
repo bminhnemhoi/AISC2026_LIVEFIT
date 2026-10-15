@@ -73,7 +73,7 @@ def _so_cho_phep(*values: object) -> set[str]:
 def _khong_bia_so(cau_list: list[narrate.Cau], *allowed_values: object) -> None:
     allowed = _so_cho_phep(*allowed_values)
     # hằng đơn vị của biến kết quả chính xuất hiện trong mọi câu kết luận
-    allowed |= {"1000", "95", "0", "7"}  # 1000 giây·người xem, KTC 95%, chứa 0, §7
+    allowed |= {"1.000", "95", "0", "7"}  # 1.000 giây·người xem / lần vẽ, KTC 95%, chứa 0, §7
     for c in cau_list:
         for so in _cac_so(c.text):
             assert so in allowed, f"số {so!r} không truy được nguồn trong câu: {c.text!r}"
@@ -120,7 +120,7 @@ def test_gop_duong_ket_luan_bang_chung_viec_lam():
     assert cau[0].badge == BADGE_THI_NGHIEM
     assert "48 khối" in cau[1].text
     assert "24 BẬT / 24 TẮT" in cau[1].text
-    assert "p < 0,0010" in cau[1].text, "p chạm sàn hoán vị phải in sàn, không in số giả"
+    assert "p < 0,001" in cau[1].text, "p chạm sàn hoán vị phải in sàn, không in số giả"
     assert "tuân thủ đo được 94%" in cau[2].text
     assert "giữ nguyên" in cau[2].text.lower()
     _khong_bia_so(cau, *GOP_DUONG.values())

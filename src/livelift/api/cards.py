@@ -190,6 +190,7 @@ def build_cards(
         product = products_by_id.get(c.product_id, {})
         name = str(product.get("name") or c.product_id)
         margin = float(product.get("margin") or 0.0)
+        bien = f"{margin:,.0f}".replace(",", ".")  # 53.000đ kiểu Việt, không 53,000đ
         cards.append(
             ActionCard(
                 card_id=f"card-{i}-{c.product_id}",
@@ -198,7 +199,7 @@ def build_cards(
                 product_name=name,
                 headline=f"Ghim {name}",
                 rationale=(
-                    f"Biên lợi nhuận {margin:,.0f}đ/sản phẩm, còn "
+                    f"Biên lợi nhuận {bien}đ/sản phẩm, còn "
                     f"{int(product.get('stock') or 0)} trong kho"
                 ),
                 source="forecast",

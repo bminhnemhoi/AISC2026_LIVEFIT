@@ -618,13 +618,21 @@ def test_c6_ly_do_cua_may_chu_theo_dinh_dang_vi_vn(api, tmp_path):
     _products(api)
     sid = _live_session(api, "ON")
     rationales = [c["rationale"] for c in api.get(f"/sessions/{sid}/state").json()["cards"]]
-    assert any(re.search(r"\d,\d{3}đ", r) for r in rationales), "máy chủ in số kiểu Anh (53,000đ)"
-    samples = [*rationales, "Còn 1,200 trong kho", "Giá 45.000 ₫ đã đúng", "Tặng 5 đồng xu"]
+    # 15/10/2026: máy chủ tự in nghìn kiểu Việt (cards.py, "53.000đ"); trước đó in "53,000đ"
+    # và chỉ web/ đổi lại. Bộ đổi của web/ vẫn được kiểm trên chuỗi kiểu cũ viết sẵn.
+    assert rationales
+    assert not any(re.search(r"\d,\d{3}đ", r) for r in rationales), rationales
+    assert any(re.search(r"\d\.\d{3}đ", r) for r in rationales), rationales
+    legacy = ["Biên lợi nhuận 53,000đ/sản phẩm, còn 80 trong kho"]
+    samples = [*legacy, "Còn 1,200 trong kho", "Giá 45.000 ₫ đã đúng", "Tặng 5 đồng xu"]
     got = node_eval(
-        tmp_path, f"[{js(samples)}.map((t) => viRationale(t)), fmtVnd(34000), fmtNumber(1200)]"
+        tmp_path,
+        f"[{js(samples)}.map((t) => viRationale(t)), fmtVnd(34000), fmtNumber(1200),"
+        f" {js(rationales)}.map((t) => viRationale(t))]",
     )
-    out, vnd, num = got
-    for before, after in zip(rationales, out[: len(rationales)], strict=True):
+    out, vnd, num, out_moi = got
+    assert out_moi == rationales, "chuỗi máy chủ đã đúng kiểu Việt phải giữ nguyên"
+    for before, after in zip(legacy, out[: len(legacy)], strict=True):
         money = re.search(r"(\d{1,3}(?:,\d{3})+)đ", before)
         assert money, before
         value = int(money.group(1).replace(",", ""))

@@ -47,7 +47,7 @@ BADGE_THIEU_DU_LIEU = "thieu_du_lieu"
 """Tuyên bố thiếu kèm con số cần thêm — không hạ ngưỡng, không nội suy."""
 
 #: Đơn vị của biến kết quả chính (tiền đăng ký §4.1) — một chỗ, mọi câu dùng chung.
-DON_VI = "lượt nhấp trên mỗi 1000 giây·người xem"
+DON_VI = "lượt nhấp trên mỗi 1.000 giây·người xem"
 
 
 @dataclass(frozen=True)
@@ -85,6 +85,11 @@ def _so(x: float, spec: str) -> str:
     return format(x, spec).replace(".", ",")
 
 
+def _nghin(n: int) -> str:
+    """Số nguyên kiểu Việt Nam: dấu CHẤM ngăn nghìn ("1.000 lần vẽ lại", không "1000")."""
+    return f"{n:,}".replace(",", ".")
+
+
 def _p_text(p_value: float | None, n_draws: int | None) -> str:
     """p-value với SÀN trung thực: kiểm định hoán vị không nói được p nhỏ hơn
     1/(số lần vẽ + 1) — in sàn thay vì một con số chính-xác-giả (cùng luật với
@@ -93,8 +98,9 @@ def _p_text(p_value: float | None, n_draws: int | None) -> str:
         return "p chưa công bố"
     floor = 1.0 / (n_draws + 1) if n_draws else None
     if floor is not None and p_value <= floor * 1.001:
-        return f"p < {_so(floor, '.4f')}"
-    return f"p = {_so(p_value, '.4f')}"
+        return f"p < {_so(floor, '.3f')}"
+    # 3 chữ số như thẻ số ngay phía trên (fmtNum(p, 3)) — câu và thẻ không được lệch nhau.
+    return f"p = {_so(p_value, '.3f')}"
 
 
 def _ktc(ci_low: float | None, ci_high: float | None) -> str:
@@ -159,7 +165,7 @@ def _cau_bang_chung(
     n_sessions: int | None = None,
 ) -> Cau:
     pham_vi = f" từ {n_sessions} phiên" if n_sessions is not None else ""
-    ve_lai = f"kiểm định hoán vị {n_draws} lần vẽ lại cho " if n_draws else ""
+    ve_lai = f"kiểm định hoán vị {_nghin(n_draws)} lần vẽ lại cho " if n_draws else ""
     return Cau(
         text=(
             f"Bằng chứng: {n_blocks} khối đo được ({n_on} BẬT / {n_off} TẮT)"
@@ -490,8 +496,8 @@ def tom_tat_phien(
         cau3 = Cau(
             text=(
                 "Việc nên làm: lặp lại đúng thiết kế này ở phiên tới — một phiên chưa "
-                f"phải chuỗi; {n_blocks} khối hiện có mới đến từ một buổi, kết luận gộp "
-                "nhiều phiên nằm ở trang Kết quả."
+                f"phải chuỗi; {n_blocks} khối hiện có mới đến từ một buổi, kết luận cuối "
+                "cùng phải gộp nhiều phiên cùng thiết kế."
             ),
             badge=BADGE_QUAN_SAT,
             refs=(f"{_KQ}n_blocks",),
