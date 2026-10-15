@@ -101,8 +101,11 @@ def _heatmaps(rows: list[dict[str, Any]], fig_dir: Path, minutes: int, reps: int
     blocks = sorted({r["block"] for r in clicks})
 
     # Figure 1 — relative bias of the block-rate estimate (τ = 0.3) by carryover × burn-in.
-    fig, axes = plt.subplots(1, len(blocks), figsize=(4.2 * len(blocks), 3.4), squeeze=False)
-    for ax, blk in zip(axes[0], blocks, strict=True):
+    fig, axes = plt.subplots(
+        1, len(blocks), figsize=(4.4 * len(blocks), 3.8), squeeze=False, sharey=True,
+        layout="constrained",
+    )  # fmt: skip
+    for k, (ax, blk) in enumerate(zip(axes[0], blocks, strict=True)):
         m = np.full((len(halflives), len(BURN_INS)), np.nan)
         for i, h in enumerate(halflives):
             for j, b in enumerate(BURN_INS):
@@ -113,17 +116,21 @@ def _heatmaps(rows: list[dict[str, Any]], fig_dir: Path, minutes: int, reps: int
         for i in range(m.shape[0]):
             for j in range(m.shape[1]):
                 if np.isfinite(m[i, j]):
-                    ax.text(j, i, f"{m[i, j]:+.0f}%", ha="center", va="center", fontsize=9)
+                    ax.text(
+                        j, i, f"{m[i, j]:+.0f}%".replace("-", "−"), ha="center", va="center",
+                        fontsize=10, color="white" if abs(m[i, j]) > 25 else "black",
+                    )  # fmt: skip
         ax.set_xticks(range(len(BURN_INS)), [f"{b}s" for b in BURN_INS])
         ax.set_yticks(range(len(halflives)), [f"{h:g}s" for h in halflives])
         ax.set_xlabel("Bỏ đầu khối (burn-in)")
-        ax.set_ylabel("Nửa đời dư âm")
-        ax.set_title(f"Khối {blk} phút")
+        if k == 0:
+            ax.set_ylabel("Nửa đời dư âm")
+        ax.set_title(f"Khối {blk} phút", fontsize=11)
     fig.colorbar(im, ax=axes[0].tolist(), shrink=0.85, label="Lệch tương đối (%)")
     fig.suptitle(
         f"MÔ PHỎNG · Lệch của ước lượng khi hiệu ứng thật +30% "
         f"(3 phiên × {minutes} phút, R={reps})",
-        fontsize=10,
+        fontsize=11,
     )
     p1 = fig_dir / "liveroom-lech-du-am.png"
     fig.savefig(p1, dpi=160, bbox_inches="tight")
@@ -131,7 +138,9 @@ def _heatmaps(rows: list[dict[str, Any]], fig_dir: Path, minutes: int, reps: int
     out.append(p1)
 
     # Figure 2 — rejection rate: size (τ = 0) and power (τ = 0.3) at the pre-registered burn-in.
-    fig, axes = plt.subplots(1, 2, figsize=(8.6, 3.4), squeeze=False)
+    fig, axes = plt.subplots(
+        1, 2, figsize=(9.2, 3.8), squeeze=False, sharey=True, layout="constrained"
+    )
     for ax, tau, title, vmax in (
         (axes[0][0], 0.0, "Dương tính giả (τ = 0, mục tiêu ≤ 5%)", 0.2),
         (axes[0][1], 0.3, "Lực phát hiện (τ = +30%)", 1.0),
@@ -157,11 +166,11 @@ def _heatmaps(rows: list[dict[str, Any]], fig_dir: Path, minutes: int, reps: int
                     )
         ax.set_xticks(range(len(blocks)), [f"khối {b} phút" for b in blocks])
         ax.set_yticks(range(len(halflives)), [f"dư âm {h:g}s" for h in halflives])
-        ax.set_title(title, fontsize=10)
+        ax.set_title(title, fontsize=11)
     fig.suptitle(
         f"MÔ PHỎNG · Kiểm định ngẫu nhiên hóa, burn-in {PRIMARY_BURN_IN}s, "
         f"3 phiên × {minutes} phút, R={reps}",
-        fontsize=10,
+        fontsize=11,
     )
     p2 = fig_dir / "liveroom-co-va-luc.png"
     fig.savefig(p2, dpi=160, bbox_inches="tight")
