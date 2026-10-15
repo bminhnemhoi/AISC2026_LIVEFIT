@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useExperimentDesk } from "@/lib/livelift-api/client";
 import { estimateState, fmtNum, funnel, sourceLabel, summaryLines } from "@/lib/livelift-api/desk";
-import { EstimateCard, SourceBadge } from "./parts";
+import { EstimateCard, SourceBadge, VerdictBanner } from "./parts";
 import "../livedesk/calm.css";
 import "./phien.css";
 
@@ -32,6 +32,7 @@ export function RecapExperiment({ sessionId }: { sessionId: string }) {
           <main>
             <section className="ph-card ph-paper">
               <h2>Hiệu ứng của việc ghim (ước lượng bằng bốc thăm)</h2>
+              <VerdictBanner state={estimateState(report)} />
               <EstimateCard state={estimateState(report)} />
             </section>
             {summaryLines(report).length > 0 && (

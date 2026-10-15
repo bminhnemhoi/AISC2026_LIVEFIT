@@ -476,6 +476,33 @@ Nguồn: dữ liệu trưng bày công khai của vòng 2 (77 đội, tải ngà
 
 Thông điệp khi được hỏi về đội khác: các đội cùng mảng thương mại điện tử giúp người bán dự đoán và tự động hóa; LiveLift trả lời câu hỏi đứng sau mọi đề xuất đó, "làm vậy có thật sự bán thêm không". Đây là quan hệ bổ sung, không phải cạnh tranh trực tiếp.
 
+### 6.3 So trực diện theo tiêu chí chấm Vòng 2 và việc đã làm để vượt
+
+Tiêu chí Vòng 2 (trang BTC, kiểm 14/10/2026; không công bố trọng số): ý nghĩa và tính mới; trình bày và phương pháp; demo và trả lời câu hỏi; sản phẩm (giao diện, công nghệ, khả năng mở rộng, thương mại hoá, đóng góp xã hội). Đối thủ so sánh là 5 đội "trực tiếp" (0010, 0015, 0028, 0051, 0058) và 0027 (gần nhất về tư duy tác động). **Giới hạn:** chỉ dựa trên phần giới thiệu công khai, khoảng 1.000 ký tự mỗi đội; chưa xem slide hay sản phẩm của họ.
+
+| Tiêu chí | Đội có thể hơn LiveLift ở đâu | LiveLift hơn ở đâu | Việc đã làm hoặc sẽ làm để bù |
+|---|---|---|---|
+| Ý nghĩa, tính mới | 0010, 0058 dùng "tác tử AI" — chủ đề hội đồng dễ chú ý | Đội duy nhất trong 77 đội làm thí nghiệm ngẫu nhiên; đội duy nhất làm livestream; ô "thí nghiệm cho người đi thuê sân" chưa công cụ thương mại nào lấp (§6.1) | Slide 3 đặt ma trận định vị; câu hỏi đáp 29 (TikTok +7,38% không đối chứng); AI vẫn có mặt ở 3 chỗ (tầng trong, radar ý định, lọc dữ liệu cá nhân) — câu dự phòng "AI nằm ở đâu" |
+| Phương pháp | 0051 dùng khoảng 41.603 bản ghi thật trên Tiki; 0027 có uplift modeling | Thiết kế có văn liệu 2023–2026 làm nền; kiểm định chính xác; LiveRoomSim lưới 40 ô × 200 lần; tự tìm và sửa lỗi p-value (sổ sự cố hàng 122) | Slide 6–7; giải thích vì sao uplift trên dữ liệu quan sát không thay được bốc thăm (câu hỏi đáp 3, 24) |
+| Dữ liệu thật | 0051, 0058 có dữ liệu sàn thật; LiveLift có 0 phiên với người bán thật | 19.126 bình luận quan sát; phòng dàn dựng có người thật, đồng ý, ẩn danh | Phòng dàn dựng 18–20/10 (cổng G2 đạt 15/10); slide 13 nói thẳng các số 0 |
+| Demo | 0010, 0028 có thể demo nhiều tính năng | Sản phẩm chạy thật trên API và cơ sở dữ liệu; ba màn hình của cùng một phiên; điện thoại người xem | Demo 2 phút theo `02` §3.2; video dự phòng trước 21/10 |
+| Giao diện, công nghệ | 0058 nối POS, Shopee, TikTok Shop, giao nhận | Proxy có danh sách cho phép, token không tới trình duyệt; đường hầm chỉ mở phòng xem; nhãn nguồn dữ liệu luôn hiện | Tài liệu `docs/kien-truc/hop-nhat-next-api.md`; slide 10, D2 |
+| Thương mại hoá | 0028 đóng gói nhiều đề xuất cho cùng khách hàng; 0015, 0058 gắn trực tiếp với tiền tồn kho | Đường vào Shopee có API ghim tự động; gói Performance kiểm chứng được | Còn yếu: 0 phỏng vấn mức sẵn lòng chi trả — việc cần người (Minh) trước 22/10 nếu kịp |
+| Đóng góp xã hội | — | Người bán nhỏ tránh chi tiền cho chiêu không hiệu quả; minh bạch đúng hướng Luật TMĐT (định danh người livestream từ 01/01/2027) | Câu hỏi đáp 38 |
+
+**Học từ các đội và ĐÃ đưa vào sản phẩm (15/10/2026):**
+
+| Ý tưởng | Học từ | Đã làm trong LiveLift | Kiểm thử |
+|---|---|---|---|
+| Tồn kho an toàn và điểm đặt hàng lại | 0015, 0058 (và tác tử kiểm tồn kho trước khi tạo đơn của 0010) | Hệ thống chỉ ghim sản phẩm còn đủ hàng cho nhu cầu dự kiến của **một khối** × hệ số an toàn 2; lệnh ghim bị từ chối kèm lý do "SẮP HẾT HÀNG". Ghim một món sắp hết làm hết hàng giữa khối BẬT và lan sang khối sau (Chen và cộng sự, EC 2026) | `tests/test_ung_vien.py`; `src/livelift/api/ung_vien.py` |
+| Ba đầu ra "đổi, giữ nguyên, đo thêm" | 0080 | Trang tổng kết và bàn thí nghiệm hiện quyết định **ĐỔI / GIỮ / ĐO THÊM / CHỜ** phía trên con số, chỉ dựa vào KTC 95% | `next/…/__tests__/hoc-tu-doi-khac.test.ts` (`verdict`) |
+| Chỉ cảnh báo khi nhiều tín hiệu cùng xấu và kéo dài | 0068 | Thẻ "Nhịp phòng": cảnh báo chỉ khi người xem **và** lượt nhấp cùng dưới dải bình thường 10 phút liền; ghi rõ là mô tả, không phải nhân quả | như trên (`roomPulse`) |
+| Dải tham chiếu từ dữ liệu tương đồng | 0072, 0051 | Dải bình thường (tứ phân vị) tính từ chính các cửa sổ 5 phút trước đó của phiên | như trên |
+
+Một lỗi đồng bộ tìm ra trong lúc làm việc này: thẻ gợi ý trên bàn vận hành dựng từ toàn bộ danh mục, còn lệnh ghim đã lọc theo sản phẩm của phòng dàn dựng. Nay cả hai dùng chung `xep_hang_ung_vien` (`tests/test_api_xem.py::test_desk_cards_use_the_same_room_candidates_as_execute`).
+
+**Chưa làm (để ngỏ có chủ đích):** bộ lọc "độ xác thực" của bình luận theo 0025 (cần nhãn, không kịp kiểm chứng trước 22/10); khía cạnh cảm xúc của 0013 (radar ý định đang yếu ở thang 11 lớp, chưa nên mở rộng); gom dữ liệu đơn đa kênh như 0058 (cần API đã được duyệt).
+
 ## 7. Gói dùng cho slide
 
 ### 7.1 Ba thông điệp

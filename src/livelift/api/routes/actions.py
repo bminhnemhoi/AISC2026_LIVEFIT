@@ -19,7 +19,7 @@ from fastapi import APIRouter, HTTPException
 
 from livelift.api import service
 from livelift.api.auth import cho_phep_demo
-from livelift.api.cards import MAX_CARDS, build_candidates, pin_cards_blocked_reason
+from livelift.api.cards import MAX_CARDS, pin_cards_blocked_reason
 from livelift.api.schemas import (
     CandidateOut,
     ExecuteOut,
@@ -28,6 +28,7 @@ from livelift.api.schemas import (
     OverrideRequest,
 )
 from livelift.api.service import StoreDep
+from livelift.api.ung_vien import phut_cua_khoi, xep_hang_ung_vien
 from livelift.core.assigner import Candidate, choose_action, intervals_overlap
 
 router = APIRouter()
@@ -68,6 +69,7 @@ def refusal_for_unpinnable_product(
     ranked: list[Candidate],
     *,
     from_card: bool,
+    nguong: dict[str, int] | None = None,
 ) -> HTTPException:
     """The TRUE reason ``product_id`` cannot be pinned right now, as an error.
 
@@ -115,6 +117,17 @@ def refusal_for_unpinnable_product(
             detail=(
                 f"«{product.get('name') or product_id}» đang HẾT HÀNG (tồn kho {stock}) "
                 "nên không được đề xuất ghim. Cập nhật tồn kho rồi ghim lại."
+            ),
+        )
+    can = (nguong or {}).get(product_id, 1)
+    if stock < can:
+        return HTTPException(
+            status_code=409,
+            detail=(
+                f"«{product.get('name') or product_id}» SẮP HẾT HÀNG: còn {stock}, dưới ngưỡng "
+                f"an toàn {can} cho một khối (nhu cầu dự kiến trong khối × hệ số an toàn). Ghim "
+                "lúc này dễ hết hàng giữa khối BẬT — người xem bấm mà không mua được. Nhập thêm "
+                "hàng rồi ghim lại, hoặc chọn một thẻ đang được gợi ý."
             ),
         )
 
@@ -201,33 +214,23 @@ def execute_action(session_id: str, body: ExecuteRequest, store: StoreDep) -> Ex
             ),
         )
 
-    recent_clicks: dict[str, int] = {}
-    for c in store.list_clicks(session_id):
-        pid = c.get("product_id")
-        if pid:
-            recent_clicks[pid] = recent_clicks.get(pid, 0) + 1
-    products = store.list_products()
-    # Phòng xem dàn dựng (15/10/2026): ứng viên CHỈ là sản phẩm của phòng. Danh
-    # mục dùng chung toàn hệ thống; không lọc thì autopilot có thể ghim một sản
-    # phẩm người xem không thấy, và khối BẬT thành khối không can thiệp.
-    room_products = (session.get("phong_xem") or {}).get("products")
-    if session.get("platform") == "lab" and room_products:
-        allowed_ids = set(room_products)
-        products = [p for p in products if p["product_id"] in allowed_ids]
+    # ONE candidate definition with the desk cards (livelift.api.ung_vien): the
+    # staged room's own products only, and a per-block reorder point on stock.
     # The FULL ranking, not just the displayed slice: a refusal has to be able
     # to say where the requested product actually stands. The suggestion set
     # stays `MAX_CARDS` — that limit is the desk's, and it is the one the
     # inner-tier propensity is logged over (§6.2).
-    ranked = build_candidates(
-        products, recent_clicks, store.list_ticks(session_id), top_k=max(len(products), 1)
+    products, ranked, nguong = xep_hang_ung_vien(
+        store, session, elapsed, phut_cua_khoi(block), top_k=10_000
     )
     candidates = ranked[:MAX_CARDS]
     if not candidates:
         raise HTTPException(
             status_code=409,
             detail=(
-                f"Không có sản phẩm nào còn hàng để ghim: cả {len(products)} sản phẩm "
-                "trong kho đều có tồn kho 0. Cập nhật tồn kho bằng POST /products."
+                f"Không có sản phẩm nào đủ hàng để ghim: cả {len(products)} sản phẩm đều "
+                "dưới ngưỡng tồn kho an toàn của một khối (hoặc hết hàng). Cập nhật tồn "
+                "kho bằng POST /products."
             ),
         )
 
@@ -245,6 +248,7 @@ def execute_action(session_id: str, body: ExecuteRequest, store: StoreDep) -> Ex
                 # A desk sends card_id AND product_id for the same card; a
                 # script that names a product outright sends no card at all.
                 from_card=product_id_from_card(body.card_id) == requested,
+                nguong=nguong,
             )
         candidates = scoped
 

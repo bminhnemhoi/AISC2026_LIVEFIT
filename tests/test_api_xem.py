@@ -299,6 +299,32 @@ def test_lab_pins_only_room_products_even_with_a_shared_catalog(env, clock):
         assert pinned <= {"A1", "A2"}
 
 
+def test_desk_cards_use_the_same_room_candidates_as_execute(env, clock):
+    """15/10/2026: /state built its cards from the whole catalog while /actions/execute
+    filtered to the room, so the desk could invite a pin the server would refuse. Both
+    now go through livelift.api.ung_vien."""
+    store = InMemoryStore()
+    with TestClient(create_app(store=store)) as client:
+        for pid in ("A1", "A2", "NGOAI-1", "NGOAI-2", "NGOAI-3"):
+            client.post(
+                "/products",
+                json={"product_id": pid, "name": pid, "cost": 1, "price": 2, "stock": 50},
+            )
+        sid = client.post(
+            "/sessions", json={"platform": "lab", "planned_duration_min": 60, "mode": "auto"}
+        ).json()["session_id"]
+        client.post(f"/sessions/{sid}/schedule", json={})
+        client.post(
+            f"/sessions/{sid}/phong-xem", json={"consent_version": "v", "products": ["A1", "A2"]}
+        )
+        client.post(f"/sessions/{sid}/start")
+        on = next(b for b in _blocks(store, sid) if b["assignment"] == "ON")
+        _go_to(clock, store, sid, on)
+        cards = client.get(f"/sessions/{sid}/state").json()["cards"]
+        assert cards
+        assert {c["product_id"] for c in cards} <= {"A1", "A2"}
+
+
 # ---------------------------------------------------------------------------
 # 3. Outcomes flow into the standard tables and analysis
 # ---------------------------------------------------------------------------

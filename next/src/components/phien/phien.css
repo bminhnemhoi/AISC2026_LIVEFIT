@@ -70,6 +70,14 @@
 .ld .ph-btn-primary:hover { background: var(--ink-2); }
 .ph-err { border: 1px solid var(--bad); background: var(--bad-soft); padding: var(--s-12) var(--s-16); margin-bottom: var(--s-16); }
 
+/* Quyết định cho người bán: đổi / giữ / đo thêm / chờ */
+.ph-verdict { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-12) var(--s-16); border-left: 4px solid var(--line-strong); background: var(--surface-2); margin-bottom: var(--s-16); }
+.ph-verdict strong { font-size: var(--fs-20); letter-spacing: var(--track-label); }
+.ph-verdict span { color: var(--ink-2); font-size: var(--fs-14); }
+.ph-verdict[data-kind="doi"] { border-left-color: var(--on); background: var(--on-soft); }
+.ph-verdict[data-kind="giu"] { border-left-color: var(--warn-line); background: var(--warn-soft); }
+.ph-verdict[data-kind="do_them"] { border-left-color: var(--ink); }
+
 .ph-table { width: 100%; border-collapse: collapse; font-size: var(--fs-14); }
 .ph-table .ph-badge { white-space: nowrap; }
 .ph-table .ph-badge-note { display: none; }

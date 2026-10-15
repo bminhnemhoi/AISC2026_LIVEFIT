@@ -105,6 +105,115 @@ export function estimateState(report: Pick<BaoCao, "loai_phien" | "ket_qua_thi_n
   };
 }
 
+export interface PulseWindow {
+  viewers: number;
+  clickRate: number;
+}
+
+export interface RoomPulse {
+  /** Windows of the session so far (5 minutes each, oldest first). */
+  windows: PulseWindow[];
+  last: PulseWindow | null;
+  /** Interquartile band of the EARLIER windows — the session's own "normal". */
+  viewersBand: [number, number] | null;
+  clickBand: [number, number] | null;
+  /** Both signals under their band in the last TWO windows. */
+  alert: boolean;
+  note: string;
+}
+
+const PULSE_WINDOW_S = 300;
+const PULSE_MIN_REFERENCE = 4;
+
+function quartiles(xs: number[]): [number, number] {
+  const s = [...xs].sort((a, b) => a - b);
+  const q = (p: number): number => {
+    const i = (s.length - 1) * p;
+    const lo = Math.floor(i);
+    const hi = Math.ceil(i);
+    return s[lo] + (s[hi] - s[lo]) * (i - lo);
+  };
+  return [q(0.25), q(0.75)];
+}
+
+/**
+ * "Nhịp phòng": the last 5 minutes against the session's own normal band, DESCRIPTIVE only. Two Round-2 ideas:
+ * a reference band built from comparable history (AISC26-0072, AISC26-0051), and raising an alert only when
+ * SEVERAL signals stay bad together (AISC26-0068) — here viewers AND click rate under their band for two windows
+ * in a row, so one noisy minute never pages the operator. It never feeds the causal estimate.
+ */
+export function roomPulse(ticks: Tick[]): RoomPulse {
+  const per = PULSE_WINDOW_S / BUCKET_S;
+  const windows: PulseWindow[] = [];
+  for (let i = 0; i + per <= ticks.length; i += per) {
+    const w = ticks.slice(i, i + per);
+    const vs = w.reduce((s, t) => s + Math.max(0, t.viewers) * BUCKET_S, 0);
+    const clicks = w.reduce((s, t) => s + (t.click_count ?? 0), 0);
+    windows.push({ viewers: vs / PULSE_WINDOW_S, clickRate: vs > 0 ? (clicks / vs) * 1000 : 0 });
+  }
+  const last = windows.length ? windows[windows.length - 1] : null;
+  const ref = windows.slice(0, -2);
+  if (ref.length < PULSE_MIN_REFERENCE) {
+    return { windows, last, viewersBand: null, clickBand: null, alert: false, note: "Chưa đủ lịch sử trong phiên để có dải bình thường (cần khoảng 30 phút)." };
+  }
+  const viewersBand = quartiles(ref.map(w => w.viewers));
+  const clickBand = quartiles(ref.map(w => w.clickRate));
+  const tail = windows.slice(-2);
+  const alert = tail.length === 2 && tail.every(w => w.viewers < viewersBand[0] && w.clickRate < clickBand[0]);
+  const note = alert
+    ? "Người xem và lượt nhấp cùng dưới dải bình thường 10 phút liền. Đây là mô tả, không phải kết luận nhân quả; lịch thí nghiệm vẫn giữ nguyên."
+    : "Trong hoặc trên dải bình thường của phiên.";
+  return { windows, last, viewersBand, clickBand, alert, note };
+}
+
+export type VerdictKind = "doi" | "giu" | "do_them" | "cho";
+
+export interface Verdict {
+  kind: VerdictKind;
+  label: string;
+  detail: string;
+}
+
+/**
+ * The decision the seller reads first: change, keep, or measure more — never a bare p-value. Borrowed from a
+ * Round-2 team (AISC26-0080) that compares every option to the current schedule and dares to say "keep" or
+ * "measure more"; here the comparison is the randomized OFF arm, and the rule is the 95% interval alone.
+ */
+export function verdict(state: EstimateState): Verdict {
+  switch (state.kind) {
+    case "estimate":
+      if (state.ciLow > 0) {
+        return {
+          kind: "doi",
+          label: "ĐỔI SANG cách ghim của LiveLift",
+          detail: "Khoảng tin cậy nằm hẳn trên 0: chiến lược ghim của LiveLift tạo thêm lượt nhấp so với cách làm thường lệ của đội.",
+        };
+      }
+      if (state.ciHigh < 0) {
+        return {
+          kind: "giu",
+          label: "GIỮ cách làm cũ",
+          detail: "Khoảng tin cậy nằm hẳn dưới 0: ghim theo LiveLift làm giảm lượt nhấp. Tác dụng ngược cũng là một phép đo thật.",
+        };
+      }
+      return {
+        kind: "do_them",
+        label: "ĐO THÊM",
+        detail: "Khoảng tin cậy còn chứa 0: chưa đủ bằng chứng theo hướng nào. Chạy thêm phiên từ 90 phút, khối 5 phút, rồi gộp.",
+      };
+    case "not_enough":
+      return {
+        kind: "do_them",
+        label: "ĐO THÊM",
+        detail: `Mới có ${state.nBlocks} khối đo được, chưa đủ để kết luận. Phiên thí nghiệm cần từ 90 phút với khối 5 phút.`,
+      };
+    case "locked":
+      return { kind: "cho", label: "CHỜ HẾT PHIÊN", detail: "Kết quả khoá đến khi phiên kết thúc, để không ai nhìn trộm giữa chừng." };
+    case "observational":
+      return { kind: "cho", label: "KHÔNG CÓ QUYẾT ĐỊNH NHÂN QUẢ", detail: "Phiên quan sát: không có bốc thăm nên không kết luận được tác động." };
+  }
+}
+
 /** Display names of the 11 intent labels — same table as src/livelift/nlp/labels.py LABEL_DISPLAY. */
 /** Badges of `livelift.analysis.narrate` (BADGE_THI_NGHIEM / BADGE_QUAN_SAT / BADGE_THIEU_DU_LIEU). */
 export const SUMMARY_BADGE: Readonly<Record<string, string>> = {

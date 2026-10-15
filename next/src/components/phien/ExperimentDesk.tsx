@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { api, useExperimentDesk } from "@/lib/livelift-api/client";
-import { blockStrip, estimateState, fmtNum, funnel, intentLabel, mmss, sourceLabel } from "@/lib/livelift-api/desk";
-import { EstimateCard, SourceBadge } from "./parts";
+import { blockStrip, estimateState, fmtNum, funnel, intentLabel, mmss, roomPulse, sourceLabel } from "@/lib/livelift-api/desk";
+import { EstimateCard, SourceBadge, VerdictBanner } from "./parts";
 import "../livedesk/calm.css";
 import "./phien.css";
 
@@ -31,6 +31,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
   const strip = blockStrip(blocks, state.elapsed_s);
   const f = funnel(ticks, orders);
   const est = estimateState(report);
+  const pulse = roomPulse(ticks);
   const cb = state.current_block;
   const arm = cb && !cb.is_washout && cb.assignment ? cb.assignment : null;
   const viewersNow = ticks.length ? ticks[ticks.length - 1].viewers : 0;
@@ -123,6 +124,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
             <section className="ph-two" aria-label="So sánh hai loại gợi ý">
               <div className="ph-card">
                 <h2>Ước lượng hiệu ứng ghim (bốc thăm)</h2>
+                <VerdictBanner state={est} />
                 <EstimateCard state={est} />
               </div>
               <div className="ph-card">
@@ -141,6 +143,26 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
           </main>
 
           <aside>
+            <section className="ph-card" aria-labelledby="h-pulse" data-testid="room-pulse">
+              <h2 id="h-pulse">Nhịp phòng (mô tả, 5 phút gần nhất)</h2>
+              {pulse.last && pulse.viewersBand && pulse.clickBand ? (
+                <table className="ph-table">
+                  <tbody>
+                    <tr>
+                      <th>Người xem</th>
+                      <td>{fmtNum(pulse.last.viewers, 0)}</td>
+                      <td className="ph-small">dải {fmtNum(pulse.viewersBand[0], 0)}–{fmtNum(pulse.viewersBand[1], 0)}</td>
+                    </tr>
+                    <tr>
+                      <th>Click / 1.000 giây</th>
+                      <td>{fmtNum(pulse.last.clickRate, 2)}</td>
+                      <td className="ph-small">dải {fmtNum(pulse.clickBand[0], 2)}–{fmtNum(pulse.clickBand[1], 2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : null}
+              <p className={pulse.alert ? "ph-err" : "ph-small"} style={{ marginBottom: 0 }}>{pulse.note}</p>
+            </section>
             <section className="ph-card" aria-labelledby="h-feed">
               <h2 id="h-feed">Bình luận (đã che thông tin cá nhân)</h2>
               {comments.length === 0 ? (

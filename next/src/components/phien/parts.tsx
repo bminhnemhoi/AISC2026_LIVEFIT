@@ -1,5 +1,16 @@
 import type { EstimateState, SourceLabel } from "@/lib/livelift-api/desk";
-import { fmtNum } from "@/lib/livelift-api/desk";
+import { fmtNum, verdict } from "@/lib/livelift-api/desk";
+
+/** The seller-facing decision (đổi / giữ / đo thêm) above the numbers it rests on. */
+export function VerdictBanner({ state }: { state: EstimateState }) {
+  const v = verdict(state);
+  return (
+    <div className="ph-verdict" data-kind={v.kind} data-testid="verdict" role="status">
+      <strong>{v.label}</strong>
+      <span>{v.detail}</span>
+    </div>
+  );
+}
 
 export function SourceBadge({ label }: { label: SourceLabel }) {
   return (
