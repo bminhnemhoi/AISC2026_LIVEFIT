@@ -1,6 +1,6 @@
 # Nhật ký test — hệ thống đã được thử trên những gì
 
-*Một bảng duy nhất, mỗi dòng một lần test. Cập nhật lần cuối: 11/09/2026.*
+*Một bảng duy nhất, mỗi dòng một lần test. Cập nhật lần cuối: 15/10/2026.*
 
 Câu trả lời một-chỗ-nhìn cho câu hỏi "LiveLift đã chạy qua dữ liệu thật nào,
 ở đâu, kết quả ra sao". Chi tiết phương pháp và số liệu đầy đủ nằm ở cột cuối.
@@ -46,6 +46,7 @@ Quy ước đọc nhanh:
 | 11/09 (tối) | 4 buổi nạp lại vào server DỰNG MỚI: ZU_0QJzsR6w · fhv_rKUeEIc · MPJktS2rkzk · L5_mvE-Hqv4 | tái lập | **6.586 · 779 · 136 · 255** bl — khớp từng con số với 08–11/09 | Tái lập lần **4**, tiến trình thứ 4, sau khi tiến trình uvicorn cũ chết (store in-memory ⇒ mất 13 phiên); đường tải → lọc PII → phân loại → store vẫn tất định | mục "Trạng thái server" bên dưới |
 | 11/09 (tối) | Bàn `/desk` + `/bao-cao` chạy trên phiên Achan 6.586 bl THẬT (ảnh 1920×1080 và 1366×768) | kiểm chứng UI | 689 test nhanh xanh · `tsc --noEmit` sạch | Bắt **2 lỗi trung thực trên màn hình** mà gate nguồn không thấy: (1) biểu đồ "Nhịp phiên" vẫn vẽ hai đường PHẲNG ở mức 0 cho `người xem` và `lượt bấm/phút` trong khi thẻ tín hiệu ngay trên nói "THIẾU nguồn" — mâu thuẫn trên cùng một màn hình, xảy ra với **13/13 phiên replay**; (2) đổi phiên dài → phiên ngắn làm radar + feed câm ("Chưa có bình luận nào" trên buổi 6.586 bl) vì mốc nước cao `lastCommentOffset` không reset. Đã sửa cả hai kèm gate hồi quy | `tests/test_web_desk_kol.py` |
 | 11/09 (sau đó) | **Đi hết 4 luồng người dùng bằng Chrome headless** trên hệ thống đang sống (web :3000, API :8000 dựng lại): xem thử 30 giây · nạp `ZU_0QJzsR6w` qua UI · chạy trọn một phiên thí nghiệm 90 phút (tạo SP → link SP → tạo phiên → bốc thăm seed 42 → phát sóng → ghim trong khối BẬT → host → kết thúc) · đọc `/ket-qua` + `/bao-cao` | kiểm chứng UI đầu-cuối | 27 ảnh chụp thật · Achan ra **6.586** bl (tái lập lần **5**, tiến trình thứ 5) · 719 test nhanh xanh | Bắt **4 lỗi trung thực/vận hành** chỉ lộ khi bấm tay: (1) `?session=` trên `/replay` bị bỏ qua ⇒ phân tích xong mở **nhầm buổi** (đã ghi 11/09, nay có ảnh chứng); (2) khối TẮT trả 409 kèm câu giải thích đúng nhưng bàn hiện *"Không gửi được lệnh — kiểm tra kết nối API"* — chẩn đoán SAI giữa buổi live; (3) `viewers` không reset khi đổi phiên ⇒ đồng hồ khối in số người xem của **phiên trước** (41) rồi in **0** trong khi ô ngay dưới nói "THIẾU nguồn"; (4) tín hiệu `clicks` ghi *"không có link đo"* dù đã tạo 2 link — thực chất là *chưa có lượt bấm nào* | [../HUONG-DAN-SU-DUNG.md](../HUONG-DAN-SU-DUNG.md) · `tests/test_docs_huong_dan.py` |
+| 15/10 | LiveRoomSim (mô phỏng phòng live: người xem lướt, nền tảng đẩy khách, dư âm, đơn trễ) — 40 ô × 200 lần lặp × 3 phiên 120 phút | cổng mô phỏng | báo nhầm TB **4,3%** (12 ô lượt nhấp); lực +30%: **95%** khối 5 phút, 63% khối 10 phút; dư âm 300 s lệch −46% → −35% | Bản đầu (phiên 60 phút) báo nhầm 7–14% → tìm ra lỗi hoà số trong bộ kiểm định (sổ sự cố 15/10), sửa, chạy lại; quy tắc phiên ≥ 90 phút, khối 5 phút | [liveroom-kiem-dinh.md](liveroom-kiem-dinh.md) |
 
 ## Trạng thái server xem trực tiếp (11/09/2026)
 
