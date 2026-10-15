@@ -80,7 +80,11 @@ function HomeBody() {
           ))}
         </dl>
       </section>
-      <p className="home-legacy"><Link href="/legacy" data-testid="home-legacy">{c.legacy}</Link></p>
+      <p className="home-legacy">
+        <Link href="/phien" data-testid="home-experiments">{c.experimentLink}</Link>
+        {" · "}
+        <Link href="/legacy" data-testid="home-legacy">{c.legacy}</Link>
+      </p>
     </div>
   );
 }

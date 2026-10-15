@@ -71,6 +71,8 @@
 .ph-err { border: 1px solid var(--bad); background: var(--bad-soft); padding: var(--s-12) var(--s-16); margin-bottom: var(--s-16); }
 
 .ph-table { width: 100%; border-collapse: collapse; font-size: var(--fs-14); }
+.ph-table .ph-badge { white-space: nowrap; }
+.ph-table .ph-badge-note { display: none; }
 .ph-table th, .ph-table td { text-align: left; padding: var(--s-8); border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 
 /* --- phòng xem trên điện thoại --- */

@@ -52,6 +52,11 @@ async function call<T>(method: "GET" | "POST", path: string, schema: z.ZodType<T
 }
 
 export const api = {
+  sessions: () => call("GET", "sessions", SessionSchema.array()),
+  /** One ended + one LIVE sample session (is_demo). 90 minutes: shorter designs cannot be tested (M-07). */
+  seedDemo: () => call("POST", "demo/seed", AnyObjectSchema, { n_sessions: 1, duration_min: 90, effect: 0.5 }),
+  /** The fixed-seed golden demo set (idempotent: a second call returns the existing set). */
+  seedVang: () => call("POST", "demo/seed-vang", AnyObjectSchema),
   session: (id: string) => call("GET", `sessions/${id}`, SessionSchema),
   schedule: (id: string) => call("GET", `sessions/${id}/schedule`, BlockSchema.array()),
   operatorState: (id: string) => call("GET", `sessions/${id}/state`, OperatorStateSchema),
