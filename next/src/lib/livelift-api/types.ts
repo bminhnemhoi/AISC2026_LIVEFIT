@@ -119,7 +119,8 @@ export const BaoCaoSchema = z
       })
       .passthrough(),
     ket_qua_thi_nghiem: KetQuaSchema.nullish(),
-    tom_tat_3_cau: z.array(z.object({ cau: z.string().optional() }).passthrough()).default([]),
+    // livelift.analysis.narrate.Cau: {text, badge, refs}. The desk once read `cau` here and rendered an empty card.
+    tom_tat_3_cau: z.array(z.object({ text: z.string(), badge: z.string().nullish() }).passthrough()).default([]),
   })
   .passthrough();
 export type BaoCao = z.infer<typeof BaoCaoSchema>;

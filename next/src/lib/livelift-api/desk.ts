@@ -106,6 +106,26 @@ export function estimateState(report: Pick<BaoCao, "loai_phien" | "ket_qua_thi_n
 }
 
 /** Display names of the 11 intent labels — same table as src/livelift/nlp/labels.py LABEL_DISPLAY. */
+/** Badges of `livelift.analysis.narrate` (BADGE_THI_NGHIEM / BADGE_QUAN_SAT / BADGE_THIEU_DU_LIEU). */
+export const SUMMARY_BADGE: Readonly<Record<string, string>> = {
+  thi_nghiem: "Bốc thăm",
+  quan_sat: "Quan sát",
+  thieu_du_lieu: "Thiếu dữ liệu",
+};
+
+export interface SummaryLine {
+  text: string;
+  badge: string | null;
+}
+
+/** The report's three-sentence summary, each with the kind of evidence behind it. Empty texts are dropped. */
+export function summaryLines(report: Pick<BaoCao, "tom_tat_3_cau"> | null): SummaryLine[] {
+  if (!report) return [];
+  return report.tom_tat_3_cau
+    .filter(c => c.text.trim().length > 0)
+    .map(c => ({ text: c.text, badge: c.badge ? (SUMMARY_BADGE[c.badge] ?? c.badge) : null }));
+}
+
 export const INTENT_DISPLAY: Readonly<Record<string, string>> = {
   hoi_gia: "Hỏi giá",
   hoi_size: "Hỏi size",

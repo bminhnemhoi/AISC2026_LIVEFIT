@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useExperimentDesk } from "@/lib/livelift-api/client";
-import { estimateState, fmtNum, funnel, sourceLabel } from "@/lib/livelift-api/desk";
+import { estimateState, fmtNum, funnel, sourceLabel, summaryLines } from "@/lib/livelift-api/desk";
 import { EstimateCard, SourceBadge } from "./parts";
 import "../livedesk/calm.css";
 import "./phien.css";
@@ -34,12 +34,15 @@ export function RecapExperiment({ sessionId }: { sessionId: string }) {
               <h2>Hiệu ứng của việc ghim (ước lượng bằng bốc thăm)</h2>
               <EstimateCard state={estimateState(report)} />
             </section>
-            {report && report.tom_tat_3_cau.length > 0 && (
-              <section className="ph-card">
+            {summaryLines(report).length > 0 && (
+              <section className="ph-card" data-testid="recap-summary">
                 <h2>Tóm tắt</h2>
                 <ol style={{ margin: 0, paddingLeft: 20 }}>
-                  {report.tom_tat_3_cau.map((c, i) => (
-                    <li key={i}>{String((c as { cau?: string; noi_dung?: string }).cau ?? (c as { noi_dung?: string }).noi_dung ?? "")}</li>
+                  {summaryLines(report).map((c, i) => (
+                    <li key={i} style={{ marginBottom: 8 }}>
+                      {c.badge && <span className="ph-intent">{c.badge}</span>}
+                      {c.text}
+                    </li>
                   ))}
                 </ol>
               </section>

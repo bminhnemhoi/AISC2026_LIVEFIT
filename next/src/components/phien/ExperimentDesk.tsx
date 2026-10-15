@@ -135,7 +135,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
                 ) : (
                   <p className="ph-muted">{state.cards_note ?? "Chưa có gợi ý."}</p>
                 )}
-                <p className="ph-small">Giống "estimated GMV" của TikTok: dựa trên tương quan, chưa kiểm chứng nhân quả.</p>
+                <p className="ph-small">Cùng loại với gợi ý ghim của nền tảng: dựa trên tương quan, chưa kiểm chứng nhân quả.</p>
               </div>
             </section>
           </main>
@@ -159,7 +159,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
             <section className="ph-card">
               <h2>Liên kết</h2>
               <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}/tong-ket`}>Tổng kết phiên</Link></p>
-              <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}/nguoi-dan`}>Màn người dẫn (bị làm mù)</Link></p>
+              <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}/nguoi-dan`}>Màn người dẫn (làm mù một phần)</Link></p>
               <p className="ph-small">Cập nhật {data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString("vi-VN") : "—"}</p>
             </section>
           </aside>
