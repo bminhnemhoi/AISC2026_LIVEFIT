@@ -71,6 +71,18 @@ curl.exe -X POST -H "Authorization: Bearer $env:INGEST_TOKEN" http://127.0.0.1:8
 
 Tắt `cloudflared` và Caddy ngay sau đó. Báo cáo của phiên xem tại `http://localhost:3130/phien/<phiên>/tong-ket`.
 
+Đếm số người, số khối và lượt nhấp từ ảnh chụp kho (không cần token, không đọc PII), rồi ghi dòng cho slide 8:
+
+```powershell
+.venv\Scripts\python scripts\so_phong_xem.py --anh-chup data\phong-xem\snapshot.json --tu-ngay 2026-10-18 `
+    --json data\phong-xem\so-phong.json --ra-slide ..\AISC26_Vong2\so-phong-dan-dung.txt
+```
+
+- `--tu-ngay` bỏ các buổi chạy thử trước 18/10.
+- `--den 2026-10-19T21:00+07:00` cắt số tại giờ nộp slide.
+- "Lượt người" là lượt tham gia theo phiên: mã băm có muối là mã phiên, nên một người dự hai tối được đếm hai lần.
+- Chưa có khối nào chạy xong thì script không ghi gì. Khi đó slide dựng bản dự phòng bằng `dung_slide.py --du-phong-phong`.
+
 ## 6. Mẫu lời đồng ý (hiện trước khi vào phòng)
 
 > **Bạn đang vào một phòng live dàn dựng phục vụ nghiên cứu sinh viên.**
