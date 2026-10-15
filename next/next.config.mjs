@@ -18,6 +18,12 @@ const nextConfig = {
   // The SIMULATED competition launcher runs `next dev`; the route indicator is framework chrome, not LiveLift UI.
   // Compile and runtime errors still surface in the error overlay.
   devIndicators: false,
+  // The staged viewer room calls the PUBLIC JSON API at `/xem-api/*` on its own origin. Behind the tunnel Caddy routes
+  // that path to FastAPI before Next sees it (docker/Caddyfile.tunnel); without Caddy this rewrite does the same.
+  async rewrites() {
+    const api = (process.env.LIVELIFT_API_BASE || "http://127.0.0.1:8000").replace(/\/+$/, "");
+    return [{ source: "/xem-api/:path*", destination: `${api}/xem-api/:path*` }];
+  },
 };
 
 export default nextConfig;

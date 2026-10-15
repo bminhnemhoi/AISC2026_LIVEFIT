@@ -1,0 +1,69 @@
+"use client";
+
+import Link from "next/link";
+import { useExperimentDesk } from "@/lib/livelift-api/client";
+import { estimateState, fmtNum, funnel, sourceLabel } from "@/lib/livelift-api/desk";
+import { EstimateCard, SourceBadge } from "./parts";
+import "../livedesk/calm.css";
+import "./phien.css";
+
+/** Recap of one session: the experiment result exactly as /sessions/{id}/bao-cao gives it, plus the funnel. */
+export function RecapExperiment({ sessionId }: { sessionId: string }) {
+  const { data } = useExperimentDesk(sessionId, 5000);
+  const { session, report, ticks, orders } = data;
+  if (!session) {
+    return (
+      <div className="ld ph"><div className="ph-wrap">{data.error ? <div className="ph-err" role="alert">{data.error}</div> : <p className="ph-muted">Đang tải…</p>}</div></div>
+    );
+  }
+  const label = sourceLabel(session, report?.binh_luan_tong_hop ?? 0);
+  const f = funnel(ticks, orders);
+  return (
+    <div className="ld ph" data-testid="experiment-recap">
+      <div className="ph-wrap">
+        <header className="ph-top">
+          <div>
+            <h1 className="ph-title">Tổng kết · {session.title || "Phiên LiveLift"}</h1>
+            <p className="ph-sub">{report?.nhan ?? "Đang đọc báo cáo…"}</p>
+          </div>
+          <SourceBadge label={label} />
+        </header>
+        <div className="ph-grid">
+          <main>
+            <section className="ph-card ph-paper">
+              <h2>Hiệu ứng của việc ghim (ước lượng bằng bốc thăm)</h2>
+              <EstimateCard state={estimateState(report)} />
+            </section>
+            {report && report.tom_tat_3_cau.length > 0 && (
+              <section className="ph-card">
+                <h2>Tóm tắt</h2>
+                <ol style={{ margin: 0, paddingLeft: 20 }}>
+                  {report.tom_tat_3_cau.map((c, i) => (
+                    <li key={i}>{String((c as { cau?: string; noi_dung?: string }).cau ?? (c as { noi_dung?: string }).noi_dung ?? "")}</li>
+                  ))}
+                </ol>
+              </section>
+            )}
+          </main>
+          <aside>
+            <section className="ph-card">
+              <h2>Phễu cả phiên</h2>
+              <table className="ph-table">
+                <tbody>
+                  <tr><th>Phút·người xem</th><td>{fmtNum(f.viewerMinutes, 0)}</td></tr>
+                  <tr><th>Click hợp lệ</th><td>{f.clicks}</td></tr>
+                  <tr><th>Click / 1.000 giây·người xem</th><td>{f.clickRate == null ? "—" : fmtNum(f.clickRate, 3)}</td></tr>
+                  <tr><th>Đơn{session.platform === "lab" ? " (tiền ảo)" : ""}</th><td>{f.orders}</td></tr>
+                  <tr><th>Bình luận</th><td>{report?.tong_quan.tong_binh_luan ?? "—"}</td></tr>
+                </tbody>
+              </table>
+            </section>
+            <section className="ph-card">
+              <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}`}>Quay lại bàn trợ live</Link></p>
+            </section>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
