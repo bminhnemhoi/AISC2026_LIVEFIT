@@ -14,6 +14,8 @@ import "./phien.css";
 
 export const XEM_API = `${process.env.NEXT_PUBLIC_XEM_API_BASE ?? ""}/xem-api`;
 export const HEARTBEAT_MS = 15_000;
+/** Attempts per event (1 + retries) when the connection drops or a proxy answers 5xx. */
+export const SEND_ATTEMPTS = 3;
 
 const ProductSchema = z.object({ product_id: z.string(), name: z.string(), price_vnd: z.number(), image_url: z.string().nullish() });
 const StateSchema = z.object({
@@ -55,6 +57,34 @@ export function newEventId(kind: XemKind): string {
   return `${kind}-${Date.now().toString(36)}-${seq}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+export type PostOutcome = { ok: boolean; status: number | null };
+
+/**
+ * POST one room event, retrying a dropped connection or a proxy 5xx with the SAME body (hence the same event id):
+ * the server dedups on it, so a retry can never record a click twice. 4xx answers are final (consent missing,
+ * withdrawn, rate limit) and are never retried.
+ */
+export async function postEvent(
+  url: string,
+  body: string,
+  fetchImpl: typeof fetch = fetch,
+  attempts: number = SEND_ATTEMPTS,
+  backoffMs: number = 400,
+): Promise<PostOutcome> {
+  let status: number | null = null;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    if (attempt > 0 && backoffMs > 0) await new Promise(r => setTimeout(r, backoffMs * attempt));
+    try {
+      const res = await fetchImpl(url, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+      status = res.status;
+      if (res.status < 500) return { ok: res.ok, status };
+    } catch {
+      status = null;
+    }
+  }
+  return { ok: false, status };
+}
+
 function embedUrl(url: string): { kind: "video" | "iframe"; src: string } {
   const yt = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
   if (yt) {
@@ -86,17 +116,10 @@ export function XemRoom({ code }: { code: string }) {
   const send = useCallback(
     async (kind: XemKind, extra: { product_id?: string; text?: string } = {}): Promise<boolean> => {
       if (!viewerId.current) return false;
-      try {
-        const res = await fetch(`${XEM_API}/${encodeURIComponent(code)}/su-kien`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ viewer_id: viewerId.current, event_id: newEventId(kind), kind, client_time_ms: Date.now(), ...extra }),
-        });
-        if (res.status === 410) setWithdrawn(true);
-        return res.ok;
-      } catch {
-        return false;
-      }
+      const body = JSON.stringify({ viewer_id: viewerId.current, event_id: newEventId(kind), kind, client_time_ms: Date.now(), ...extra });
+      const out = await postEvent(`${XEM_API}/${encodeURIComponent(code)}/su-kien`, body);
+      if (out.status === 410) setWithdrawn(true);
+      return out.ok;
     },
     [code],
   );
@@ -223,7 +246,7 @@ export function XemRoom({ code }: { code: string }) {
           ) : (
             <section className="ph-card ph-paper">
               <h2>Trước khi vào phòng</h2>
-              <ul style={{ paddingLeft: 18, margin: 0 }}>
+              <ul className="xem-consent-list">
                 <li>Đây là phòng live <strong>dàn dựng</strong> phục vụ nghiên cứu sinh viên, không phải buổi bán hàng thật. Mọi giao dịch dùng <strong>tiền ảo</strong>.</li>
                 <li>Chúng tôi ghi các thao tác trong phòng (xem, bấm, thêm giỏ, "mua", bình luận) cùng một mã ngẫu nhiên do máy bạn tạo. Không thu tên, số điện thoại, email hay địa chỉ IP. Bình luận được tự động che thông tin cá nhân.</li>
                 <li>Cách sản phẩm hiển thị có thể thay đổi theo thời gian. Đây là một phần của nghiên cứu.</li>
@@ -249,6 +272,10 @@ export function XemRoom({ code }: { code: string }) {
   return (
     <div className="ld ph">
       <main className="xem" data-testid="xem-room">
+        <header className="xem-head">
+          <h1>{state.room.title}</h1>
+          <span className="ph-small">{state.room.source_label}</span>
+        </header>
         {media?.kind === "video" && <video className="xem-video" src={media.src} autoPlay muted loop playsInline aria-label="Video người dẫn" />}
         {media?.kind === "iframe" && <iframe className="xem-video" src={media.src} title="Video người dẫn" allow="autoplay; encrypted-media" />}
         {!media && <div className="xem-placeholder">Người dẫn đang giới thiệu sản phẩm</div>}
@@ -290,7 +317,7 @@ export function XemRoom({ code }: { code: string }) {
           <button type="button" className="ph-btn" onClick={() => void postComment()}>Gửi</button>
         </div>
 
-        <p style={{ marginTop: 24 }}>
+        <p className="xem-leave">
           <button type="button" className="ph-btn" onClick={() => void withdraw()}>Rút lui khỏi nghiên cứu</button>
         </p>
         {toast && <div className="xem-toast" role="status">{toast}</div>}

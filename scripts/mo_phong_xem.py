@@ -22,6 +22,8 @@ from typing import Any
 
 import httpx
 
+from livelift.console import configure
+
 SAN_PHAM_MAC_DINH: list[dict[str, Any]] = [
     {"product_id": "LAB-1", "name": "Sản phẩm 1", "cost": 20000, "price": 59000, "stock": 100},
     {"product_id": "LAB-2", "name": "Sản phẩm 2", "cost": 30000, "price": 89000, "stock": 100},
@@ -38,6 +40,7 @@ def _goi(client: httpx.Client, method: str, path: str, **kw: Any) -> dict[str, A
 
 
 def main(argv: list[str] | None = None) -> int:
+    configure()
     ap = argparse.ArgumentParser(description="Mở phòng xem dàn dựng (LiveLift)")
     ap.add_argument("--api", default="http://127.0.0.1:8000")
     ap.add_argument("--san-pham", type=Path, help="tệp JSON danh sách sản phẩm của phòng")

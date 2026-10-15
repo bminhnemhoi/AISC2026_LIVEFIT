@@ -48,17 +48,27 @@
 	encode zstd gzip
 	import bao_mat
 
+	# keepalive 4s: uvicorn đóng kết nối rảnh sau 5 s (mặc định). Nếu Caddy giữ
+	# lâu hơn, yêu cầu rơi đúng lúc uvicorn vừa đóng sẽ bị ECONNRESET → 502 cho
+	# người xem (đã gặp khi chạy thử G2 15/10/2026). Đóng sớm hơn phía máy chủ
+	# thì không bao giờ tái dùng một socket đã chết. Chạy uvicorn kèm
+	# --timeout-keep-alive 75 là lớp bảo vệ thứ hai.
 	handle /xem-api/* {
 		reverse_proxy {$LIVELIFT_API_UPSTREAM:host.docker.internal:8000} {
 			transport http {
 				dial_timeout 5s
 				response_header_timeout 15s
+				keepalive 4s
 			}
 		}
 	}
 
 	handle /r/* {
-		reverse_proxy {$LIVELIFT_API_UPSTREAM:host.docker.internal:8000}
+		reverse_proxy {$LIVELIFT_API_UPSTREAM:host.docker.internal:8000} {
+			transport http {
+				keepalive 4s
+			}
+		}
 	}
 
 	handle /xem/* {

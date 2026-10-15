@@ -26,7 +26,7 @@ Phòng xem dàn dựng là cách đội có dữ liệu **người thật** khi 
 
 ## 3. Mở phòng (mỗi buổi tối, khoảng 15 phút)
 
-Chạy phòng trên **một API riêng**, chỉ có sản phẩm của phòng. Lý do: autopilot chọn ứng viên trên toàn danh mục, và lệnh bật phòng sẽ cảnh báo nếu danh mục còn sản phẩm lạ.
+Nên chạy phòng trên **một API riêng** cho gọn dữ liệu. Autopilot của phiên `lab` chỉ chọn ứng viên ghim trong `products` của phòng (kể cả khi danh mục dùng chung), nên không có rủi ro ghim nhầm sản phẩm ngoài phòng (`tests/test_api_xem.py::test_lab_pins_only_room_products_even_with_a_shared_catalog`).
 
 ```powershell
 # 1) API: kho bộ nhớ có ảnh chụp, autopilot bật, đặt token
@@ -34,7 +34,10 @@ $env:STORE_BACKEND = "memory"
 $env:STORE_SNAPSHOT_PATH = "data\phong-xem\snapshot.json"
 $env:LIVELIFT_AUTOPILOT = "1"
 $env:INGEST_TOKEN = "<một chuỗi dài ngẫu nhiên>"
-.venv\Scripts\python -m uvicorn livelift.api.main:app --port 8000
+.venv\Scripts\python -m uvicorn livelift.api.main:app --port 8000 --timeout-keep-alive 75
+# --timeout-keep-alive 75: uvicorn mặc định đóng kết nối rảnh sau 5 s; proxy giữ
+# lâu hơn sẽ thỉnh thoảng gặp ECONNRESET (lỗi 502 phía người xem). Caddyfile.tunnel
+# cũng đặt keepalive 4s cho chắc.
 
 # 2) Next (cửa sổ khác)
 cd next; $env:LIVELIFT_API_BASE = "http://127.0.0.1:8000"; npm run dev

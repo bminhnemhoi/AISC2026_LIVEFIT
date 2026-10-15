@@ -80,8 +80,16 @@
 .xem-pin { border: 2px solid var(--ink); background: var(--paper); padding: var(--s-12) var(--s-16); margin: var(--s-12) 0; transform: rotate(var(--tilt-card)); }
 .xem-pin-kicker { font-size: var(--fs-12); font-weight: var(--w-strong); letter-spacing: var(--track-label); text-transform: uppercase; }
 .xem-products { list-style: none; padding: 0; margin: var(--s-12) 0; }
-.xem-products li { display: grid; grid-template-columns: 1fr auto; gap: var(--s-8); align-items: center; padding: var(--s-12) 0; border-bottom: 1px solid var(--line); }
+.xem-products li { display: grid; grid-template-columns: 1fr; gap: var(--s-8); padding: var(--s-12) 0; border-bottom: 1px solid var(--line); }
+.xem-products li > div:first-child { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-8); }
+.xem-products .xem-actions { display: grid; grid-template-columns: repeat(3, 1fr); }
 .xem-actions { display: flex; gap: var(--s-8); flex-wrap: wrap; }
+.xem-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s-8); margin-bottom: var(--s-12); }
+.xem-head h1 { font-size: var(--fs-20); margin: 0; }
+.xem-consent-list { padding-left: 18px; margin: 0; }
+.xem-consent-list li + li { margin-top: var(--s-8); }
+.xem-leave { margin-top: var(--s-24); }
+.xem-leave .ph-btn { background: transparent; border-color: var(--line-strong); color: var(--ink-2); }
 .xem-foot { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding: var(--s-8) var(--s-16); font-size: var(--fs-12); color: var(--ink-2); display: flex; justify-content: space-between; gap: var(--s-8); }
 .xem-comment { display: flex; gap: var(--s-8); margin-top: var(--s-12); }
 .xem-comment input { flex: 1; min-height: var(--target); padding: 0 var(--s-12); border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); font: inherit; }

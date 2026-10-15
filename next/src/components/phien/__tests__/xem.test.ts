@@ -1,5 +1,43 @@
 import { describe, expect, it } from "vitest";
-import { HEARTBEAT_MS, XEM_API, consentKey, getViewerId, newEventId } from "../XemRoom";
+import { HEARTBEAT_MS, SEND_ATTEMPTS, XEM_API, consentKey, getViewerId, newEventId, postEvent } from "../XemRoom";
+
+/** A fetch double that answers from a script: a number is an HTTP status, "drop" is a reset connection. */
+function scriptedFetch(script: Array<number | "drop">): { fetchImpl: typeof fetch; bodies: string[] } {
+  const bodies: string[] = [];
+  let i = 0;
+  const fetchImpl = (async (_url: string, init?: RequestInit) => {
+    bodies.push(String(init?.body));
+    const step = script[Math.min(i++, script.length - 1)];
+    if (step === "drop") throw new TypeError("fetch failed: ECONNRESET");
+    return new Response("{}", { status: step });
+  }) as unknown as typeof fetch;
+  return { fetchImpl, bodies };
+}
+
+describe("phòng xem — gửi sự kiện chịu được rớt kết nối (G2, 15/10/2026)", () => {
+  it("retries a dropped connection and a proxy 502 with the very same body", async () => {
+    const { fetchImpl, bodies } = scriptedFetch(["drop", 502, 200]);
+    const out = await postEvent("/xem-api/x/su-kien", '{"event_id":"bam-1"}', fetchImpl, 3, 0);
+    expect(out).toEqual({ ok: true, status: 200 });
+    expect(bodies).toEqual(Array(3).fill('{"event_id":"bam-1"}'));
+  });
+
+  it("never retries a 4xx: consent missing, withdrawn and rate limits are final answers", async () => {
+    for (const status of [403, 410, 422, 429]) {
+      const { fetchImpl, bodies } = scriptedFetch([status, 200]);
+      const out = await postEvent("/xem-api/x/su-kien", "{}", fetchImpl, 3, 0);
+      expect(out).toEqual({ ok: false, status });
+      expect(bodies).toHaveLength(1);
+    }
+  });
+
+  it("gives up after the attempt budget", async () => {
+    const { fetchImpl, bodies } = scriptedFetch(["drop"]);
+    const out = await postEvent("/xem-api/x/su-kien", "{}", fetchImpl, SEND_ATTEMPTS, 0);
+    expect(out).toEqual({ ok: false, status: null });
+    expect(bodies).toHaveLength(SEND_ATTEMPTS);
+  });
+});
 
 function memoryStorage(): Pick<Storage, "getItem" | "setItem"> {
   const m = new Map<string, string>();
