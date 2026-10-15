@@ -91,6 +91,7 @@ TEN_NEN_TANG: dict[str, str] = {
     "shopee": "Shopee",
     "replay": "Phát lại",
     "sim": "Mô phỏng",
+    "lab": "Phòng dàn dựng",
 }
 """Tên nền tảng viết đẹp cho người bán — cùng cách viết với bảng ``TEN_NEN_TANG``
 của wizard ``web/src/app/chay-phien/page.tsx`` để tên do máy chủ đặt và tên do

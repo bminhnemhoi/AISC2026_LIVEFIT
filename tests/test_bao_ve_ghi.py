@@ -29,6 +29,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from livelift.api.auth import (
+    MUC_CONG_KHAI,
     MUC_DEMO,
     MUC_TOKEN,
     GioiHanTanSuat,
@@ -78,6 +79,11 @@ BANG_MUC_BAO_VE: dict[tuple[str, str], str] = {
     ("POST", "/sessions/{session_id}/orders/import"): MUC_DEMO,
     ("POST", "/demo/seed"): MUC_DEMO,
     ("POST", "/demo/seed-vang"): MUC_DEMO,
+    # Phòng xem dàn dựng (15/10/2026): BẬT phòng là việc của người vận hành;
+    # GỬI THAO TÁC là của người xem ẩn danh — công khai có chủ đích, có trần
+    # riêng, chỉ ghi được vào phòng đang mở (tests/test_api_xem.py).
+    ("POST", "/sessions/{session_id}/phong-xem"): MUC_TOKEN,
+    ("POST", "/xem-api/{code}/su-kien"): MUC_CONG_KHAI,
 }
 
 
@@ -209,10 +215,24 @@ def _yeu_cau_ghi(sid: str) -> dict[tuple[str, str], tuple[str, dict[str, Any] | 
             "/replays/youtube",
             {"url": "https://www.youtube.com/watch?v=khong-tai-that"},
         ),
+        ("POST", "/sessions/{session_id}/phong-xem"): (
+            f"/sessions/{sid}/phong-xem",
+            {"consent_version": "v1", "products": ["P-TEST", "P-TEST-2"]},
+        ),
+        ("POST", "/xem-api/{code}/su-kien"): (
+            "/xem-api/khong-co-phong/su-kien",
+            {"viewer_id": "v" * 20, "event_id": "e-1", "kind": "dong_y"},
+        ),
     }
 
 
-MOI_DUONG_GHI = sorted(BANG_MUC_BAO_VE)
+MOI_DUONG_GHI = sorted(k for k, muc in BANG_MUC_BAO_VE.items() if muc != MUC_CONG_KHAI)
+"""Mọi đường ghi ĐÓNG. Đường công khai có chủ đích được kiểm riêng ở
+:func:`test_duong_cong_khai_mo_khong_token_nhung_co_tran` — gộp chung thì hoặc
+phải nới khẳng định 401 cho mọi đường, hoặc đường công khai làm đỏ một test
+mà nó vốn không thuộc về."""
+
+DUONG_CONG_KHAI = sorted(k for k, muc in BANG_MUC_BAO_VE.items() if muc == MUC_CONG_KHAI)
 
 
 # ---------------------------------------------------------------------------
@@ -237,6 +257,26 @@ def test_moi_endpoint_ghi_deu_co_mot_loi_goi_trong_bo_kiem_thu():
     """Bảng lời gọi phải phủ đúng 15 endpoint — không endpoint nào được kiểm
     thử "bằng cách bỏ qua"."""
     assert set(_yeu_cau_ghi("sid")) == set(BANG_MUC_BAO_VE)
+
+
+def test_chi_mot_duong_ghi_cong_khai():
+    """Mỗi đường công khai là một quyết định có người ký: hôm nay chỉ có một."""
+    assert DUONG_CONG_KHAI == [("POST", "/xem-api/{code}/su-kien")]
+
+
+@pytest.mark.parametrize(("method", "mau"), DUONG_CONG_KHAI)
+def test_duong_cong_khai_mo_khong_token_nhung_co_tran(
+    method, mau, khoa_sach, app_store, monkeypatch
+):
+    """Hồ sơ khoá sạch vẫn để người xem gửi thao tác (không 401) — nhưng trần
+    theo địa chỉ chặn một vòng lặp curl (429)."""
+    monkeypatch.setenv("PHONG_XEM_RATE_LIMIT_PER_MIN", "3")
+    get_settings.cache_clear()
+    _, _, client = app_store
+    duong, body = _yeu_cau_ghi("sid")[(method, mau)]
+    ma = [client.request(method, duong, json=body).status_code for _ in range(4)]
+    assert ma[:3] == [404, 404, 404], ma  # qua cổng, tới route: phòng không tồn tại
+    assert ma[3] == 429, ma
 
 
 def test_cong_xac_thuc_gan_o_cap_ung_dung():

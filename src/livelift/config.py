@@ -96,6 +96,17 @@ class Settings(BaseSettings):
     # POST /sessions/{id}/orders/import: một lượt ghi tới hàng trăm đơn, nên
     # cũng có trần riêng theo giờ (kiểm toán 17/09/2026). Đặt 0 để tắt.
     order_import_rate_limit_per_hour: int = 12
+    # Phòng xem dàn dựng (/xem-api/*, 15/10/2026): đường ghi CÔNG KHAI duy nhất,
+    # người xem ẩn danh không bao giờ có token. Hai trần chồng nhau:
+    #   - theo ĐỊA CHỈ gọi: rộng, vì cả một lớp học sau một Wi-Fi trường đi ra
+    #     cùng một địa chỉ (40 người × nhịp 15 giây + thao tác ≈ 250 lượt/phút);
+    #   - theo MÃ NGƯỜI XEM: hẹp, một người thật không bấm quá chừng này.
+    # Đặt 0 để tắt từng trần.
+    phong_xem_rate_limit_per_min: int = 600
+    phong_xem_viewer_rate_limit_per_min: int = 40
+    # AGPL §13: người dùng tương tác qua mạng phải lấy được mã nguồn. Phòng xem
+    # in đường dẫn này ở chân trang.
+    source_code_url: str = "https://github.com/bminhnemhoi/AISC2026_LIVEFIT"
 
     # --- Địa chỉ thật của người gọi sau proxy (kiểm toán 17/09/2026) --------
     # Chỉ tin X-Forwarded-For khi kết nối TRỰC TIẾP đến từ một proxy trong danh

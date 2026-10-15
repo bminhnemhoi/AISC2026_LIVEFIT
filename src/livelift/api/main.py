@@ -31,6 +31,7 @@ from livelift.api.routes import (
     reports,
     sessions,
     ws,
+    xem,
 )
 from livelift.api.store import (
     Store,
@@ -250,6 +251,7 @@ def create_app(
     app.include_router(ingest.router, tags=["ingest"])
     app.include_router(orders.router, tags=["orders"])
     app.include_router(demo.router, tags=["demo"])
+    app.include_router(xem.router, tags=["phong-xem"])
     app.include_router(ws.router)
     return app
 

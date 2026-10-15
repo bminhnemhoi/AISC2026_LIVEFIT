@@ -80,13 +80,20 @@ from livelift.config import get_settings
 
 logger = logging.getLogger("livelift.api.auth")
 
-MucBaoVe = Literal["token", "demo"]
+MucBaoVe = Literal["token", "demo", "cong_khai"]
 
 MUC_TOKEN: MucBaoVe = "token"  # noqa: S105 — tên MỨC bảo vệ, không phải bí mật
 """Luôn cần ``Authorization: Bearer <INGEST_TOKEN>`` khi token được đặt."""
 
 MUC_DEMO: MucBaoVe = "demo"
 """Cần token, HOẶC (chế độ trưng bày bật) chỉ chạm vào dữ liệu mẫu."""
+
+MUC_CONG_KHAI: MucBaoVe = "cong_khai"
+"""Đường ghi CÔNG KHAI có chủ đích: người xem ẩn danh của phòng dàn dựng
+(``/xem-api/{code}/su-kien``). Không token, không phạm vi demo — thay vào đó:
+chỉ ghi được vào phòng ĐANG MỞ theo mã công khai, qua trần tần suất riêng, và
+chỉ ghi được những loại sự kiện route cho phép. Mỗi route mang mức này phải được
+liệt kê tường minh trong bảng chính sách của ``tests/test_bao_ve_ghi.py``."""
 
 MUC_MAC_DINH: MucBaoVe = MUC_TOKEN
 """Mức của một route ghi QUÊN khai báo. Ngặt nhất — quên phải là lỗi an toàn."""
@@ -125,10 +132,19 @@ def cho_phep_demo(fn: F) -> F:
     return fn
 
 
+def cong_khai(fn: F) -> F:
+    """Đánh dấu route ghi này mở cho người xem ẩn danh (:data:`MUC_CONG_KHAI`).
+
+    Đặt NGOÀI ``@router.post(...)`` như :func:`cho_phep_demo`.
+    """
+    setattr(fn, _THUOC_TINH_MUC, MUC_CONG_KHAI)
+    return fn
+
+
 def muc_bao_ve_cua(endpoint: Any) -> MucBaoVe | None:
     """Mức đã khai báo của một hàm xử lý, hoặc ``None`` nếu chưa khai báo."""
     muc = getattr(endpoint, _THUOC_TINH_MUC, None)
-    return muc if muc in (MUC_TOKEN, MUC_DEMO) else None
+    return muc if muc in (MUC_TOKEN, MUC_DEMO, MUC_CONG_KHAI) else None
 
 
 def _moi_route(node: Any) -> list[Any]:
@@ -420,6 +436,22 @@ def _ap_gioi_han(conn: HTTPConnection) -> None:
         raise exc
 
 
+def _ap_gioi_han_phong_xem(conn: HTTPConnection) -> None:
+    """Trần theo địa chỉ cho đường ghi công khai của phòng xem (nhóm riêng,
+    không ăn lượt của nhóm "ghi" của bản trưng bày)."""
+    gioi_han = get_settings().phong_xem_rate_limit_per_min
+    cho = _bo_dem(conn).xin_luot((dia_chi_goi(conn), "phong_xem"), gioi_han, 60.0, time.monotonic())
+    if cho:
+        exc = _tu_choi(
+            conn,
+            429,
+            f"Phòng xem đang nhận quá nhiều thao tác từ cùng một mạng. Chờ {cho} giây rồi thử lại.",
+            f"vượt trần {gioi_han}/phút nhóm phong_xem",
+        )
+        exc.headers = {"Retry-After": str(cho)}
+        raise exc
+
+
 def require_write_auth(conn: HTTPConnection) -> None:
     """Cổng xác thực cho MỌI đường ghi. Gắn ở cấp ứng dụng (``create_app``).
 
@@ -444,6 +476,12 @@ def require_write_auth(conn: HTTPConnection) -> None:
     muc = muc_bao_ve_cua(endpoint) or MUC_MAC_DINH
 
     cfg = get_settings()
+    if muc == MUC_CONG_KHAI:
+        # Người xem phòng dàn dựng: không token theo thiết kế. Trần theo địa chỉ
+        # áp cả khi INGEST_TOKEN trống — đường này mở ra Internet qua đường hầm,
+        # nên "chế độ phát triển" không phải lý do để bỏ chống ngập.
+        _ap_gioi_han_phong_xem(conn)
+        return
     token = cfg.ingest_token
     if not token:
         return

@@ -26,8 +26,8 @@ ALLOWED_OVERRIDE_REASONS: frozenset[str] = frozenset({"hết hàng", "sai giá",
 
 OverrideReason = Literal["hết hàng", "sai giá", "sự cố kỹ thuật"]
 
-Platform = Literal["youtube", "facebook", "tiktok", "replay", "sim"]
-EventPlatform = Literal["youtube", "facebook", "tiktok", "shopee", "replay", "sim"]
+Platform = Literal["youtube", "facebook", "tiktok", "replay", "sim", "lab"]
+EventPlatform = Literal["youtube", "facebook", "tiktok", "shopee", "replay", "sim", "lab"]
 """Nguồn của MỘT sự kiện (bình luận, tương tác trả phí) — rộng hơn ``Platform``
 của phiên. Kiểm toán 17/09/2026: bộ thu Shopee gắn ``platform="shopee"`` cho mọi
 bình luận, nhưng API chỉ nhận năm giá trị của ``Platform`` nên trả 422, và
