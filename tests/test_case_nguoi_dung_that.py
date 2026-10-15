@@ -527,7 +527,9 @@ def test_case_2_shop_owner_runs_their_first_experiment_session(client, store):
         client,
         store,
         title="Phiên thí nghiệm đầu tiên của shop",
-        duration_min=60,
+        # 90, không phải 60: một phiên 60 phút khối 5 phút chỉ có 4 chuỗi gán khả dĩ,
+        # p chính xác không thể dưới 0,5 nên KTC không bao giờ khép (sự cố 15/10/2026)
+        duration_min=90,
         block_min=5,
         clicks_per_block=4,
         pin_on_blocks=3,

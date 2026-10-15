@@ -27,7 +27,7 @@ def seed_phien_that_mo_phong(
     store,
     n_sessions: int = 3,
     effect: float = 0.5,
-    duration_min: int = 40,
+    duration_min: int = 90,
     seed0: int = 1000,
 ) -> list[str]:
     """Seed ``n_sessions`` ended, measured, NON-demo sessions. Returns ids."""

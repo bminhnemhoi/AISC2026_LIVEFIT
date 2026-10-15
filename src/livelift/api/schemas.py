@@ -778,7 +778,9 @@ class BaoCaoOut(BaseModel):
 class DemoSeedRequest(BaseModel):
     n_sessions: int = Field(default=3, ge=1, le=20)
     effect: float = Field(default=0.15, ge=-0.9, le=5.0)
-    duration_min: int = Field(default=60, ge=30, le=180)
+    # 90, not 60: with 5-minute blocks a 60-minute session admits only 4 assignment
+    # patterns, so the sample could never be tested (M-07, incident 15/10/2026)
+    duration_min: int = Field(default=90, ge=30, le=180)
 
 
 class DemoSeedOut(BaseModel):

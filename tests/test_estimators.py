@@ -239,6 +239,62 @@ def test_degenerate_redraws_are_dropped_not_counted_as_zero():
 
 
 # ---------------------------------------------------------------------------
+# Incident 15/10/2026 — the observed assignment must tie with itself
+# ---------------------------------------------------------------------------
+
+
+def test_observed_assignment_and_its_mirror_always_count_as_ties():
+    """A reference set holding ONLY z and its mirror 1−z has |t| equal to the
+    observed one in every row, so p must be exactly 1. Before the fix the two
+    code paths disagreed in the last bits on rate-like outcomes (level ≫
+    spread) and the bare ``>=`` dropped those rows in ~60% of cases."""
+    from livelift.analysis.estimators import _batch_studentized, _p_from_stats
+
+    rng = np.random.default_rng(15)
+    z = np.array([0, 0, 1, 1] * 3)
+    zmat = np.array([z, 1 - z] * 50, dtype=np.int8)
+    for _ in range(200):
+        y = 1.0 + 0.1 * rng.normal(size=z.size)
+        p = _p_from_stats(studentized_stat(y, z), _batch_studentized(y, zmat))
+        assert p == 1.0, f"p={p}: phép gán quan sát không được tính là hòa với chính nó"
+
+
+def test_batch_statistic_matches_the_single_one_on_rate_like_outcomes():
+    """Centering keeps the batch path within float rounding of the direct one
+    even when the outcome level is far above its spread."""
+    from livelift.analysis.estimators import _batch_studentized
+
+    rng = np.random.default_rng(16)
+    z = np.array([1, 0] * 9)
+    for level in (1.0, 1e3, 1e6):
+        y = level + 0.01 * rng.normal(size=z.size)
+        t_single = studentized_stat(y, z)
+        t_batch = _batch_studentized(y, z[None, :].astype(np.int8))[0]
+        assert abs(t_batch - t_single) <= 1e-9 * max(1.0, abs(t_single)), level
+
+
+def test_null_rejection_cannot_beat_the_exact_floor_on_tiny_designs():
+    """60-minute sessions in 10-minute blocks: 4 blocks (early, mid, mid, late)
+    and only two admissible patterns per session (0011 / 1100). Over three
+    sessions there are 8 assignments, the exact two-sided p is at least 0.25,
+    and NO true null may be rejected. The LiveRoomSim grid rejected 9–14%."""
+    from livelift.analysis.estimators import _redraw_matrix
+
+    sids = np.array(["s0"] * 4 + ["s1"] * 4 + ["s2"] * 4)
+    phases = ["early", "mid", "mid", "late"] * 3
+    rng = np.random.default_rng(17)
+    rejected = 0
+    for rep in range(150):
+        zmat = _redraw_matrix(sids, phases, n_draws=200, seed=rep)
+        z = zmat[rep % zmat.shape[0]]
+        y = 1.0 + 0.1 * rng.normal(size=z.size)
+        p, _ = randomization_test(y, z, sids, phases, zmat=zmat)
+        assert p >= 0.2, f"p={p} dưới sàn chính xác 0,25 của thiết kế 8 phép gán"
+        rejected += p < 0.05
+    assert rejected == 0
+
+
+# ---------------------------------------------------------------------------
 # Review 06/09 — redraws must run the SAVED design, not the default one
 # ---------------------------------------------------------------------------
 

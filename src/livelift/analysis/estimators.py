@@ -123,6 +123,15 @@ see :func:`analyze_outer` and the audit note in ``docs/incident-log.md``.
 """
 
 
+_TIE_RTOL = 1e-9
+"""Relative tolerance under which a redrawn statistic ties the observed one.
+
+Far above float rounding of the studentized statistic (~1e-15 relative once the
+batch path centres y) and far below any difference a real assignment change can
+make, so it only ever reunites an assignment with itself or its mirror.
+"""
+
+
 def _se_is_degenerate(se: float, m1: float, m0: float) -> bool:
     """Scale-aware zero test for the studentized denominator.
 
@@ -264,21 +273,29 @@ def _batch_studentized(y: np.ndarray, zmat: np.ndarray) -> np.ndarray:
     every p-value downward.
     """
     y = np.asarray(y, float)
+    # The statistic is shift-invariant, so work on y centred at its mean. Without
+    # this, q − n·m² cancels catastrophically when the level dwarfs the spread
+    # (click rates ≈ 1.0 with SD ≈ 0.1): the redraw of the OBSERVED assignment
+    # then differs from studentized_stat in the last bits — incident 15/10/2026,
+    # see _p_from_stats.
+    mu = float(y.mean()) if y.size else 0.0
+    yc = y - mu
     n1 = zmat.sum(axis=1)
     n0 = zmat.shape[1] - n1
     ok = (n1 >= MIN_BLOCKS_PER_ARM) & (n0 >= MIN_BLOCKS_PER_ARM)
     with np.errstate(divide="ignore", invalid="ignore"):
-        s1 = zmat @ y
-        s0 = y.sum() - s1
+        s1 = zmat @ yc
+        s0 = yc.sum() - s1
         m1 = np.where(n1 > 0, s1 / np.maximum(n1, 1), np.nan)
         m0 = np.where(n0 > 0, s0 / np.maximum(n0, 1), np.nan)
-        q1 = zmat @ (y**2)
-        q0 = (y**2).sum() - q1
+        q1 = zmat @ (yc**2)
+        q0 = (yc**2).sum() - q1
         # unbiased variances
         v1 = (q1 - n1 * m1**2) / np.maximum(n1 - 1, 1)
         v0 = (q0 - n0 * m0**2) / np.maximum(n0 - 1, 1)
         se = np.sqrt(np.maximum(v1, 0) / np.maximum(n1, 1) + np.maximum(v0, 0) / np.maximum(n0, 1))
-        scale = 1e-12 * np.maximum(1.0, np.abs(m1) + np.abs(m0))
+        # degeneracy is judged on the UNCENTRED means, exactly as _se_is_degenerate does
+        scale = 1e-12 * np.maximum(1.0, np.abs(m1 + mu) + np.abs(m0 + mu))
         t = np.where(se > scale, (m1 - m0) / se, 0.0)
     return np.where(ok, t, np.nan)
 
@@ -296,14 +313,26 @@ def _p_from_stats(t_obs: float, t_draws: np.ndarray) -> float:
 
     Degenerate draws (NaN) are dropped from the reference set and the p-value
     is computed over the valid ones only.
+
+    TIES COUNT AS EXTREME, WITH A TOLERANCE (incident 15/10/2026). ``t_obs``
+    comes from :func:`studentized_stat` and the draws from
+    :func:`_batch_studentized`; for the very same assignment the two can differ
+    in the last bits. A bare ``>=`` then drops the observed assignment (and its
+    mirror 1−z) from the count. On a 60-minute session cut into 10-minute
+    blocks the design admits only two patterns per session (0011 / 1100), eight
+    in total over three sessions, so the exact p-value can never fall below
+    0.25 — yet the bare comparison rejected 9–14% of true nulls in the
+    LiveRoomSim grid. Draws within :data:`_TIE_RTOL` of ``|t_obs|`` are ties.
     """
     if not np.isfinite(t_obs):
         return float("nan")
     valid = t_draws[np.isfinite(t_draws)]
     if valid.size == 0:
         return float("nan")
+    t_abs = abs(t_obs)
+    tol = _TIE_RTOL * max(1.0, t_abs)
     # add-one correction keeps the p-value valid (never exactly 0)
-    return float((1 + np.sum(np.abs(valid) >= abs(t_obs))) / (1 + valid.size))
+    return float((1 + np.sum(np.abs(valid) >= t_abs - tol)) / (1 + valid.size))
 
 
 def _build_zmat(
