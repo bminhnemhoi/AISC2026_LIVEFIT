@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { api, useExperimentDesk } from "@/lib/livelift-api/client";
-import { blockStrip, estimateState, fmtNum, funnel, mmss, sourceLabel } from "@/lib/livelift-api/desk";
+import { blockStrip, estimateState, fmtNum, funnel, intentLabel, mmss, sourceLabel } from "@/lib/livelift-api/desk";
 import { EstimateCard, SourceBadge } from "./parts";
 import "../livedesk/calm.css";
 import "./phien.css";
@@ -149,7 +149,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
                 <ul className="ph-feed">
                   {[...comments].reverse().slice(0, 40).map(c => (
                     <li key={c.comment_id}>
-                      {c.intent && <span className="ph-intent">{c.intent}</span>}
+                      {c.intent && <span className="ph-intent">{intentLabel(c.intent)}</span>}
                       {c.text}
                     </li>
                   ))}

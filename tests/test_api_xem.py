@@ -265,22 +265,38 @@ def test_only_lab_sessions_can_open_a_room(env, clock):
         assert r.status_code == 409
 
 
-def test_room_warns_when_the_catalog_has_foreign_products(env, clock):
+def test_lab_pins_only_room_products_even_with_a_shared_catalog(env, clock):
+    """The catalog is shared system-wide; a lab session must still only ever pin
+    one of its own room products (otherwise the viewer would see no card in an
+    ON block and the treatment would silently not happen)."""
     store = InMemoryStore()
     with TestClient(create_app(store=store)) as client:
-        for pid in ("A1", "A2", "LA"):
+        for pid in ("A1", "A2", "NGOAI-1", "NGOAI-2", "NGOAI-3"):
             client.post(
                 "/products",
                 json={"product_id": pid, "name": pid, "cost": 1, "price": 2, "stock": 5},
             )
         sid = client.post(
-            "/sessions", json={"platform": "lab", "planned_duration_min": 30, "mode": "auto"}
+            "/sessions", json={"platform": "lab", "planned_duration_min": 60, "mode": "auto"}
         ).json()["session_id"]
+        assert client.post(f"/sessions/{sid}/schedule", json={}).status_code == 200
         r = client.post(
             f"/sessions/{sid}/phong-xem", json={"consent_version": "v", "products": ["A1", "A2"]}
         )
         assert r.status_code == 200
-        assert any("LA" in w for w in r.json()["warnings"])
+        assert r.json()["warnings"] == []
+        assert client.post(f"/sessions/{sid}/start").status_code == 200
+        pinned = set()
+        for block in _blocks(store, sid):
+            if block["assignment"] != "ON":
+                continue
+            _go_to(clock, store, sid, block)
+            assert client.post(f"/sessions/{sid}/actions/execute", json={}).status_code == 200
+        for row in store.list_interventions(sid):
+            if row.get("action_type") == "pin":
+                pinned.add(row["product_id"])
+        assert pinned
+        assert pinned <= {"A1", "A2"}
 
 
 # ---------------------------------------------------------------------------

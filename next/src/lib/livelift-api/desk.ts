@@ -105,6 +105,26 @@ export function estimateState(report: Pick<BaoCao, "loai_phien" | "ket_qua_thi_n
   };
 }
 
+/** Display names of the 11 intent labels — same table as src/livelift/nlp/labels.py LABEL_DISPLAY. */
+export const INTENT_DISPLAY: Readonly<Record<string, string>> = {
+  hoi_gia: "Hỏi giá",
+  hoi_size: "Hỏi size",
+  che_dat: "Chê đắt",
+  chot_don: "Chốt đơn",
+  van_chuyen: "Vận chuyển",
+  chao_hoi: "Chào hỏi",
+  cam_on_khen: "Cảm ơn / khen",
+  hoi_sanpham: "Hỏi sản phẩm",
+  hoi_daily: "Hỏi mở đại lý",
+  bao_gia_shop: "Shop tự báo giá",
+  khac: "Khác",
+};
+
+export function intentLabel(intent: string | null | undefined): string | null {
+  if (!intent) return null;
+  return INTENT_DISPLAY[intent] ?? intent;
+}
+
 export function mmss(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;

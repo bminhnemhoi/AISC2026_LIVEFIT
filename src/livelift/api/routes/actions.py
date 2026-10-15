@@ -207,6 +207,13 @@ def execute_action(session_id: str, body: ExecuteRequest, store: StoreDep) -> Ex
         if pid:
             recent_clicks[pid] = recent_clicks.get(pid, 0) + 1
     products = store.list_products()
+    # Phòng xem dàn dựng (15/10/2026): ứng viên CHỈ là sản phẩm của phòng. Danh
+    # mục dùng chung toàn hệ thống; không lọc thì autopilot có thể ghim một sản
+    # phẩm người xem không thấy, và khối BẬT thành khối không can thiệp.
+    room_products = (session.get("phong_xem") or {}).get("products")
+    if session.get("platform") == "lab" and room_products:
+        allowed_ids = set(room_products)
+        products = [p for p in products if p["product_id"] in allowed_ids]
     # The FULL ranking, not just the displayed slice: a refusal has to be able
     # to say where the requested product actually stands. The suggestion set
     # stays `MAX_CARDS` — that limit is the desk's, and it is the one the

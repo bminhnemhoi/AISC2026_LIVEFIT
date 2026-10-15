@@ -254,19 +254,9 @@ def bat_phong_xem(session_id: str, body: PhongXemIn, store: StoreDep) -> PhongXe
         }
     )
     store.update_session(session_id, {"phong_xem": room})
+    # Ứng viên ghim của phiên 'lab' đã bị giới hạn trong danh sách phòng ngay tại
+    # execute_action (routes/actions.py), nên danh mục dùng chung không còn là rủi ro.
     warnings: list[str] = []
-    others = sorted(
-        p["product_id"] for p in store.list_products() if p["product_id"] not in room["products"]
-    )
-    if others:
-        warnings.append(
-            "Danh mục còn sản phẩm ngoài phòng ("
-            + ", ".join(others[:5])
-            + ("…" if len(others) > 5 else "")
-            + "): autopilot chọn ứng viên trên TOÀN danh mục, nên hãy chạy phòng xem trên "
-            "một máy chủ riêng chỉ có sản phẩm của phòng. Thẻ ghim ngoài danh sách phòng "
-            "sẽ không hiện cho người xem."
-        )
     if session.get("mode") != "auto":
         warnings.append(
             "Phiên không ở chế độ 'auto': không có người vận hành thì autopilot sẽ không ghim."
