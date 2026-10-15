@@ -57,7 +57,12 @@ ORDER_HALFLIVES: tuple[float, ...] = (0.0, 120.0)
 CLICK_TO_ORDER = 0.08  # ASSUMPTION — see liveroom.py
 
 SESSIONS_PER_REP = 3
-SESSION_MINUTES = 60
+SESSION_MINUTES = 120
+"""Two hours: the typical TikTok Shop LIVE the seller guidance is written for.
+60 minutes is too short for this design — with 5-minute blocks the acceptance
+rules leave only 4 assignment patterns per session (2 with 10-minute blocks),
+so three sessions cannot reach an exact p below 0.05 (incident 15/10/2026;
+:func:`design_richness`)."""
 N_DRAWS = 200
 ALPHA = 0.05
 
@@ -138,7 +143,34 @@ def _truth(schedule, on_events, off_events, burn_in: int, outcome: str) -> tuple
     return y_on - y_off, y_off
 
 
-def run_cell(c: dict[str, Any], reps: int, master_seed: int = 2026) -> dict[str, Any]:
+def design_richness(session_minutes: int, block_min: int, draws: int = 4000) -> dict[str, Any]:
+    """How many distinct assignment patterns ONE session of this design admits.
+
+    The randomization test can only be as fine as the design: with ``k``
+    patterns per session and ``S`` sessions the exact two-sided p-value never
+    falls below ``2 / k**S``. Counted from ``draws`` redraws (a count equal to
+    ``draws`` means "at least that many").
+    """
+    from livelift.analysis.estimators import _redraw_matrix
+
+    sched = generate_schedule(session_minutes, DesignParams(block_min=block_min), 0)
+    phases = [b.phase for b in sched.blocks if not b.is_washout]
+    zmat = _redraw_matrix(np.array(["s0"] * len(phases)), phases, draws, 0)
+    k = len({tuple(r) for r in zmat})
+    return {
+        "blocks_per_session": len(phases),
+        "patterns_per_session": k,
+        "patterns_capped": k >= draws,
+        "exact_p_floor": 2.0 / float(k) ** SESSIONS_PER_REP,
+    }
+
+
+def run_cell(
+    c: dict[str, Any],
+    reps: int,
+    master_seed: int = 2026,
+    session_minutes: int = SESSION_MINUTES,
+) -> dict[str, Any]:
     """Monte-Carlo study of one cell; returns per-burn-in summaries + raw vectors."""
     params = cell_params(c)
     outcome = "click" if c["grid"] == "clicks" else "order"
@@ -154,7 +186,7 @@ def run_cell(c: dict[str, Any], reps: int, master_seed: int = 2026) -> dict[str,
         gte_d, gte_b = 0.0, 0.0
         for _s in range(SESSIONS_PER_REP):
             seed = seed_rng.randrange(2**60)
-            schedule = generate_schedule(SESSION_MINUTES, design, seed)
+            schedule = generate_schedule(session_minutes, design, seed)
             obs = simulate_with_orders(schedule, params, seed)
             on = simulate_with_orders(schedule, params, seed, override="all_on")
             off = simulate_with_orders(schedule, params, seed, override="all_off")
@@ -198,7 +230,8 @@ def run_cell(c: dict[str, Any], reps: int, master_seed: int = 2026) -> dict[str,
         "cell": c,
         "reps": reps,
         "sessions_per_rep": SESSIONS_PER_REP,
-        "session_minutes": SESSION_MINUTES,
+        "session_minutes": session_minutes,
+        "design": design_richness(session_minutes, c["block_min"]),
         "n_draws": N_DRAWS,
         "outcome": outcome,
         "seconds": round(time.perf_counter() - started, 1),
@@ -258,14 +291,18 @@ def summarise(d: dict[str, list[float]]) -> dict[str, float]:
     }
 
 
-def _out_path(out_dir: Path, c: dict[str, Any], reps: int) -> Path:
-    return out_dir / f"R{reps}" / f"{c['id']}.json"
+def _run_dir(out_dir: Path, reps: int, minutes: int) -> Path:
+    return out_dir / f"R{reps}-P{minutes}"
 
 
-def _work(args: tuple[dict[str, Any], int, str]) -> str:
-    c, reps, out_dir = args
-    result = run_cell(c, reps)
-    path = _out_path(Path(out_dir), c, reps)
+def _out_path(out_dir: Path, c: dict[str, Any], reps: int, minutes: int) -> Path:
+    return _run_dir(out_dir, reps, minutes) / f"{c['id']}.json"
+
+
+def _work(args: tuple[dict[str, Any], int, str, int]) -> str:
+    c, reps, out_dir, minutes = args
+    result = run_cell(c, reps, session_minutes=minutes)
+    path = _out_path(Path(out_dir), c, reps, minutes)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
@@ -273,15 +310,23 @@ def _work(args: tuple[dict[str, Any], int, str]) -> str:
     return f"{c['id']} {result['seconds']}s"
 
 
-def run_grid(reps: int, workers: int, out_dir: Path, only: str | None = None) -> None:
+def run_grid(
+    reps: int,
+    workers: int,
+    out_dir: Path,
+    only: str | None = None,
+    minutes: int = SESSION_MINUTES,
+) -> None:
     cells = [c for c in cell_specs() if only is None or only in c["id"]]
-    todo = [c for c in cells if not _out_path(out_dir, c, reps).exists()]
+    todo = [c for c in cells if not _out_path(out_dir, c, reps, minutes).exists()]
     print(
-        f"{len(cells)} ô, còn {len(todo)} ô chưa chạy (R={reps}, {workers} tiến trình)", flush=True
+        f"{len(cells)} ô, còn {len(todo)} ô chưa chạy (R={reps}, phiên {minutes} phút, "
+        f"{workers} tiến trình)",
+        flush=True,
     )
     if not todo:
         return
-    jobs = [(c, reps, str(out_dir)) for c in todo]
+    jobs = [(c, reps, str(out_dir), minutes) for c in todo]
     if workers <= 1:
         for j in jobs:
             print(_work(j), flush=True)
@@ -292,8 +337,8 @@ def run_grid(reps: int, workers: int, out_dir: Path, only: str | None = None) ->
             print(f.result(), flush=True)
 
 
-def load_results(out_dir: Path, reps: int) -> list[dict[str, Any]]:
-    folder = out_dir / f"R{reps}"
+def load_results(out_dir: Path, reps: int, minutes: int = SESSION_MINUTES) -> list[dict[str, Any]]:
+    folder = _run_dir(out_dir, reps, minutes)
     return [json.loads(p.read_text(encoding="utf-8")) for p in sorted(folder.glob("*.json"))]
 
 
@@ -301,10 +346,21 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Lưới kiểm định LiveRoomSim (MÔ PHỎNG)")
     ap.add_argument("--reps", type=int, default=200)
     ap.add_argument("--workers", type=int, default=3)
+    ap.add_argument("--phut", type=int, default=SESSION_MINUTES, help="độ dài mỗi phiên (phút)")
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--only", default=None, help="chỉ chạy các ô có id chứa chuỗi này")
+    ap.add_argument(
+        "--summarise",
+        action="store_true",
+        help="không chạy; tổng hợp kết quả đã có thành bảng + hình (liveroom_report)",
+    )
     args = ap.parse_args(argv)
-    run_grid(args.reps, args.workers, args.out, args.only)
+    if args.summarise:
+        from livelift.sim.liveroom_report import write_report
+
+        print(write_report(args.out, args.reps, args.phut))
+        return 0
+    run_grid(args.reps, args.workers, args.out, args.only, args.phut)
     return 0
 
 
