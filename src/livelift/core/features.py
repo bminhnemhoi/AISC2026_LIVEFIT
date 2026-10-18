@@ -31,7 +31,14 @@ from typing import Literal
 
 from livelift.core.assigner.outer import ON, Schedule
 
-EventKind = Literal["comment", "like", "click", "viewer_count", "pin"]
+EventKind = Literal["comment", "like", "click", "viewer_count", "pin", "order"]
+"""``"order"`` (LiveRoomSim v1, 14/10): a purchase attributed to a product, emitted
+only by the simulator's order-delay mechanism (:mod:`livelift.sim.liveroom`).
+:func:`build_ticks` ignores it; :func:`block_frame` counts it only when asked to
+with ``outcome_kind="order"``."""
+
+OUTCOME_KINDS: tuple[str, ...] = ("click", "order")
+"""Event kinds :func:`block_frame` may use as the numerator of ``y``."""
 
 
 @dataclass(frozen=True)
@@ -182,9 +189,13 @@ def _window_stats(
     end_s: float,
     tick_viewers: list[tuple[float, float]],
     tick_s: int = 30,
+    outcome_kind: str = "click",
 ) -> tuple[float, int, int, int, int]:
     """(viewer-seconds, valid clicks, raw clicks, comments, likes) within
     [start_s, end_s).
+
+    ``outcome_kind`` names the event kind counted in the two "clicks" slots —
+    ``"click"`` (default, the historical behaviour) or ``"order"``.
 
     The numerator and the denominator MUST share the same support. Exposure can
     only be integrated where viewer telemetry exists, so the counts are taken
@@ -219,8 +230,8 @@ def _window_stats(
             exposure += viewers * (hi - lo)
     return (
         exposure,
-        count("click", valid_only=True),
-        count("click"),
+        count(outcome_kind, valid_only=True),
+        count(outcome_kind),
         count("comment"),
         count("like"),
     )
@@ -243,8 +254,17 @@ def block_frame(
     tick_s: int = 30,
     live_until_s: float | None = None,
     include_invalid: bool = False,
+    outcome_kind: str = "click",
 ) -> list[BlockRecord]:
     """Build the block-level analysis dataset from the schedule and events.
+
+    ``outcome_kind`` (LiveRoomSim v1, 14/10): which event kind is the numerator
+    of ``y``. ``"click"`` — the default — is the pre-registered primary outcome
+    and reproduces the historical frame exactly. ``"order"`` counts order events
+    instead (the simulator's delayed-purchase mechanism); the ``clicks`` /
+    ``clicks_raw`` fields then hold ORDER counts — the names are kept so every
+    existing reader of :class:`BlockRecord` keeps working. Exposure, burn-in,
+    measurability and the pre-block covariates do not depend on it.
 
     ``burn_in_s`` seconds at the start of every measurement block are excluded
     from the outcome window (carryover burn-in).
@@ -264,6 +284,8 @@ def block_frame(
     ``MIN_EXPOSURE_VIEWER_S`` of exposure — come back with ``measurable=False``
     and MUST be dropped before estimation.
     """
+    if outcome_kind not in OUTCOME_KINDS:
+        raise ValueError(f"outcome_kind phải thuộc {OUTCOME_KINDS} (nhận {outcome_kind!r})")
     ev_list = sorted(events, key=lambda e: e.ts_offset_s)
     session_s = schedule.session_duration_min * 60
     horizon = session_s if live_until_s is None else min(session_s, max(live_until_s, 0.0))
@@ -279,7 +301,7 @@ def block_frame(
         if win_end <= win_start:
             unmeasurable = "khối không phát sóng (phiên kết thúc trước khối này)"
         exposure, valid_clicks, raw_clicks, _, _ = _window_stats(
-            ev_list, win_start, win_end, tick_viewers, tick_s
+            ev_list, win_start, win_end, tick_viewers, tick_s, outcome_kind
         )
         clicks = raw_clicks if include_invalid else valid_clicks
         if unmeasurable is None and exposure < MIN_EXPOSURE_VIEWER_S:

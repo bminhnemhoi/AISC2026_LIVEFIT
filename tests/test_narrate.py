@@ -73,7 +73,7 @@ def _so_cho_phep(*values: object) -> set[str]:
 def _khong_bia_so(cau_list: list[narrate.Cau], *allowed_values: object) -> None:
     allowed = _so_cho_phep(*allowed_values)
     # hằng đơn vị của biến kết quả chính xuất hiện trong mọi câu kết luận
-    allowed |= {"1000", "95", "0", "7"}  # 1000 giây·người xem, KTC 95%, chứa 0, §7
+    allowed |= {"1.000", "95", "0", "7"}  # 1.000 giây·người xem / lần vẽ, KTC 95%, chứa 0, §7
     for c in cau_list:
         for so in _cac_so(c.text):
             assert so in allowed, f"số {so!r} không truy được nguồn trong câu: {c.text!r}"
@@ -115,12 +115,12 @@ GOP_DUONG = {
 def test_gop_duong_ket_luan_bang_chung_viec_lam():
     cau = tom_tat_gop(**GOP_DUONG)
     assert len(cau) == 3, "tóm tắt PHẢI đúng 3 câu"
-    assert "tạo thêm +1.224" in cau[0].text
+    assert "tạo thêm +1,224" in cau[0].text  # dấu phẩy thập phân (15/10/2026)
     assert "không chứa 0" in cau[0].text
     assert cau[0].badge == BADGE_THI_NGHIEM
     assert "48 khối" in cau[1].text
     assert "24 BẬT / 24 TẮT" in cau[1].text
-    assert "p < 0.0010" in cau[1].text, "p chạm sàn hoán vị phải in sàn, không in số giả"
+    assert "p < 0,001" in cau[1].text, "p chạm sàn hoán vị phải in sàn, không in số giả"
     assert "tuân thủ đo được 94%" in cau[2].text
     assert "giữ nguyên" in cau[2].text.lower()
     _khong_bia_so(cau, *GOP_DUONG.values())
@@ -159,7 +159,7 @@ def test_gop_null_la_ket_qua_hop_le_va_giai_k_tu_bang_luc():
     # k = 18 - 2 = 16, giải từ bảng lực với CV đo được — không hardcode
     assert "thêm ~16 phiên" in cau[2].text
     assert "21%" in cau[2].text
-    assert "0.62" in cau[2].text
+    assert "0,62" in cau[2].text
     assert cau[2].badge == BADGE_THIEU_DU_LIEU
     _khong_bia_so(cau, 0.206, -0.031, 0.396, 0.14, 1000, 2, 32, 16, 16, 18, 16, 0.62, 0.21, 288)
 
@@ -225,7 +225,7 @@ def test_gop_khoa_7_khong_lo_uoc_luong_ke_ca_khi_duoc_truyen():
     assert len(cau) == 3
     assert ly_do in cau[0].text, "lý do khóa phải được chép nguyên văn"
     ca_ba = " ".join(c.text for c in cau)
-    for cam in ("1.234", "0.9", "1.5", "KTC", "p =", "p <"):
+    for cam in ("1.234", "1,234", "0.9", "0,9", "1.5", "1,5", "KTC", "p =", "p <"):
         assert cam not in ca_ba, f"khóa §7 mà vẫn lộ {cam!r}"
     assert all(c.badge != BADGE_THI_NGHIEM for c in cau)
 
@@ -285,7 +285,7 @@ def test_phien_duong_va_null_du_ba_cau_co_so():
         "n_off": 8,
     }
     duong = tom_tat_phien(**chung, estimate=1.224, ci_low=0.932, ci_high=1.498)
-    assert "tạo thêm +1.224" in duong[0].text
+    assert "tạo thêm +1,224" in duong[0].text
     assert duong[0].badge == BADGE_THI_NGHIEM
     assert "16 khối" in duong[1].text
     assert "một phiên chưa phải chuỗi" in duong[2].text.lower()
@@ -328,7 +328,7 @@ def test_bao_cao_demo_vang_duong_narrate_khop_trang_thai(vang):
     assert cau[0]["badge"] == "thi_nghiem"
     # con số trong câu phải là ĐÚNG con số của khối nhân quả cùng payload
     kq = bc["ket_qua_thi_nghiem"]
-    assert f"{kq['estimate']:+.3f}" in cau[0]["text"]
+    assert f"{kq['estimate']:+.3f}".replace(".", ",") in cau[0]["text"]
     assert f"{kq['n_blocks']} khối" in cau[1]["text"]
     assert cau[0]["refs"], "mỗi câu phải khai nguồn số (refs)"
 

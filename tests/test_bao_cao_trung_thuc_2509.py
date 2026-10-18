@@ -44,7 +44,7 @@ def ung_dung():
 def _phien(
     store,
     *,
-    thoi_luong_min: int = 40,
+    thoi_luong_min: int = 90,
     phat_duoc_min: int | None = None,
     ket_thuc: bool = True,
     dry_run: bool = False,
@@ -267,14 +267,17 @@ def test_ban_gop_hai_phien_0_luot_nhap_khong_estimable_voi_ktc_null(ung_dung):
 @pytest.mark.parametrize("dry_run", [False, True], ids=["phien-that", "chay-thu"])
 def test_bao_cao_phien_dang_chay_bi_khoa_du_da_du_khoi(ung_dung, dry_run):
     client, store = ung_dung
+    # Kế hoạch 120 phút, phát 95 phút rồi dừng sớm. Bản cũ (60/45) chỉ có 4 chuỗi
+    # gán khả dĩ — KTC không thể khép, nên "estimable" ở cuối test từng chỉ đúng
+    # nhờ lỗi hoà số của p-value (sự cố 15/10/2026).
     sid = _phien(
         store,
-        thoi_luong_min=60,
-        phat_duoc_min=45,
+        thoi_luong_min=120,
+        phat_duoc_min=95,
         ket_thuc=False,
         dry_run=dry_run,
         luot_nhap_moi_phut=3.0,
-        bat_dau_cach_day_min=45,
+        bat_dau_cach_day_min=95,
     )
     assert store.get_session(sid)["status"] == "live"
 

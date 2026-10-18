@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from livelift.api import autopilot, service
 from livelift.api.auth import cho_phep_demo, ghi_khong_token
-from livelift.api.cards import build_candidates, build_cards, pin_cards_blocked_reason
+from livelift.api.cards import build_cards, pin_cards_blocked_reason
 from livelift.api.schemas import (
     AutopilotState,
     BlockOut,
@@ -31,6 +31,7 @@ from livelift.api.schemas import (
 )
 from livelift.api.service import StoreDep
 from livelift.api.store import ShortlinkCodeTakenError, Store
+from livelift.api.ung_vien import phut_cua_khoi, xep_hang_ung_vien
 from livelift.core.assigner import (
     DesignParams,
     RerandomizationExhaustedError,
@@ -91,6 +92,7 @@ TEN_NEN_TANG: dict[str, str] = {
     "shopee": "Shopee",
     "replay": "Phát lại",
     "sim": "Mô phỏng",
+    "lab": "Phòng dàn dựng",
 }
 """Tên nền tảng viết đẹp cho người bán — cùng cách viết với bảng ``TEN_NEN_TANG``
 của wizard ``web/src/app/chay-phien/page.tsx`` để tên do máy chủ đặt và tên do
@@ -412,13 +414,11 @@ def get_state(
     cards_note = pin_cards_blocked_reason(session["status"], service.is_analysis_only(session))
     cards = []
     if cards_note is None:
-        recent_clicks: dict[str, int] = {}
-        for c in store.list_clicks(session_id):
-            pid = c.get("product_id")
-            if pid:
-                recent_clicks[pid] = recent_clicks.get(pid, 0) + 1
-        products = store.list_products()
-        candidates = build_candidates(products, recent_clicks, store.list_ticks(session_id))
+        # Same candidate definition as /actions/execute (livelift.api.ung_vien):
+        # the desk never invites a pin the server would refuse.
+        products, candidates, _nguong = xep_hang_ung_vien(
+            store, session, elapsed, phut_cua_khoi(current)
+        )
         cards = build_cards(candidates, {p["product_id"]: p for p in products})
     return OperatorState(
         session_id=session_id,

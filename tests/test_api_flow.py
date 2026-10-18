@@ -303,7 +303,7 @@ def test_demo_seed_and_experiment_summary(client):
     (real) summary must NOT move — the demo verdict lives at ?env=demo, under
     a MÔ PHỎNG label. Both directions of the no-mixing gate are asserted here.
     """
-    r = client.post("/demo/seed", json={"n_sessions": 3, "effect": 0.5, "duration_min": 40})
+    r = client.post("/demo/seed", json={"n_sessions": 3, "effect": 0.5, "duration_min": 90})
     assert r.status_code == 200, r.text
     seeded = r.json()
     assert len(seeded["session_ids"]) == 3

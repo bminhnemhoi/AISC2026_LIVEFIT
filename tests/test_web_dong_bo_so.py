@@ -136,6 +136,16 @@ def test_doi_so_thi_tep_that_doi_theo(db, nhom):
         assert lai == moi, f"{tep.name}: ngày đếm chỉ đổi khi con số đổi"
 
 
+def test_ho_so_da_nop_khong_bi_viet_lai(db):
+    """15/10/2026: hồ sơ Sáng tạo trẻ đã nộp với số đếm 27/09. Chạy ``--ghi`` trước Vòng 2
+    từng sắp đổi 2.116 thành số test hôm nay trong cả ba tệp nộp — sửa bản ghi có ngày."""
+    rel = {tep.relative_to(GOC).as_posix() for tep in HO_SO}
+    assert rel == db.TEP_DONG_BANG
+    can = db.tep_can_dong_bo()
+    assert not rel & set(can)
+    assert {"README.md", "web/src/app/page.tsx", "docs/competition/FACT-SHEET.md"} <= set(can)
+
+
 def test_badge_giu_mau_va_khong_bi_khoa_vao_brightgreen(db):
     luat = db.LUAT["README.md"]
     so = db.SoTest(nhanh=7, thong_ke=1, nlp=1, css=1, trinh_duyet=1)

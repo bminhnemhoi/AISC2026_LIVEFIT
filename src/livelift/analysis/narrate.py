@@ -47,7 +47,7 @@ BADGE_THIEU_DU_LIEU = "thieu_du_lieu"
 """Tuyên bố thiếu kèm con số cần thêm — không hạ ngưỡng, không nội suy."""
 
 #: Đơn vị của biến kết quả chính (tiền đăng ký §4.1) — một chỗ, mọi câu dùng chung.
-DON_VI = "lượt nhấp trên mỗi 1000 giây·người xem"
+DON_VI = "lượt nhấp trên mỗi 1.000 giây·người xem"
 
 
 @dataclass(frozen=True)
@@ -75,6 +75,21 @@ def trang_thai_ket_luan(estimable: bool, ci_low: float | None, ci_high: float | 
     return "null"
 
 
+def _so(x: float, spec: str) -> str:
+    """Số thập phân kiểu Việt Nam: dấu PHẨY thập phân (cùng quy ước với giao diện).
+
+    "+1.224" đọc theo tiếng Việt là một nghìn hai trăm hai mươi tư, trong khi máy
+    muốn nói một phẩy hai hai bốn — câu tóm tắt từng nói ngược với thẻ số ngay
+    phía trên nó (soát 15/10/2026). Mọi số thập phân trong câu đi qua hàm này.
+    """
+    return format(x, spec).replace(".", ",")
+
+
+def _nghin(n: int) -> str:
+    """Số nguyên kiểu Việt Nam: dấu CHẤM ngăn nghìn ("1.000 lần vẽ lại", không "1000")."""
+    return f"{n:,}".replace(",", ".")
+
+
 def _p_text(p_value: float | None, n_draws: int | None) -> str:
     """p-value với SÀN trung thực: kiểm định hoán vị không nói được p nhỏ hơn
     1/(số lần vẽ + 1) — in sàn thay vì một con số chính-xác-giả (cùng luật với
@@ -83,13 +98,14 @@ def _p_text(p_value: float | None, n_draws: int | None) -> str:
         return "p chưa công bố"
     floor = 1.0 / (n_draws + 1) if n_draws else None
     if floor is not None and p_value <= floor * 1.001:
-        return f"p < {floor:.4f}"
-    return f"p = {p_value:.4f}"
+        return f"p < {_so(floor, '.3f')}"
+    # 3 chữ số như thẻ số ngay phía trên (fmtNum(p, 3)) — câu và thẻ không được lệch nhau.
+    return f"p = {_so(p_value, '.3f')}"
 
 
 def _ktc(ci_low: float | None, ci_high: float | None) -> str:
-    lo = "—" if ci_low is None else f"{ci_low:+.3f}"
-    hi = "—" if ci_high is None else f"{ci_high:+.3f}"
+    lo = "—" if ci_low is None else _so(ci_low, "+.3f")
+    hi = "—" if ci_high is None else _so(ci_high, "+.3f")
     return f"KTC 95% [{lo}; {hi}]"
 
 
@@ -112,7 +128,7 @@ def _cau_ket_luan(
     if st == "duong":
         return Cau(
             text=(
-                f"Hệ thống tạo thêm {estimate:+.3f} {DON_VI} so với khi tắt "
+                f"Hệ thống tạo thêm {_so(estimate, '+.3f')} {DON_VI} so với khi tắt "
                 f"({_ktc(ci_low, ci_high)} — không chứa 0)."
             ),
             badge=BADGE_THI_NGHIEM,
@@ -121,7 +137,7 @@ def _cau_ket_luan(
     if st == "am":
         return Cau(
             text=(
-                f"Hệ thống làm GIẢM {abs(estimate or 0.0):.3f} {DON_VI} "
+                f"Hệ thống làm GIẢM {_so(abs(estimate or 0.0), '.3f')} {DON_VI} "
                 f"({_ktc(ci_low, ci_high)} — không chứa 0); tác dụng ngược cũng là "
                 "một phép đo thật, cần xem lại chiến lược ghim trước khi chạy tiếp."
             ),
@@ -131,7 +147,7 @@ def _cau_ket_luan(
     return Cau(
         text=(
             "Chưa đủ bằng chứng để kết luận hệ thống làm tăng hay giảm lượt nhấp "
-            f"(ước lượng {estimate:+.3f}, {_ktc(ci_low, ci_high)} còn chứa 0) — "
+            f"(ước lượng {_so(estimate, '+.3f')}, {_ktc(ci_low, ci_high)} còn chứa 0) — "
             "và đó là một kết quả hợp lệ, không phải thất bại."
         ),
         badge=BADGE_THI_NGHIEM,
@@ -149,7 +165,7 @@ def _cau_bang_chung(
     n_sessions: int | None = None,
 ) -> Cau:
     pham_vi = f" từ {n_sessions} phiên" if n_sessions is not None else ""
-    ve_lai = f"kiểm định hoán vị {n_draws} lần vẽ lại cho " if n_draws else ""
+    ve_lai = f"kiểm định hoán vị {_nghin(n_draws)} lần vẽ lại cho " if n_draws else ""
     return Cau(
         text=(
             f"Bằng chứng: {n_blocks} khối đo được ({n_on} BẬT / {n_off} TẮT)"
@@ -286,7 +302,7 @@ def tom_tat_gop(
             )
             refs3: tuple[str, ...] = ("measured_compliance",)
         elif measured_cv is not None:
-            duoi = f"; CV đo được {measured_cv:.2f} — thêm khối sẽ thu hẹp khoảng tin cậy"
+            duoi = f"; CV đo được {_so(measured_cv, '.2f')} — thêm khối sẽ thu hẹp khoảng tin cậy"
             refs3 = ("measured_cv",)
         else:
             duoi = ""
@@ -308,7 +324,7 @@ def tom_tat_gop(
                     f"Việc nên làm: tích lũy thêm ~{them} phiên (đủ {row['n_sessions']} "
                     f"phiên, mỗi phiên ~{row['blocks_per_session']} khối đo) để phát hiện "
                     f"được hiệu ứng cỡ {row['mde_relative'] * 100:.0f}% với CV đo được "
-                    f"{row['cv']:.2f}; nếu chuỗi vẫn null, hiệu ứng thật (nếu có) nhỏ hơn "
+                    f"{_so(row['cv'], '.2f')}; nếu chuỗi vẫn null, hiệu ứng thật (nếu có) nhỏ hơn "
                     "ngưỡng đó."
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
@@ -480,8 +496,8 @@ def tom_tat_phien(
         cau3 = Cau(
             text=(
                 "Việc nên làm: lặp lại đúng thiết kế này ở phiên tới — một phiên chưa "
-                f"phải chuỗi; {n_blocks} khối hiện có mới đến từ một buổi, kết luận gộp "
-                "nhiều phiên nằm ở trang Kết quả."
+                f"phải chuỗi; {n_blocks} khối hiện có mới đến từ một buổi, kết luận cuối "
+                "cùng phải gộp nhiều phiên cùng thiết kế."
             ),
             badge=BADGE_QUAN_SAT,
             refs=(f"{_KQ}n_blocks",),

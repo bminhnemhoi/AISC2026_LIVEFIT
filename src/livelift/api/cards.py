@@ -117,6 +117,7 @@ def build_candidates(
     recent_clicks_by_product: dict[str, int],
     ticks: Sequence[Tick | Mapping[str, Any]] | None = None,
     top_k: int = MAX_CARDS,
+    min_stock: Mapping[str, int] | None = None,
 ) -> list[Candidate]:
     """Score in-stock products with a Gamma-Poisson posterior and wrap the
     top ``top_k`` as inner-tier candidates with posterior intervals.
@@ -142,8 +143,16 @@ def build_candidates(
     ``ticks`` may be feature-layer :class:`Tick` objects or persisted
     ``session_tick`` rows. Display ranking is by posterior mean descending,
     ties broken stably by ``product_id``.
+
+    ``min_stock`` (product_id → threshold) is the per-block reorder point from
+    :mod:`livelift.api.ung_vien`; a product below it is not a candidate. Without
+    it the old rule holds: anything in stock.
     """
-    in_stock = [p for p in products if int(p.get("stock") or 0) > 0]
+    in_stock = [
+        p
+        for p in products
+        if int(p.get("stock") or 0) >= max(1, (min_stock or {}).get(p["product_id"], 1))
+    ]
     exposure_units = {
         pid: vs / UNIT_VIEWER_S for pid, vs in product_exposure(_as_ticks(ticks)).items()
     }
@@ -181,6 +190,7 @@ def build_cards(
         product = products_by_id.get(c.product_id, {})
         name = str(product.get("name") or c.product_id)
         margin = float(product.get("margin") or 0.0)
+        bien = f"{margin:,.0f}".replace(",", ".")  # 53.000đ kiểu Việt, không 53,000đ
         cards.append(
             ActionCard(
                 card_id=f"card-{i}-{c.product_id}",
@@ -189,7 +199,7 @@ def build_cards(
                 product_name=name,
                 headline=f"Ghim {name}",
                 rationale=(
-                    f"Biên lợi nhuận {margin:,.0f}đ/sản phẩm, còn "
+                    f"Biên lợi nhuận {bien}đ/sản phẩm, còn "
                     f"{int(product.get('stock') or 0)} trong kho"
                 ),
                 source="forecast",

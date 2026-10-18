@@ -256,6 +256,19 @@ def _dong_bang(van_ban: str, dau: str) -> str:
     return dong[0]
 
 
+NGAY_DONG_BANG_HO_SO = (2026, 9, 27)
+"""Ngày đếm ghi trong hồ sơ Sáng tạo trẻ (nộp 30/09/2026) và các tệp đi kèm."""
+
+
+def _so_hang_den(so_text: str, ngay: tuple[int, int, int]) -> int:
+    """Số hàng sổ sự cố có ngày ≤ ``ngay`` (năm, tháng, ngày)."""
+    dem = 0
+    for d, m, y in re.findall(r"^\| (\d{2})/(\d{2})/(\d{4}) \|", so_text, re.M):
+        if (int(y), int(m), int(d)) <= ngay:
+            dem += 1
+    return dem
+
+
 def test_so_su_co_o_fact_sheet_va_ho_so_khop_so_hang_cua_so_su_co() -> None:
     """Gate README ở trên không quét FACT-SHEET hay hồ sơ: tối 25/09/2026 sổ thêm hàng mà
     hai tệp nộp này vẫn có thể ghi số cũ."""
@@ -265,8 +278,13 @@ def test_so_su_co_o_fact_sheet_va_ho_so_khop_so_hang_cua_so_su_co() -> None:
     dong = _dong_bang(FACT_SHEET.read_text(encoding="utf-8"), "| Sổ sự cố |")
     assert f"**{that} sự cố có nguyên nhân gốc**" in dong, dong[:160]
     assert f"{that} hàng, trong đó {ngay_25} hàng ngày 25/09" in dong, dong[:220]
+    # Hồ sơ Sáng tạo trẻ (nộp 30/09/2026) và các tệp đi kèm là BẢN CHỤP CÓ NGÀY: chúng ghi
+    # "đếm ngày 27/09/2026". Sổ vẫn được ghi tiếp sau đó (15/10: lỗi hoà số p-value), nên các
+    # tệp này phải khớp số hàng ĐẾN ngày đóng băng — đổi 121 thành số mới mà giữ chữ "đếm
+    # 27/09" là sai sự thật. FACT-SHEET và README ở trên vẫn theo số sống của sổ.
+    that = _so_hang_den(so, NGAY_DONG_BANG_HO_SO)
     trich = {int(m) for m in re.findall(r"\*\*(\d+)\*\* sự cố", HO_SO.read_text("utf-8"))}
-    assert trich == {that}, f"hồ sơ ghi {sorted(trich)} sự cố, sổ có {that} hàng"
+    assert trich == {that}, f"hồ sơ ghi {sorted(trich)} sự cố, sổ có {that} hàng đến 27/09"
     # Phần việc 3 (tối 25/09/2026): mẫu "**N** sự cố" ở trên không quét dòng BẢNG, nên Bảng 5
     # của hồ sơ và bảng "Số được phép nói" của kịch bản video còn ghi 99 sau khi sổ lên 109.
     # Quét mọi dạng trích trong cả ba tệp nộp: "N sự cố", "**N** sự cố", "| Sự cố … | N |".

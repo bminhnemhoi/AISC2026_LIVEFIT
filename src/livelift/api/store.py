@@ -334,6 +334,14 @@ class Store(Protocol):
     def add_order(self, session_id: str | None, row: dict[str, Any]) -> dict[str, Any]: ...
     def list_orders(self, session_id: str) -> list[dict[str, Any]]: ...
 
+    # staged viewer room (migration 0010)
+    def find_session_by_room_code(self, code: str) -> dict[str, Any] | None: ...
+    def add_lab_event(
+        self, session_id: str, row: dict[str, Any]
+    ) -> tuple[dict[str, Any], bool]: ...
+    def list_lab_events(self, session_id: str) -> list[dict[str, Any]]: ...
+    def forget_lab_viewer(self, session_id: str, viewer_hash: str) -> dict[str, int]: ...
+
     # pubsub
     def subscribe(self, session_id: str) -> asyncio.Queue[dict[str, Any]]: ...
     def unsubscribe(self, session_id: str, q: asyncio.Queue[dict[str, Any]]) -> None: ...
@@ -528,6 +536,10 @@ class InMemoryStore:
         # Append-only event tables (migration 0006) — written, never rewritten.
         self._assignment_events: dict[str, list[dict[str, Any]]] = {}
         self._exposure_events: dict[str, list[dict[str, Any]]] = {}
+        # Phòng xem dàn dựng (migration 0010): nhật ký thao tác người xem, khoá
+        # idempotency (viewer_hash, event_id) dựng lại từ dòng khi khôi phục.
+        self._lab_events: dict[str, list[dict[str, Any]]] = {}
+        self._lab_keys: dict[str, dict[tuple[str, str], dict[str, Any]]] = {}
         self._broadcaster = Broadcaster()
 
     # -- products ----------------------------------------------------------
@@ -793,6 +805,74 @@ class InMemoryStore:
     def list_orders(self, session_id: str) -> list[dict[str, Any]]:
         return sorted((dict(o) for o in self._orders.get(session_id, [])), key=_by_ts("ts"))
 
+    # -- staged viewer room (migration 0010) -------------------------------
+    def find_session_by_room_code(self, code: str) -> dict[str, Any] | None:
+        for row in self._sessions.values():
+            room = row.get("phong_xem") or {}
+            if room.get("code") == code:
+                return dict(row)
+        return None
+
+    def add_lab_event(self, session_id: str, row: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+        """Append one viewer action; ``(row, duplicate)``. Idempotent on
+        ``(viewer_hash, event_id)`` — same contract as the SQL primary key."""
+        key = (row["viewer_hash"], row["event_id"])
+        keys = self._lab_keys.setdefault(session_id, {})
+        existing = keys.get(key)
+        if existing is not None:
+            return dict(existing), True
+        stored = {"product_id": None, "client_ts": None, **row, "session_id": session_id}
+        keys[key] = stored
+        self._lab_events.setdefault(session_id, []).append(stored)
+        self._rev += 1
+        return dict(stored), False
+
+    def list_lab_events(self, session_id: str) -> list[dict[str, Any]]:
+        return sorted((dict(e) for e in self._lab_events.get(session_id, [])), key=_by_ts("ts"))
+
+    def forget_lab_viewer(self, session_id: str, viewer_hash: str) -> dict[str, int]:
+        """Quyền rút lui: xoá MỌI dấu vết của một người xem trong phiên — nhật ký
+        phòng xem, click (băm = viewer_hash, không qua link đo), bình luận
+        (``ext_id`` mở đầu bằng băm) và đơn tiền ảo (``order_id`` mở đầu bằng
+        ``lab:<băm>:``). Trả về số dòng đã xoá theo bảng."""
+        prefix = f"{viewer_hash}:"
+        order_prefix = f"lab:{viewer_hash}:"
+        events = self._lab_events.get(session_id, [])
+        kept_events = [e for e in events if e["viewer_hash"] != viewer_hash]
+        self._lab_events[session_id] = kept_events
+        self._lab_keys[session_id] = {(e["viewer_hash"], e["event_id"]): e for e in kept_events}
+
+        clicks = self._clicks.get(session_id, [])
+        kept_clicks = [
+            c
+            for c in clicks
+            if not (c.get("dedup_hash") == viewer_hash and c.get("shortlink_code") is None)
+        ]
+        self._clicks[session_id] = kept_clicks
+
+        comments = self._comments.get(session_id, [])
+        kept_comments = [
+            c
+            for c in comments
+            if not (c.get("platform") == "lab" and str(c.get("ext_id") or "").startswith(prefix))
+        ]
+        self._comments[session_id] = kept_comments
+        self._comment_keys = _rebuild_dedup_index(self._comments)
+
+        orders = self._orders.get(session_id, [])
+        kept_orders = [o for o in orders if not str(o.get("order_id", "")).startswith(order_prefix)]
+        for o in orders:
+            if str(o.get("order_id", "")).startswith(order_prefix):
+                self._order_index.pop(o["order_id"], None)
+        self._orders[session_id] = kept_orders
+        self._rev += 1
+        return {
+            "lab_events": len(events) - len(kept_events),
+            "clicks": len(clicks) - len(kept_clicks),
+            "comments": len(comments) - len(kept_comments),
+            "orders": len(orders) - len(kept_orders),
+        }
+
     # -- pubsub ------------------------------------------------------------
     def subscribe(self, session_id: str) -> asyncio.Queue[dict[str, Any]]:
         return self._broadcaster.subscribe(session_id)
@@ -838,6 +918,7 @@ class InMemoryStore:
             "orders": self._orders,
             "assignment_events": self._assignment_events,
             "exposure_events": self._exposure_events,
+            "lab_events": self._lab_events,
         }
         return json.dumps(state, default=_snapshot_default, ensure_ascii=False)
 
@@ -878,6 +959,12 @@ class InMemoryStore:
         self._orders = _table("orders")
         self._assignment_events = _table("assignment_events")
         self._exposure_events = _table("exposure_events")
+        # Ảnh chụp cũ (trước 0010) không có bảng này: _table trả {} — đúng.
+        self._lab_events = _table("lab_events")
+        self._lab_keys = {
+            sid: {(e["viewer_hash"], e["event_id"]): e for e in rows}
+            for sid, rows in self._lab_events.items()
+        }
 
         # Rebuild the idempotency indexes by identity: the value must be the
         # SAME dict that sits in the rows list, or a duplicate delivery after
@@ -907,6 +994,7 @@ class InMemoryStore:
             "interventions": sum(len(v) for v in self._interventions.values()),
             "assignment_events": sum(len(v) for v in self._assignment_events.values()),
             "exposure_events": sum(len(v) for v in self._exposure_events.values()),
+            "lab_events": sum(len(v) for v in self._lab_events.values()),
         }
 
     def ping(self, timeout_s: float = DEFAULT_PING_TIMEOUT_S) -> None:
@@ -1188,13 +1276,22 @@ class PostgresStore:
         return self._one("SELECT * FROM live_session WHERE session_id = %s", (session_id,))
 
     def update_session(self, session_id: str, fields: dict[str, Any]) -> dict[str, Any]:
-        allowed = ("status", "start_ts", "end_ts", "design", "title", "mode", "runsheet")
+        allowed = (
+            "status",
+            "start_ts",
+            "end_ts",
+            "design",
+            "title",
+            "mode",
+            "runsheet",
+            "phong_xem",
+        )
         sets, params = [], []
         for key in allowed:
             if key in fields:
                 sets.append(f"{key} = %s")
                 value = fields[key]
-                if key in ("design", "runsheet") and value is not None:
+                if key in ("design", "runsheet", "phong_xem") and value is not None:
                     value = self._jsonb(value)
                 params.append(value)
         params.append(session_id)
@@ -1561,6 +1658,75 @@ class PostgresStore:
             "SELECT * FROM order_event WHERE session_id = %s ORDER BY ts",
             (session_id,),
         )
+
+    # -- staged viewer room (migration 0010) -------------------------------
+    def find_session_by_room_code(self, code: str) -> dict[str, Any] | None:
+        return self._one(
+            "SELECT * FROM live_session WHERE phong_xem->>'code' = %s",
+            (code,),
+        )
+
+    def add_lab_event(self, session_id: str, row: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+        out = self._one(
+            """
+            INSERT INTO lab_event
+                (session_id, viewer_hash, event_id, kind, product_id, ts, client_ts)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (session_id, viewer_hash, event_id) DO NOTHING
+            RETURNING *
+            """,
+            (
+                session_id,
+                row["viewer_hash"],
+                row["event_id"],
+                row["kind"],
+                row.get("product_id"),
+                row["ts"],
+                row.get("client_ts"),
+            ),
+        )
+        if out is not None:
+            return out, False
+        existing = self._one(
+            "SELECT * FROM lab_event WHERE session_id = %s AND viewer_hash = %s AND event_id = %s",
+            (session_id, row["viewer_hash"], row["event_id"]),
+        )
+        assert existing is not None
+        return existing, True
+
+    def list_lab_events(self, session_id: str) -> list[dict[str, Any]]:
+        return self._all(
+            "SELECT * FROM lab_event WHERE session_id = %s ORDER BY ts",
+            (session_id,),
+        )
+
+    def forget_lab_viewer(self, session_id: str, viewer_hash: str) -> dict[str, int]:
+        """Same contract as :meth:`InMemoryStore.forget_lab_viewer`, in ONE
+        transaction: a half-forgotten viewer would be worse than none."""
+        like_ext = f"{viewer_hash}:%"
+        like_order = f"lab:{viewer_hash}:%"
+        with self._connection() as conn:
+            counts = {
+                "lab_events": conn.execute(
+                    "DELETE FROM lab_event WHERE session_id = %s AND viewer_hash = %s",
+                    (session_id, viewer_hash),
+                ).rowcount,
+                "clicks": conn.execute(
+                    "DELETE FROM click_event WHERE session_id = %s AND dedup_hash = %s"
+                    " AND shortlink_code IS NULL",
+                    (session_id, viewer_hash),
+                ).rowcount,
+                "comments": conn.execute(
+                    "DELETE FROM comment_event WHERE session_id = %s AND platform = 'lab'"
+                    " AND ext_id LIKE %s",
+                    (session_id, like_ext),
+                ).rowcount,
+                "orders": conn.execute(
+                    "DELETE FROM order_event WHERE session_id = %s AND order_id LIKE %s",
+                    (session_id, like_order),
+                ).rowcount,
+            }
+        return {k: int(v or 0) for k, v in counts.items()}
 
     # -- pubsub ------------------------------------------------------------
     def subscribe(self, session_id: str) -> asyncio.Queue[dict[str, Any]]:

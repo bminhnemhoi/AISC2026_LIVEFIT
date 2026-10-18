@@ -1,0 +1,90 @@
+# Caddyfile.tunnel — cổng vào cho PHÒNG XEM DÀN DỰNG qua đường hầm Cloudflare.
+#
+# Khác docker/Caddyfile (cổng vào đầy đủ của máy chủ): tệp này mở ra Internet
+# ĐÚNG phần người xem ẩn danh cần, không hơn:
+#   /xem-api/*  → API   (trạng thái phòng + gửi thao tác, tests/test_api_xem.py)
+#   /r/*        → API   (link đo click, nếu phòng dùng link ngoài)
+#   /xem/*      → Next  (trang phòng xem trên điện thoại)
+#   /_next/*    → Next  (JS/CSS/phông của trang đó)
+# Mọi đường khác — /sessions, /demo, /ws, /docs, bàn trợ live, trang chủ — trả
+# 404 ngay tại đây. Người xem không có token và không cần nhìn thấy gì khác.
+#
+# Chạy trên Windows (Docker Desktop), API và Next chạy trên máy:
+#   docker run --rm --name livelift-caddy-xem -p 8088:8088 ^
+#     -v "%cd%\docker\Caddyfile.tunnel:/etc/caddy/Caddyfile:ro" caddy:2
+#   cloudflared tunnel --url http://localhost:8088
+# Hướng dẫn đầy đủ: docs/HUONG-DAN-PHONG-XEM.md
+#
+# Biến môi trường (mặc định hợp với Docker Desktop):
+#   LIVELIFT_API_UPSTREAM   host.docker.internal:8000
+#   LIVELIFT_NEXT_UPSTREAM  host.docker.internal:3130
+
+{
+	# Đường hầm mang HTTPS từ Cloudflare tới đây; bên trong là HTTP thường.
+	auto_https off
+	admin off
+	servers {
+		# cloudflared nối tới Caddy từ mạng riêng/loopback: tin X-Forwarded-For
+		# của nó để API thấy địa chỉ thật của người xem (trần tần suất theo
+		# địa chỉ cần điều đó). API chỉ tin lại Caddy nếu Caddy nằm trong
+		# TRUSTED_PROXY_CIDRS — mặc định đã có dải mạng Docker 172.16.0.0/12.
+		trusted_proxies static private_ranges
+	}
+}
+
+(bao_mat) {
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+		-X-Powered-By
+	}
+}
+
+:8088 {
+	encode zstd gzip
+	import bao_mat
+
+	# keepalive 4s: uvicorn đóng kết nối rảnh sau 5 s (mặc định). Nếu Caddy giữ
+	# lâu hơn, yêu cầu rơi đúng lúc uvicorn vừa đóng sẽ bị ECONNRESET → 502 cho
+	# người xem (đã gặp khi chạy thử G2 15/10/2026). Đóng sớm hơn phía máy chủ
+	# thì không bao giờ tái dùng một socket đã chết. Chạy uvicorn kèm
+	# --timeout-keep-alive 75 là lớp bảo vệ thứ hai.
+	handle /xem-api/* {
+		reverse_proxy {$LIVELIFT_API_UPSTREAM:host.docker.internal:8000} {
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 15s
+				keepalive 4s
+			}
+		}
+	}
+
+	handle /r/* {
+		reverse_proxy {$LIVELIFT_API_UPSTREAM:host.docker.internal:8000} {
+			transport http {
+				keepalive 4s
+			}
+		}
+	}
+
+	handle /xem/* {
+		reverse_proxy {$LIVELIFT_NEXT_UPSTREAM:host.docker.internal:3130}
+	}
+
+	handle /_next/* {
+		reverse_proxy {$LIVELIFT_NEXT_UPSTREAM:host.docker.internal:3130}
+	}
+
+	handle {
+		respond "Không tìm thấy." 404
+	}
+
+	handle_errors {
+		import bao_mat
+		respond "Phòng xem đang khởi động lại, thử lại sau ít giây." 503
+	}
+}

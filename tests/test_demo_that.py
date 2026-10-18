@@ -181,7 +181,7 @@ def test_label_export_refuses_demo_sessions(client, store):
 
 def test_freeze_locks_real_summary_but_not_the_labeled_demo_view(client, store, monkeypatch):
     seed_phien_that_mo_phong(store, n_sessions=2)
-    client.post("/demo/seed", json={"n_sessions": 3, "effect": 0.5, "duration_min": 40})
+    client.post("/demo/seed", json={"n_sessions": 3, "effect": 0.5, "duration_min": 90})
 
     real = _with_freeze(client, monkeypatch, "/experiment/summary", "2999-01-01")
     assert real["estimable"] is False

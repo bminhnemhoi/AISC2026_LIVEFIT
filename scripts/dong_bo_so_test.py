@@ -16,6 +16,9 @@ ghi con số vào:
   - docs/competition/sang-tao-tre-2026/  noi-dung.md (Tóm tắt, Bảng 5), 05-BAN-KE-KHAI.md
                                     (mục VIII), 07-KICH-BAN-2-VIDEO.md (lời thoại, bảng số)
 
+Từ 15/10/2026 ba tệp Sáng tạo trẻ bị ĐÓNG BĂNG (``TEP_DONG_BANG``): hồ sơ đã nộp, giữ số
+ngày 27/09, script chỉ in "Bỏ qua" chứ không đọc hay ghi.
+
 Ba tệp nộp cuối (thêm tối 25/09/2026) và README (từ 27/09/2026) còn chép KẾT QUẢ một lần
 chạy ("2.091 đạt, 2 bỏ qua"). Script không tự sửa số đó; nếu số đạt + bỏ qua không còn
 cộng ra tổng thu thập thì báo LỖI, thoát mã 1 — phải chạy lại bộ test rồi sửa tay.
@@ -285,6 +288,17 @@ LUAT: dict[str, list[Luat]] = {
 #: README vào danh sách từ 27/09/2026 (bảng Bộ số chuẩn ghi "2.114 đạt, 2 bỏ qua").
 TEP_KET_QUA_CHAY = (*(k for k in LUAT if k.startswith(HO_SO)), "README.md")
 
+#: Hồ sơ Sáng tạo trẻ đã nộp (hạn 30/09/2026) với số đếm ngày 27/09 — là bản ghi có ngày,
+#: không được viết lại theo số test hôm nay. Cùng mốc ``NGAY_DONG_BANG_HO_SO`` của
+#: ``tests/test_so_cong_bo.py``. Luật của chúng vẫn giữ trong ``LUAT`` để gate mẫu còn chạy.
+TEP_DONG_BANG = frozenset(k for k in LUAT if k.startswith(HO_SO))
+
+
+def tep_can_dong_bo() -> dict[str, list[Luat]]:
+    """Các tệp ``main`` được đọc và ghi: mọi tệp trong ``LUAT`` trừ hồ sơ đã đóng băng."""
+    return {rel: luat for rel, luat in LUAT.items() if rel not in TEP_DONG_BANG}
+
+
 KET_QUA_CHAY_RE = re.compile(r"(\d[\d.]*) đạt, (\d[\d.]*) bỏ qua")
 
 
@@ -343,7 +357,9 @@ def main() -> int:
     ngay = dt.date.today().strftime("%d/%m/%Y")
     sua: list[tuple[Path, str, str]] = []
     loi: list[str] = []
-    for rel, luat in LUAT.items():
+    for rel in sorted(TEP_DONG_BANG):
+        print(f"Bỏ qua {rel}: hồ sơ đã nộp, giữ số đếm ngày 27/09/2026")
+    for rel, luat in tep_can_dong_bo().items():
         f = GOC / rel
         cu = f.read_text(encoding="utf-8")
         moi, thieu = ap_dung(cu, luat, so, ngay)
