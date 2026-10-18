@@ -105,6 +105,10 @@
 .xem-consent-list li + li { margin-top: var(--s-8); }
 .xem-leave { margin-top: var(--s-24); }
 .xem-leave .ph-btn { background: transparent; border-color: var(--line-strong); color: var(--ink-2); }
+/* Bước xác nhận rút lui ngay trong trang (không window.confirm) và lời báo kết quả nằm dưới nút. */
+.xem-leave > p { margin: 0 0 var(--s-8); }
+.xem-leave .ph-btn-primary { background: var(--ink); border-color: var(--ink); color: var(--ink-inverse); }
+.xem-leave .ph-err, .xem-leave .ph-muted { margin: var(--s-8) 0 0; }
 .xem-foot { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding: var(--s-8) var(--s-16); font-size: var(--fs-12); color: var(--ink-2); display: flex; justify-content: space-between; gap: var(--s-8); }
 .xem-comment { display: flex; gap: var(--s-8); margin-top: var(--s-12); }
 .xem-comment input { flex: 1; min-height: var(--target); padding: 0 var(--s-12); border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); font: inherit; }

@@ -106,6 +106,58 @@ describe("desk proxy route", () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
+  it("answers a POST to a path outside the allowlist with 404, not 403, even from a foreign origin", async () => {
+    // The allowlist decides first: a path the desk never opens looks the same from every origin.
+    const res = await POST(post(`sessions/${SID}/cancel`, { origin: "https://evil.example", host: "localhost:3130" }), ctx(`sessions/${SID}/cancel`));
+    expect(res.status).toBe(404);
+    expect(await detail(res)).toContain("không mở");
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it('refuses a write whose Origin is the literal "null" (sandboxed iframe, file://) with 403', async () => {
+    const res = await POST(post(`sessions/${SID}/end`, { origin: "null", host: "localhost:3130" }), ctx(`sessions/${SID}/end`));
+    expect(res.status).toBe(403);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it("refuses a localhost Origin when X-Forwarded-Host names another host (403): the forwarded host wins", async () => {
+    const res = await POST(
+      post(`sessions/${SID}/end`, { origin: "http://localhost:3130", host: "localhost:3130", "x-forwarded-host": "abc.trycloudflare.com" }),
+      ctx(`sessions/${SID}/end`),
+    );
+    expect(res.status).toBe(403);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  type Blocked = { name: string; method: "GET" | "POST"; path: string; headers?: Record<string, string>; body?: BodyInit; status: number };
+  const BLOCKED: Blocked[] = [
+    { name: "foreign Origin", method: "POST", path: `sessions/${SID}/end`, headers: { origin: "https://evil.example", host: "localhost:3130" }, status: 403 },
+    { name: "no Origin", method: "POST", path: "demo/seed-vang", headers: { host: "localhost:3130" }, status: 403 },
+    { name: 'Origin "null"', method: "POST", path: "demo/seed-vang", headers: { origin: "null", host: "localhost:3130" }, status: 403 },
+    { name: "non-http Origin", method: "POST", path: "demo/seed-vang", headers: { origin: "chrome-extension://abcdef", host: "localhost:3130" }, status: 403 },
+    {
+      name: "localhost Origin, other X-Forwarded-Host",
+      method: "POST",
+      path: "demo/seed-vang",
+      headers: { origin: "http://localhost:3130", host: "localhost:3130", "x-forwarded-host": "abc.trycloudflare.com" },
+      status: 403,
+    },
+    { name: "same Origin, other port", method: "POST", path: "demo/seed-vang", headers: { origin: "http://localhost:3000", host: "localhost:3130" }, status: 403 },
+    { name: "POST outside allowlist, foreign Origin", method: "POST", path: `sessions/${SID}/cancel`, headers: { origin: "https://evil.example", host: "localhost:3130" }, status: 404 },
+    { name: "POST outside allowlist, same Origin", method: "POST", path: `sessions/${SID}/cancel`, headers: SAME, status: 404 },
+    { name: "path traversal", method: "POST", path: "sessions/../demo/seed", headers: SAME, status: 404 },
+    { name: "GET /report", method: "GET", path: `sessions/${SID}/report`, status: 404 },
+    { name: "text/plain body", method: "POST", path: "sessions", headers: { ...SAME, "content-type": "text/plain" }, body: "{}", status: 415 },
+    { name: "body without Content-Type", method: "POST", path: "sessions", headers: SAME, body: new TextEncoder().encode("{}"), status: 415 },
+  ];
+
+  it.each(BLOCKED)("never calls the API when a request is blocked: $name → $status", async ({ method, path, headers, body, status }) => {
+    const req = new NextRequest(`http://localhost:3130/api/ll/${path}`, { method, headers: headers ?? {}, body });
+    const res = await (method === "GET" ? GET : POST)(req, ctx(path));
+    expect(res.status).toBe(status);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
   it("never echoes the operator token to the browser", async () => {
     const res = await POST(post(`sessions/${SID}/end`, SAME), ctx(`sessions/${SID}/end`));
     const text = await res.text();

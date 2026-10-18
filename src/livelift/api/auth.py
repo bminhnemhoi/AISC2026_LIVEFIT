@@ -92,8 +92,11 @@ MUC_CONG_KHAI: MucBaoVe = "cong_khai"
 """Đường ghi CÔNG KHAI có chủ đích: người xem ẩn danh của phòng dàn dựng
 (``/xem-api/{code}/su-kien``). Không token, không phạm vi demo — thay vào đó:
 chỉ ghi được vào phòng ĐANG MỞ theo mã công khai, qua trần tần suất riêng, và
-chỉ ghi được những loại sự kiện route cho phép. Mỗi route mang mức này phải được
-liệt kê tường minh trong bảng chính sách của ``tests/test_bao_ve_ghi.py``."""
+chỉ ghi được những loại sự kiện route cho phép. Ngoại lệ duy nhất là rút lui
+(``rut_lui``) của người ĐÃ ĐỒNG Ý: được nhận ở mọi trạng thái phòng (chưa mở,
+đã đóng, cả khi đã tắt), vẫn qua trần tần suất; phòng đã tắt trả người lạ đúng
+404 của mã không tồn tại. Mỗi route mang mức này phải được liệt kê tường minh
+trong bảng chính sách của ``tests/test_bao_ve_ghi.py``."""
 
 MUC_MAC_DINH: MucBaoVe = MUC_TOKEN
 """Mức của một route ghi QUÊN khai báo. Ngặt nhất — quên phải là lỗi an toàn."""

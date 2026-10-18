@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HEARTBEAT_MS, SEND_ATTEMPTS, XEM_API, consentKey, getViewerId, newEventId, postEvent } from "../XemRoom";
+import { HEARTBEAT_MS, SEND_ATTEMPTS, XEM_API, consentKey, forgetViewerEverywhere, getViewerId, newEventId, postEvent, storedViewerId, withdrawNote } from "../XemRoom";
 
 /** A fetch double that answers from a script: a number is an HTTP status, "drop" is a reset connection. */
 function scriptedFetch(script: Array<number | "drop">): { fetchImpl: typeof fetch; bodies: string[] } {
@@ -73,5 +73,60 @@ describe("phòng xem — client helpers", () => {
   it("talks only to the public room API and beats every 15 s", () => {
     expect(XEM_API.endsWith("/xem-api")).toBe(true);
     expect(HEARTBEAT_MS).toBe(15_000);
+  });
+});
+
+describe("phòng xem: rút lui (V3-xem-ui, 19/10/2026)", () => {
+  it("reading the stored id never creates one", () => {
+    const s = memoryStorage();
+    expect(storedViewerId(s)).toBeNull();
+    expect(s.getItem("livelift.xem.viewer")).toBeNull();
+    s.setItem("livelift.xem.viewer", "<bad>");
+    expect(storedViewerId(s)).toBeNull();
+    const id = getViewerId(memoryStorage());
+    s.setItem("livelift.xem.viewer", id);
+    expect(storedViewerId(s)).toBe(id);
+  });
+
+  it("forgetting removes the shared id and the consent marks of EVERY room, nothing else", () => {
+    const m = new Map<string, string>([
+      ["livelift.xem.viewer", "abcdef0123456789"],
+      [consentKey("ABC", "v1"), "1"],
+      [consentKey("ABC", "v2"), "1"],
+      [consentKey("ABCD", "v1"), "1"],
+      [consentKey("XYZ", "v1"), "1"],
+      ["unrelated", "x"],
+    ]);
+    const storage = {
+      get length() {
+        return m.size;
+      },
+      key: (i: number) => Array.from(m.keys())[i] ?? null,
+      removeItem: (k: string) => void m.delete(k),
+    };
+    forgetViewerEverywhere(storage);
+    // Mọi dấu đồng ý trỏ tới mã chung vừa xoá, nên giữ lại dấu nào cũng gây bẫy 403 (G3-xem-ui, 19/10/2026).
+    expect([...m.keys()]).toEqual(["unrelated"]);
+  });
+
+  it("every failure says the data is NOT deleted; 403/404 say there is nothing here to delete", () => {
+    for (const status of [null, 400, 409, 422, 429, 500, 502, 503]) {
+      const n = withdrawNote(status);
+      expect(n.kind).toBe("loi");
+      expect(n.text).toContain("chưa bị xoá");
+    }
+    for (const status of [403, 404]) {
+      const n = withdrawNote(status);
+      expect(n.kind).toBe("tin");
+      expect(n.text).toContain("không có gì để xoá");
+    }
+  });
+
+  it("the messages are plain Vietnamese: no long dash, no claim of a deletion", () => {
+    for (const status of [null, 403, 404, 409, 429, 500]) {
+      const { text } = withdrawNote(status);
+      expect(text).not.toMatch(/[\u2014\u2013]/);
+      expect(text).not.toMatch(/đã (được )?xoá/);
+    }
   });
 });

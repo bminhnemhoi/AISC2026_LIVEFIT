@@ -227,14 +227,14 @@ so:
     ngay_do: "2026-10-19"
 
   - id: su_co
-    gia_tri: 122
-    hien_thi: "122 sự cố"
+    gia_tri: 123
+    hien_thi: "123 sự cố"
     nhan: THẬT
     nguon_tep: docs/incident-log.md
     nguon_khoa: "đếm hàng bảng bắt đầu bằng '| dd/mm/yyyy |' (tests/test_so_cong_bo.py)"
-    duoc_noi: "122 sự cố đã ghi sổ kèm nguyên nhân gốc."
+    duoc_noi: "123 sự cố đã ghi sổ kèm nguyên nhân gốc."
     cam: []
-    ngay_do: "2026-10-15"
+    ngay_do: "2026-10-19"
     ghi_chu: "Số sống: sổ thêm hàng thì số đổi theo, test sẽ báo."
 
   - id: phien_90_khoi

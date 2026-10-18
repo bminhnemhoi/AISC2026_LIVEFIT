@@ -59,7 +59,9 @@
 
 - Đồng ý trước mọi sự kiện (máy chủ trả 403 nếu chưa); phiên bản lời đồng ý ghi theo phòng.
 - Lưu `sha256("lab:{phiên}:{mã người xem}")[:32]`, không lưu mã gốc, không lưu IP; bình luận đi qua bộ lọc PII như bình luận thật.
-- Rút lui xoá mọi click, bình luận, đơn tiền ảo và nhật ký của người đó, tính lại số người xem các mốc liên quan; sau đó máy chủ trả 410.
+- Rút lui xoá mọi click, bình luận, đơn tiền ảo và nhật ký của người đó, tính lại số người xem các mốc liên quan. Từ 19/10/2026 rút lui được ở mọi trạng thái phòng (chưa mở, đang mở, đã đóng, cả khi đã tắt) vì quyền rút lui sống lâu hơn buổi phát. Loại sự kiện khác vẫn cần phòng đang mở: phòng chưa mở hoặc đã đóng trả 409, phòng đã tắt trả 404. Rút lui lặp lại trả 200 `duplicate`, không xoá hay ghi thêm; thao tác khác của người đã rút lui nhận 410 khi phòng còn mở. Rút lui vẫn cần đã đồng ý (403) và chịu trần tần suất.
+- Phòng đã tắt chỉ trả lời người từng tham gia (còn dòng `dong_y` hoặc `rut_lui`). Người chưa từng tham gia gửi rút lui vào phòng tắt nhận đúng 404 của mã không tồn tại, xét trước trần tần suất theo người xem (trần theo địa chỉ vẫn áp), để 403 hay 429 không lộ rằng mã từng có (`routes/xem.py::su_kien`, `_tung_tham_gia`).
+- Phòng đã tắt thì `/xem-api/<mã>/trang-thai` trả 404 (trang `/xem/<mã>` vẫn 200): trang hiện "Phòng không tồn tại hoặc đã tắt." và chỉ còn nút rút lui tối giản cho máy còn giữ mã ngẫu nhiên (chỉ đọc mã cũ, không tạo mã mới). Rút lui hỏi xác nhận ngay trong trang, không dùng `window.confirm` (`XemRoom.tsx`). Vẫn đóng buổi bằng `/end`, không tắt phòng, để trang còn đầy đủ (`tests/test_api_xem.py`).
 - Sự kiện idempotent theo `event_id`; trình duyệt gửi lại cùng `event_id` khi rớt kết nối hoặc gặp 5xx, không gửi lại 4xx (`postEvent`).
 - Mức người xem theo mốc 30 giây = số người xem khác nhau còn nhịp tim trong mốc.
 

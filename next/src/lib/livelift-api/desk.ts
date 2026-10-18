@@ -17,10 +17,12 @@ export interface SourceLabel {
  * The label that must be visible on every screen state. Simulated data is never presented as real.
  * A `lab` session created with `dry_run` (scripts/mo_phong_xem.py --thu-noi-bo) is the team's own internal trial:
  * it keeps kind `dan_dung` (same badge style) but says THỬ NỘI BỘ, because the server keeps it out of the pooled result.
+ * Only when NOT `is_demo`: the server marks a session `is_demo` when a guest created it without the operator token on
+ * the public showcase (auth.py), and a guest's room is never the team's internal trial; it keeps plain DÀN DỰNG.
  */
 export function sourceLabel(session: Pick<Session, "platform" | "is_demo" | "dry_run">, syntheticComments = 0): SourceLabel {
   if (session.platform === "lab") {
-    if (session.dry_run) {
+    if (session.dry_run && !session.is_demo) {
       return {
         kind: "dan_dung",
         text: "DÀN DỰNG · THỬ NỘI BỘ",

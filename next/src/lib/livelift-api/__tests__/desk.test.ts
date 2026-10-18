@@ -43,6 +43,29 @@ describe("sourceLabel — simulated data is never presented as real", () => {
     expect(sourceLabel({ platform: "lab", is_demo: false, dry_run: false }).text).toBe("DÀN DỰNG");
   });
 
+  it.each([
+    [{ platform: "lab", is_demo: true, dry_run: true }],
+    [{ platform: "lab", is_demo: true, dry_run: false }],
+  ])("a guest's lab room (%o, is_demo set by the server) is never THỬ NỘI BỘ", session => {
+    const l = sourceLabel(session);
+    expect(l.text).toBe("DÀN DỰNG");
+    expect(l.text).not.toContain("THỬ NỘI BỘ");
+    expect(l.kind).toBe("dan_dung");
+    expect(sourceLabel(session, 5).text).not.toContain("THỬ NỘI BỘ");
+  });
+
+  it("THỬ NỘI BỘ appears for exactly one combination: lab, dry_run, not is_demo", () => {
+    const hits: string[] = [];
+    for (const platform of ["lab", "sim", "replay", "youtube", "facebook", "tiktok", "shopee"]) {
+      for (const is_demo of [false, true]) {
+        for (const dry_run of [false, true]) {
+          if (sourceLabel({ platform, is_demo, dry_run }).text.includes("THỬ NỘI BỘ")) hits.push(`${platform}/${is_demo}/${dry_run}`);
+        }
+      }
+    }
+    expect(hits).toEqual(["lab/false/true"]);
+  });
+
   it("the API's dry_run field reaches the label after parsing (SessionSchema keeps it)", () => {
     const s = SessionSchema.parse({
       session_id: "s-1",
@@ -55,6 +78,8 @@ describe("sourceLabel — simulated data is never presented as real", () => {
       is_demo: false,
     });
     expect(sourceLabel(s).text).toBe("DÀN DỰNG · THỬ NỘI BỘ");
+    // The same payload with the server's is_demo flag (a guest on the public showcase) loses the internal-trial label.
+    expect(sourceLabel(SessionSchema.parse({ ...s, is_demo: true })).text).toBe("DÀN DỰNG");
   });
 });
 

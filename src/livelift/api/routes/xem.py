@@ -30,7 +30,9 @@ Research rules enforced here
   is accepted in EVERY room state (not open yet, open, closed, even switched off)
   because the right to withdraw outlives the broadcast; every other kind still
   needs an open room (409). A repeated withdrawal changes nothing and answers
-  ``duplicate``.
+  ``duplicate``. A switched-off room answers only viewers who took part (consent
+  or an earlier withdrawal); anyone else gets the very 404 of an unknown code,
+  so a stranger cannot learn that the code ever existed.
 * **No personal data**: the client sends a random ``viewer_id``; the server stores
   only ``sha256(session_id:viewer_id)``. Comment text goes through the same PII
   scrubber as real comments before anything is stored. No IP address is stored.
@@ -157,6 +159,11 @@ def _status(session: dict[str, Any]) -> Literal["chua_mo", "dang_mo", "da_dong"]
     return "chua_mo"
 
 
+LOI_KHONG_CO_PHONG = "Phòng xem không tồn tại hoặc đã tắt."
+"""Một câu 404 duy nhất cho mã sai, phòng đã tắt và người lạ gửi rút lui vào
+phòng đã tắt: ba trường hợp phải trông giống hệt nhau từ ngoài nhìn vào."""
+
+
 def _require_room(
     store: Any, code: str, *, ca_khi_tat: bool = False
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -164,8 +171,17 @@ def _require_room(
     session = store.find_session_by_room_code(code)
     room = _room(session) if session else {}
     if session is None or not (room.get("enabled") or ca_khi_tat):
-        raise HTTPException(status_code=404, detail="Phòng xem không tồn tại hoặc đã tắt.")
+        raise HTTPException(status_code=404, detail=LOI_KHONG_CO_PHONG)
     return session, room
+
+
+def _tung_tham_gia(store: Any, sid: str, vhash: str) -> bool:
+    """Người xem này đã từng đồng ý (còn dòng ``dong_y``) hoặc đã rút lui (chỉ
+    còn dòng ``rut_lui``, vì rút lui xoá mọi dòng khác của họ)."""
+    return any(
+        e["viewer_hash"] == vhash and e["kind"] in ("dong_y", "rut_lui")
+        for e in store.list_lab_events(sid)
+    )
 
 
 def _product_card(store: Any, product_id: str) -> XemSanPham | None:
@@ -321,6 +337,13 @@ def su_kien(code: str, body: XemSuKienIn, request: Request, store: StoreDep) -> 
         raise HTTPException(status_code=409, detail="Phòng chưa mở hoặc đã đóng.")
     sid = session["session_id"]
     vhash = viewer_hash(sid, body.viewer_id)
+    if not room.get("enabled") and not _tung_tham_gia(store, sid, vhash):
+        # Phòng đã tắt chỉ còn mở cho người từng tham gia (V2-loi-ghim, 19/10/2026).
+        # Người lạ gửi rút lui vào mã của phòng đã tắt phải nhận ĐÚNG 404 của mã
+        # không tồn tại, không phải 403 "cần đồng ý": 403 thú nhận phòng có thật.
+        # Đứng TRƯỚC trần tần suất người xem vì cùng lý do: mã sai không bao giờ
+        # trả 429 theo người xem, nên một 429 ở đây cũng là lời thú nhận.
+        raise HTTPException(status_code=404, detail=LOI_KHONG_CO_PHONG)
     _per_viewer_limit(request, vhash)
 
     history = [e for e in store.list_lab_events(sid) if e["viewer_hash"] == vhash]

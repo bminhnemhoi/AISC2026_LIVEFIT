@@ -10,6 +10,9 @@ import "./phien.css";
  *
  * Talks ONLY to the public JSON API under `/xem-api/` (same origin: Caddy behind the tunnel, or the Next rewrite in
  * development). It never sees arms or blocks — the server does not send them (tests/test_api_xem.py).
+ *
+ * The right to withdraw outlives the room: when the room is switched off (trang-thai 404) a phone that still holds its
+ * random id keeps a minimal "Rút lui và xoá dữ liệu của tôi" button (19/10/2026). Nothing new is stored for that.
  */
 
 export const XEM_API = `${process.env.NEXT_PUBLIC_XEM_API_BASE ?? ""}/xem-api`;
@@ -37,11 +40,18 @@ type Product = z.infer<typeof ProductSchema>;
 export type XemKind = "dong_y" | "nhip" | "xem_san_pham" | "bam" | "them_gio" | "mua" | "binh_luan" | "rut_lui";
 
 const VIEWER_KEY = "livelift.xem.viewer";
+const VIEWER_ID = /^[A-Za-z0-9_-]{16,64}$/;
+
+/** The id this phone already holds, or null. Never creates one: a room that is gone must not leave a new id behind. */
+export function storedViewerId(storage: Pick<Storage, "getItem">): string | null {
+  const existing = storage.getItem(VIEWER_KEY);
+  return existing && VIEWER_ID.test(existing) ? existing : null;
+}
 
 /** A random id made on this phone: never a name, never sent anywhere but this room. */
 export function getViewerId(storage: Pick<Storage, "getItem" | "setItem">): string {
-  const existing = storage.getItem(VIEWER_KEY);
-  if (existing && /^[A-Za-z0-9_-]{16,64}$/.test(existing)) return existing;
+  const existing = storedViewerId(storage);
+  if (existing) return existing;
   const id = crypto.randomUUID().replace(/-/g, "");
   storage.setItem(VIEWER_KEY, id);
   return id;
@@ -49,6 +59,56 @@ export function getViewerId(storage: Pick<Storage, "getItem" | "setItem">): stri
 
 export function consentKey(code: string, version: string): string {
   return `livelift.xem.${code}.dong-y.${version}`;
+}
+
+/** A consent mark written by consentKey, for any room code and any version. */
+const CONSENT_MARK = /^livelift\.xem\..+\.dong-y\./;
+
+/**
+ * After a withdrawal the server confirmed: drop the random id AND the consent marks of every room on this phone.
+ * The id is one for all rooms (VIEWER_KEY), so once it is gone no mark can point at it any more. A mark left behind,
+ * in this room or in any other, would reopen that room on the next visit under a NEW id that never agreed: every
+ * action would answer 403, and a withdrawal there would wrongly read "nothing to delete" (G3-xem-ui, 19/10/2026).
+ * Keys that are not the viewer id or a consent mark are not touched.
+ */
+export function forgetViewerEverywhere(storage: Pick<Storage, "length" | "key" | "removeItem">): void {
+  const keys: string[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const k = storage.key(i);
+    if (k !== null && (k === VIEWER_KEY || CONSENT_MARK.test(k))) keys.push(k);
+  }
+  for (const k of keys) storage.removeItem(k);
+}
+
+export type LeaveNote = { kind: "loi" | "tin"; text: string };
+
+/**
+ * What the phone says when a withdrawal was not confirmed. It never claims a deletion the server did not confirm.
+ * 403 (consent gate) and 404 (a switched-off room answers a phone that never took part like an unknown code,
+ * xem.py) both mean the server holds nothing from this phone in this room: information, not an error.
+ */
+export function withdrawNote(status: number | null): LeaveNote {
+  if (status === 403 || status === 404) {
+    return { kind: "tin", text: "Máy chủ không có dữ liệu nào của máy này trong phòng này, nên không có gì để xoá." };
+  }
+  if (status === 429) {
+    return { kind: "loi", text: "Bạn bấm hơi nhanh. Chờ khoảng một phút rồi bấm lại. Dữ liệu của bạn chưa bị xoá." };
+  }
+  if (status === null || status >= 500) {
+    return {
+      kind: "loi",
+      text: "Chưa gửi được yêu cầu rút lui (mất mạng hoặc máy chủ đang bận). Dữ liệu của bạn chưa bị xoá. Kiểm tra mạng rồi bấm lại.",
+    };
+  }
+  return { kind: "loi", text: `Chưa rút lui được (mã ${status}). Dữ liệu của bạn chưa bị xoá. Thử lại sau ít phút.` };
+}
+
+function readStoredViewer(): string | null {
+  try {
+    return storedViewerId(window.localStorage);
+  } catch {
+    return null; // private mode or blocked storage: nothing was kept, so there is nothing to withdraw from here
+  }
 }
 
 let seq = 0;
@@ -98,12 +158,70 @@ function vnd(n: number): string {
   return `${n.toLocaleString("vi-VN")} đ`;
 }
 
+/**
+ * The withdrawal control, in the open room and on a room that is gone. It asks once INSIDE the page, not with
+ * window.confirm: an iOS in-app browser (Zalo, Messenger) that does not implement the confirm panel answers "Cancel"
+ * without showing anything, and the right to withdraw would silently do nothing. A failure is reported here, in the
+ * page, never through window.alert. On success the parent swaps to the "Bạn đã rút lui" screen.
+ */
+function RutLui({ label, onSend }: { label: string; onSend: () => Promise<PostOutcome> }) {
+  const [step, setStep] = useState<"nut" | "hoi" | "gui">("nut");
+  const [note, setNote] = useState<LeaveNote | null>(null);
+
+  const go = async (): Promise<void> => {
+    setStep("gui");
+    setNote(null);
+    const out = await onSend();
+    if (!out.ok) {
+      setNote(withdrawNote(out.status));
+      setStep("nut");
+    }
+  };
+
+  return (
+    <div className="xem-leave" data-testid="xem-leave">
+      {step === "hoi" ? (
+        <>
+          <p>Mọi thao tác của bạn trong phòng sẽ bị xoá khỏi nghiên cứu. Bạn chắc chứ?</p>
+          <div className="xem-actions">
+            <button type="button" className="ph-btn ph-btn-primary" onClick={() => void go()}>Xác nhận rút lui</button>
+            <button type="button" className="ph-btn" onClick={() => setStep("nut")}>Huỷ</button>
+          </div>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="ph-btn"
+          disabled={step === "gui"}
+          onClick={() => {
+            setNote(null);
+            setStep("hoi");
+          }}
+        >
+          {step === "gui" ? "Đang gửi…" : label}
+        </button>
+      )}
+      {note && (
+        <p className={note.kind === "loi" ? "ph-err" : "ph-muted"} role={note.kind === "loi" ? "alert" : "status"}>
+          {note.text}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function XemRoom({ code }: { code: string }) {
   const [state, setState] = useState<RoomState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** trang-thai answered 404: the room was switched off or never existed. */
+  const [gone, setGone] = useState(false);
+  /** The id this phone still holds when the room is gone (read only, never created). */
+  const [leftover, setLeftover] = useState<string | null>(null);
   const [consented, setConsented] = useState(false);
   const [declined, setDeclined] = useState(false);
   const [withdrawn, setWithdrawn] = useState(false);
+  /** The local id and every room's consent marks were removed after a confirmed withdrawal. */
+  const [cleared, setCleared] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const viewerId = useRef<string | null>(null);
@@ -113,15 +231,20 @@ export function XemRoom({ code }: { code: string }) {
     window.setTimeout(() => setToast(null), 2200);
   };
 
-  const send = useCallback(
-    async (kind: XemKind, extra: { product_id?: string; text?: string } = {}): Promise<boolean> => {
-      if (!viewerId.current) return false;
+  const post = useCallback(
+    async (kind: XemKind, extra: { product_id?: string; text?: string } = {}): Promise<PostOutcome> => {
+      if (!viewerId.current) return { ok: false, status: null };
       const body = JSON.stringify({ viewer_id: viewerId.current, event_id: newEventId(kind), kind, client_time_ms: Date.now(), ...extra });
       const out = await postEvent(`${XEM_API}/${encodeURIComponent(code)}/su-kien`, body);
       if (out.status === 410) setWithdrawn(true);
-      return out.ok;
+      return out;
     },
     [code],
+  );
+
+  const send = useCallback(
+    async (kind: XemKind, extra: { product_id?: string; text?: string } = {}): Promise<boolean> => (await post(kind, extra)).ok,
+    [post],
   );
 
   // Poll the room.
@@ -132,12 +255,22 @@ export function XemRoom({ code }: { code: string }) {
       let wait = 3000;
       try {
         const res = await fetch(`${XEM_API}/${encodeURIComponent(code)}/trang-thai`, { cache: "no-store" });
-        if (res.status === 404) throw new Error("Phòng không tồn tại hoặc đã tắt.");
+        if (res.status === 404) {
+          // Phòng đã tắt (hoặc mã sai). Quyền rút lui sống lâu hơn phòng (xem.py nhận rut_lui cả khi phòng đã tắt),
+          // nên máy nào còn giữ mã ngẫu nhiên vẫn thấy nút rút lui. Chỉ ĐỌC mã cũ, không tạo mã mới.
+          // Máy chặn bộ nhớ (chế độ riêng tư) không giữ được mã: dùng mã của chính trang này nếu đã có.
+          if (alive) {
+            setGone(true);
+            setLeftover(readStoredViewer() ?? viewerId.current);
+          }
+          throw new Error("Phòng không tồn tại hoặc đã tắt.");
+        }
         if (!res.ok) throw new Error("Không tải được phòng, đang thử lại…");
         const s = StateSchema.parse(await res.json());
         if (alive) {
           setState(s);
           setError(null);
+          setGone(false);
         }
         wait = Math.max(1500, s.poll_after_ms);
       } catch (e) {
@@ -152,28 +285,28 @@ export function XemRoom({ code }: { code: string }) {
     };
   }, [code]);
 
-  // Restore consent for this room and version.
+  // Restore consent for this room and version. Not after a withdrawal: that would mint a fresh id on this phone.
   useEffect(() => {
-    if (!state) return;
+    if (!state || withdrawn) return;
     try {
       viewerId.current = getViewerId(window.localStorage);
       setConsented(window.localStorage.getItem(consentKey(code, state.room.consent_version)) === "1");
     } catch {
       viewerId.current = crypto.randomUUID().replace(/-/g, "");
     }
-  }, [code, state?.room.consent_version]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [code, state?.room.consent_version, withdrawn]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Heartbeat while the page is visible and the room is open.
+  // Heartbeat while the page is visible and the room is open (a room switched off mid-session stops it too).
   const open = state?.room.status === "dang_mo";
   useEffect(() => {
-    if (!consented || !open || withdrawn) return;
+    if (!consented || !open || withdrawn || gone) return;
     const beat = (): void => {
       if (document.visibilityState === "visible") void send("nhip");
     };
     beat();
     const id = window.setInterval(beat, HEARTBEAT_MS);
     return () => window.clearInterval(id);
-  }, [consented, open, withdrawn, send]);
+  }, [consented, open, withdrawn, gone, send]);
 
   const agree = async (): Promise<void> => {
     if (!state) return;
@@ -191,17 +324,26 @@ export function XemRoom({ code }: { code: string }) {
     }
   };
 
-  const withdraw = async (): Promise<void> => {
-    if (!window.confirm("Rút lui khỏi nghiên cứu? Mọi thao tác của bạn trong phòng sẽ bị xoá.")) return;
-    const ok = await send("rut_lui");
-    if (ok) {
-      setWithdrawn(true);
+  /**
+   * Withdraw from the open room, or from a room that is gone with the id this phone still holds. Only a 2xx (deleted
+   * now, or already deleted by an earlier withdrawal) clears the phone; any other answer leaves it as it was so the
+   * viewer can press again, and RutLui says why in the page.
+   */
+  const withdraw = async (): Promise<PostOutcome> => {
+    viewerId.current = viewerId.current ?? leftover;
+    const out = await post("rut_lui");
+    if (out.ok) {
       try {
-        window.localStorage.removeItem(VIEWER_KEY);
+        forgetViewerEverywhere(window.localStorage);
+        setCleared(true);
       } catch {
-        /* ignore */
+        /* storage blocked: nothing was kept on this phone */
       }
+      viewerId.current = null;
+      setLeftover(null);
+      setWithdrawn(true);
     }
+    return out;
   };
 
   const act = async (kind: XemKind, p: Product, okMsg: string): Promise<void> => {
@@ -224,15 +366,39 @@ export function XemRoom({ code }: { code: string }) {
     </footer>
   );
 
-  if (!state) {
+  if (withdrawn) {
     return (
-      <div className="ld ph"><main className="xem"><p className="ph-muted">{error ?? "Đang mở phòng…"}</p></main>{footer}</div>
+      <div className="ld ph">
+        <main className="xem" data-testid="xem-withdrawn">
+          <h1 className="ph-title">Bạn đã rút lui</h1>
+          <p>Mọi thao tác của bạn đã được xoá khỏi nghiên cứu. Cảm ơn bạn đã ghé.</p>
+          {cleared && <p className="ph-small">Mã ngẫu nhiên lưu trên máy này cũng đã được xoá.</p>}
+        </main>
+        {footer}
+      </div>
     );
   }
 
-  if (withdrawn) {
+  if (gone) {
     return (
-      <div className="ld ph"><main className="xem" data-testid="xem-withdrawn"><h1 className="ph-title">Bạn đã rút lui</h1><p>Mọi thao tác của bạn đã được xoá khỏi nghiên cứu. Cảm ơn bạn đã ghé.</p></main>{footer}</div>
+      <div className="ld ph">
+        <main className="xem" data-testid="xem-gone">
+          <p className="ph-muted">Phòng không tồn tại hoặc đã tắt.</p>
+          {leftover && (
+            <>
+              <p>Nếu bạn đã tham gia phòng này, bạn vẫn rút lui được: mọi thao tác của bạn trong phòng sẽ bị xoá khỏi nghiên cứu.</p>
+              <RutLui label="Rút lui và xoá dữ liệu của tôi" onSend={withdraw} />
+            </>
+          )}
+        </main>
+        {footer}
+      </div>
+    );
+  }
+
+  if (!state) {
+    return (
+      <div className="ld ph"><main className="xem"><p className="ph-muted">{error ?? "Đang mở phòng…"}</p></main>{footer}</div>
     );
   }
 
@@ -317,9 +483,7 @@ export function XemRoom({ code }: { code: string }) {
           <button type="button" className="ph-btn" onClick={() => void postComment()}>Gửi</button>
         </div>
 
-        <p className="xem-leave">
-          <button type="button" className="ph-btn" onClick={() => void withdraw()}>Rút lui khỏi nghiên cứu</button>
-        </p>
+        <RutLui label="Rút lui khỏi nghiên cứu" onSend={withdraw} />
         {toast && <div className="xem-toast" role="status">{toast}</div>}
       </main>
       {footer}

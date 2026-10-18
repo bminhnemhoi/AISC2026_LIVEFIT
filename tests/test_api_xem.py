@@ -61,38 +61,56 @@ def room(env, clock):
     store = InMemoryStore()
     app = create_app(store=store)
     with TestClient(app) as client:
-        for pid, price in zip(PRODUCTS, (45_000, 129_000, 99_000), strict=True):
-            r = client.post(
-                "/products",
-                json={
-                    "product_id": pid,
-                    "name": f"SP {pid}",
-                    "cost": 10_000,
-                    "price": price,
-                    "stock": 50,
-                },
-            )
-            assert r.status_code == 200, r.text
+        sid, code = _lab_room(client)
+        assert client.post(f"/sessions/{sid}/start").status_code == 200
+        yield client, store, sid, code
+
+
+@pytest.fixture(params=["planned", "scheduled"])
+def planned_room(request, env, clock):
+    """Như ``room`` nhưng phiên CHƯA bắt đầu (phòng 'chua_mo'): 'planned' là chưa
+    bốc lịch, 'scheduled' là đã bốc lịch nhưng chưa phát."""
+    store = InMemoryStore()
+    with TestClient(create_app(store=store)) as client:
+        sid, code = _lab_room(client, schedule=request.param == "scheduled")
+        assert store.get_session(sid)["status"] == request.param
+        yield client, store, sid, code
+
+
+def _lab_room(client, *, schedule: bool = True) -> tuple[str, str]:
+    """Danh mục, phiên 'lab' (đã bốc lịch nếu ``schedule``) và phòng xem đã bật;
+    chưa bắt đầu phiên."""
+    for pid, price in zip(PRODUCTS, (45_000, 129_000, 99_000), strict=True):
         r = client.post(
-            "/sessions",
+            "/products",
             json={
-                "platform": "lab",
-                "title": "Phòng thử",
-                "planned_duration_min": 60,
-                "mode": "auto",
+                "product_id": pid,
+                "name": f"SP {pid}",
+                "cost": 10_000,
+                "price": price,
+                "stock": 50,
             },
         )
         assert r.status_code == 200, r.text
-        sid = r.json()["session_id"]
+    r = client.post(
+        "/sessions",
+        json={
+            "platform": "lab",
+            "title": "Phòng thử",
+            "planned_duration_min": 60,
+            "mode": "auto",
+        },
+    )
+    assert r.status_code == 200, r.text
+    sid = r.json()["session_id"]
+    if schedule:
         assert client.post(f"/sessions/{sid}/schedule", json={}).status_code == 200
-        r = client.post(
-            f"/sessions/{sid}/phong-xem",
-            json={"consent_version": "2026-10-15", "products": list(PRODUCTS)},
-        )
-        assert r.status_code == 200, r.text
-        code = r.json()["code"]
-        assert client.post(f"/sessions/{sid}/start").status_code == 200
-        yield client, store, sid, code
+    r = client.post(
+        f"/sessions/{sid}/phong-xem",
+        json={"consent_version": "2026-10-15", "products": list(PRODUCTS)},
+    )
+    assert r.status_code == 200, r.text
+    return sid, r.json()["code"]
 
 
 def _event(client, code, viewer, event_id, kind, **extra):
@@ -589,15 +607,131 @@ def test_repeated_withdrawal_is_a_harmless_duplicate(room, closed):
     assert other.status_code == (409 if closed else 410)
 
 
-@pytest.mark.parametrize("how", ["ket_thuc", "tat_phong"])
-def test_withdrawal_without_consent_writes_nothing_even_when_closed(room, how):
+@pytest.mark.parametrize(
+    ("how", "status"), [("ket_thuc", 403), ("tat_phong", 404), ("ca_hai", 404)]
+)
+def test_withdrawal_without_consent_writes_nothing_even_when_closed(room, how, status):
     """Phòng đóng không phải cửa sau để ghi: người chưa từng đồng ý thì không có
-    gì để xoá, và cũng không để lại dòng ``rut_lui`` nào."""
+    gì để xoá, và cũng không để lại dòng ``rut_lui`` nào. Phòng đã tắt còn không
+    được thừa nhận là có thật (404 như mã sai); phòng chỉ đóng thì trang trạng
+    thái vẫn công khai, nên 403 không lộ thêm gì."""
     client, store, sid, code = room
     _close_room(client, sid, how)
     before = _tables(store)
-    assert _event(client, code, VIEWERS[2], "out", "rut_lui").status_code == 403
+    assert _event(client, code, VIEWERS[2], "out", "rut_lui").status_code == status
     assert _tables(store) == before
+
+
+@pytest.mark.parametrize("how", ["tat_phong", "ca_hai"])
+def test_stranger_withdrawal_in_a_switched_off_room_looks_like_an_unknown_code(
+    room, monkeypatch, how
+):
+    """V2-loi-ghim (19/10/2026): người lạ gửi ``rut_lui`` vào mã của phòng đã tắt
+    từng nhận 403 "Cần đồng ý", tức là biết mã ấy có thật. Nay nhận ĐÚNG phản hồi
+    của mã không tồn tại, cả khi gửi dồn (không bao giờ 429 theo người xem, vì mã
+    sai không bao giờ trả 429 ấy). Người đã đồng ý vẫn rút lui được."""
+    client, store, sid, code = room
+    monkeypatch.setenv("PHONG_XEM_VIEWER_RATE_LIMIT_PER_MIN", "2")
+    get_settings.cache_clear()
+    member = VIEWERS[0]
+    _consent(client, code, member)
+    assert _event(client, code, member, "b", "bam", product_id="P-SAP").status_code == 200
+    _close_room(client, sid, how)
+    before = _tables(store)
+
+    unknown = _event(client, "khong-co", VIEWERS[2], "out", "rut_lui")
+    assert unknown.status_code == 404
+    for k in range(4):
+        r = _event(client, code, VIEWERS[2], f"out-{k}", "rut_lui")
+        assert (r.status_code, r.json()) == (404, unknown.json())
+    assert _tables(store) == before
+
+    # Người đã đồng ý đã tiêu hết 2 lượt (đồng ý + bấm); người lạ không tốn lượt nào.
+    client.app.state.gioi_han_ghi.xoa_het()
+    r = _event(client, code, member, "out", "rut_lui")
+    assert r.status_code == 200, r.text
+    assert (r.json()["accepted"], r.json()["duplicate"]) == (True, False)
+    h = viewer_hash(sid, member)
+    assert store.list_clicks(sid) == []
+    assert [e["kind"] for e in store.list_lab_events(sid) if e["viewer_hash"] == h] == ["rut_lui"]
+
+
+def test_repeated_withdrawal_in_a_switched_off_room_is_still_a_duplicate(room):
+    """Người đã rút lui chỉ còn dòng ``rut_lui`` (dòng ``dong_y`` đã bị xoá cùng
+    mọi dấu vết khác); họ vẫn là người từng tham gia, nên bấm lại sau khi phòng
+    tắt nhận ``duplicate`` chứ không phải 404."""
+    client, store, sid, code = room
+    _consent(client, code, VIEWERS[0])
+    assert _event(client, code, VIEWERS[0], "out", "rut_lui").status_code == 200
+    _close_room(client, sid, "tat_phong")
+    before = _tables(store)
+    again = _event(client, code, VIEWERS[0], "out-lan-2", "rut_lui")
+    assert again.status_code == 200, again.text
+    assert (again.json()["accepted"], again.json()["duplicate"]) == (False, True)
+    assert _tables(store) == before
+
+
+def test_withdrawal_while_the_session_is_still_planned(planned_room):
+    """Phiên chưa phát ('planned' hoặc 'scheduled', phòng 'chua_mo'): rút lui
+    không vướng cổng 409 như mọi loại khác, nhưng chưa ai đồng ý được nên người
+    gửi là người lạ: 403, không ghi gì. Phòng đã tắt thì 404 y như mã sai."""
+    client, store, sid, code = planned_room
+    assert client.get(f"/xem-api/{code}/trang-thai").json()["room"]["status"] == "chua_mo"
+    before = _tables(store)
+    assert _event(client, code, VIEWERS[0], "dy", "dong_y").status_code == 409
+    r = _event(client, code, VIEWERS[0], "out", "rut_lui")
+    assert r.status_code == 403, r.text
+    assert _tables(store) == before
+
+    _close_room(client, sid, "tat_phong")
+    before = _tables(store)
+    unknown = _event(client, "khong-co", VIEWERS[0], "out", "rut_lui")
+    r = _event(client, code, VIEWERS[0], "out", "rut_lui")
+    assert (r.status_code, r.json()) == (404, unknown.json())
+    assert _tables(store) == before
+
+
+@pytest.mark.parametrize("how", ["dang_mo", "ket_thuc", "tat_phong"])
+def test_withdrawal_keeps_the_pin_recorded_in_every_old_bucket(room, clock, how):
+    """V2-loi-ghim (19/10/2026): rút lui tính lại tick của các mốc cũ, và
+    ``_store_tick`` từng đóng dấu món đang ghim LÚC RÚT LUI (sau khi phiên kết
+    thúc là món ghim cuối) lên mọi mốc ấy. Ghim đổi qua nhiều khối (chưa ghim,
+    A, B, gỡ, C); rút lui; món ghim của từng mốc không đổi, chỉ số người xem
+    được tính lại."""
+    client, store, sid, code = room
+    keep, leave = VIEWERS[0], VIEWERS[1]
+    steps = [None, "P-SAP", "P-BINH", "unpin", "P-AO"]
+    for k, (block, step) in enumerate(zip(_blocks(store, sid), steps, strict=False)):
+        _go_to(clock, store, sid, block)
+        if step is not None:
+            r = client.post(
+                f"/sessions/{sid}/actions/override",
+                json={
+                    "product_id": None if step == "unpin" else step,
+                    "reason": "sự cố kỹ thuật",
+                },
+            )
+            assert r.status_code == 200, r.text
+        for offset in (0, 30):  # hai mốc 30 giây mỗi khối
+            clock.now = clock.now + timedelta(seconds=offset)
+            for v in (keep, leave):
+                if k == 0 and offset == 0:
+                    _consent(client, code, v)
+                assert _event(client, code, v, f"n{k}-{offset}", "nhip").status_code == 200
+    before = {t["ts_bucket"]: t["pinned_product_id"] for t in store.list_ticks(sid)}
+    assert set(before.values()) == {None, "P-SAP", "P-BINH", "P-AO"}
+    assert {t["viewers"] for t in store.list_ticks(sid)} == {2}
+
+    if how != "dang_mo":
+        clock.now += timedelta(minutes=2)
+        _close_room(client, sid, how)
+        clock.now += timedelta(hours=3)
+    r = _event(client, code, leave, "out", "rut_lui")
+    assert r.status_code == 200, r.text
+
+    after = store.list_ticks(sid)
+    assert {t["ts_bucket"]: t["pinned_product_id"] for t in after} == before
+    assert {t["viewers"] for t in after} == {1}  # tick đã được tính lại thật
 
 
 def test_withdrawal_from_an_unknown_room_is_404(room):
