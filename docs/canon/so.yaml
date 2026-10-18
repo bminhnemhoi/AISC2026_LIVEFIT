@@ -1,0 +1,381 @@
+# Bộ số chuẩn của LiveLift (AISC'26, đội AISC26-0039)
+#
+# Đây là nguồn chuẩn cho mọi con số xuất hiện trên deck, poster, kịch bản, hỏi đáp,
+# README và giao diện. Số mới phải vào docs/competition/FACT-SHEET.md trước, rồi mới
+# vào tệp này, rồi mới đi ra nơi khác. Không bao giờ sửa theo chiều ngược lại.
+#
+# Lập 19/10/2026. Các số mô phỏng đã đối chiếu lại với JSON nguồn cùng ngày.
+#
+# Trường của mỗi số:
+#   id          khoá ngắn, không dấu, dùng trong mã (so_lieu.py, kiem_so.py)
+#   gia_tri     giá trị máy đọc (tỷ lệ để dạng 0..1; số tiền để nguyên đơn vị)
+#   hien_thi    cách viết đúng trên bản tiếng Việt (dấu phẩy thập phân, dấu chấm hàng nghìn)
+#   nhan        MÔ PHỎNG · DÀN DỰNG · THẬT · GIẢ THUYẾT · THỨ CẤP · NHÃN AI · QUAN SÁT ·
+#               MINH HOẠ · MÀN MẪU · THỬ NỘI BỘ
+#   nguon_tep   tệp sinh ra hoặc ghi số (đường dẫn tính từ gốc repo livelift/, hoặc URL)
+#   nguon_khoa  khoá JSON hoặc dòng bảng để đối chiếu
+#   duoc_noi    câu mẫu được phép nói (có thể rút gọn, không được bỏ điều kiện)
+#   cam         biểu thức chính quy của cách nói bị cấm (Python re, không phân biệt hoa thường)
+#   ngay_do     ngày đo hoặc ngày kiểm nguồn (YYYY-MM-DD)
+
+phien_ban: "2026-10-19"
+fact_sheet: docs/competition/FACT-SHEET.md
+
+so:
+  # ---------------------------------------------------------------------------
+  # Kiểm định trên mô phỏng (LiveRoomSim, lưới R200-P120)
+  # Lưới: 40 ô × 200 lần lặp × 3 phiên × 120 phút; bỏ 60 giây đầu khối (tiền đăng ký)
+  # ---------------------------------------------------------------------------
+  - id: bao_nham_tb
+    gia_tri: 0.043
+    hien_thi: "4,3%"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/data/liveroom-grid/R200-P120/
+    nguon_khoa: "trung bình by_burn_in/60/rejection_rate trên 12 tệp clicks_tau0_*.json (0,0429)"
+    duoc_noi: "Trong 12 kịch bản mô phỏng không có tác động, phép đo báo nhầm trung bình 4,3% (mức cho phép 5%)."
+    cam:
+      - '≈\s*4\s*%'
+      - 'luôn đúng 5\s*%'
+      - '4,5\s*%'
+    ngay_do: "2026-10-15"
+    ghi_chu: "Số tiêu đề của phần bằng chứng phương pháp. A/A 3,50% chỉ ở chú thích."
+
+  - id: bao_nham_dai
+    gia_tri: [0.005, 0.075]
+    hien_thi: "0,5–7,5%"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/data/liveroom-grid/R200-P120/
+    nguon_khoa: "min và max của by_burn_in/60/rejection_rate trên 12 tệp clicks_tau0_*.json"
+    duoc_noi: "Từng kịch bản dao động 0,5–7,5%; sai số Monte-Carlo khoảng ±1,5 điểm phần trăm."
+    cam: []
+    ngay_do: "2026-10-15"
+
+  - id: aa_hieu_chuan
+    gia_tri: 0.035
+    hien_thi: "3,50% (7/200)"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/so-hieu-chuan.json
+    nguon_khoa: "/nghien_cuu/aa/ty_le_bac_bo"
+    duoc_noi: "Chỉ ở chú thích: hiệu chuẩn A/A bác bỏ 3,50% (7/200, danh nghĩa 5%)."
+    cam:
+      - '0,872'
+      - '4,5\s*%'
+      - '96,50\s*%(?!.*không độc lập)'
+    ngay_do: "2026-09-25"
+
+  - id: luc_khoi_5p
+    gia_tri: 0.95
+    hien_thi: "95%"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/data/liveroom-grid/R200-P120/clicks_tau0.3_h0_b5_beta0.json
+    nguon_khoa: "/by_burn_in/60/rejection_rate"
+    duoc_noi: "Với tác động +30% và khối 5 phút, phép đo bắt được 95% số lần (3 phiên × 120 phút, mô phỏng)."
+    cam:
+      - 'lực (phát hiện )?95\s*%(?!.*\+30)'
+    ngay_do: "2026-10-15"
+    ghi_chu: "Không đặt sát chữ 'KTC 95%' để người nghe không nhầm hai số 95."
+
+  - id: luc_khoi_10p
+    gia_tri: 0.63
+    hien_thi: "63%"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/data/liveroom-grid/R200-P120/clicks_tau0.3_h0_b10_beta0.json
+    nguon_khoa: "/by_burn_in/60/rejection_rate"
+    duoc_noi: "Cùng tác động +30% nhưng khối 10 phút thì chỉ bắt được 63%."
+    cam: []
+    ngay_do: "2026-10-15"
+
+  - id: do_phu_ktc_luoi
+    gia_tri: 0.955
+    hien_thi: "95,5%"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/data/liveroom-grid/R200-P120/clicks_tau0.3_h0_b5_beta0.json
+    nguon_khoa: "/by_burn_in/60/coverage"
+    duoc_noi: "Chỉ ở slide dự phòng, luôn ghi 'độ phủ KTC 95% trên lưới LiveRoomSim'."
+    cam:
+      - '95,5\s*%(?!.*(lưới|LiveRoomSim))'
+    ngay_do: "2026-10-15"
+    ghi_chu: "Trùng chữ số với độ phủ A/A cũ của Vòng 1 (đã thay). Không đưa lên deck chính."
+
+  - id: du_am_h300
+    gia_tri: {khong_bo: -0.464, bo_180s: -0.354}
+    hien_thi: "−46% → −35%"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/data/liveroom-grid/R200-P120/clicks_tau0.3_h300_b5_beta0.json
+    nguon_khoa: "/by_burn_in/0/relative_bias và /by_burn_in/180/relative_bias"
+    duoc_noi: "Khi dư âm kéo dài (nửa đời 300 giây), ước lượng lệch −46%, bỏ 180 giây đầu khối còn −35%, và luôn lệch về phía 0: sai thì sai về phía thận trọng."
+    cam: []
+    ngay_do: "2026-10-15"
+    ghi_chu: "Bộ cũ 96/76/57% (lưới 02/09, khác mô hình) chỉ ở slide dự phòng."
+
+  - id: day_khach_beta05
+    gia_tri: {tong_luot_nhap: 0.52, tac_dong: 0.30, lech_uoc_luong: -0.006}
+    hien_thi: "+52% so với +30%, lệch −0,6%"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/data/liveroom-grid/R200-P120/
+    nguon_khoa: "+52%: trung bình gte_total_relative của 6 tệp clicks_tau0.3_*_beta0.5.json (0,515–0,524); −0,6%: clicks_tau0.3_h0_b5_beta0.5.json /by_burn_in/60/relative_bias"
+    duoc_noi: "Khi nền tảng đẩy thêm khách (β = 0,5), tổng lượt nhấp tăng khoảng +52% trong khi tác động thật là +30%; ước lượng của LiveLift lệch −0,6%."
+    cam: []
+    ngay_do: "2026-10-15"
+
+  - id: don_tre_90s
+    gia_tri: {khong_bo: -0.351, bo_180s: -0.073}
+    hien_thi: "−35% → −7%"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/data/liveroom-grid/R200-P120/orders_tau0.3_h0_b5_d90.json
+    nguon_khoa: "/by_burn_in/0/relative_bias và /by_burn_in/180/relative_bias"
+    duoc_noi: "Đơn đến trễ (trung vị 90 giây) làm ước lượng theo đơn lệch −35%, bỏ 180 giây đầu khối còn −7%. Đơn là chỉ số phụ."
+    cam: []
+    ngay_do: "2026-10-15"
+
+  - id: thu_hoi_tac_dong
+    gia_tri: {lech: -0.0084, do_phu: 0.925}
+    hien_thi: "lệch −0,84%, phủ 92,50% (37/40)"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/benchmarks/so-hieu-chuan.json
+    nguon_khoa: "/nghien_cuu/thu_hoi"
+    duoc_noi: "Thu hồi tác động biết trước: lệch −0,84%, KTC phủ 37/40 lần."
+    cam:
+      - '−0,3\s*%'
+    ngay_do: "2026-09-25"
+
+  - id: mde_luot_nhap
+    gia_tri: 0.164
+    hien_thi: "16,4% ở khoảng 59 người xem"
+    nhan: MÔ PHỎNG
+    nguon_tep: docs/competition/sang-tao-tre-2026/hinh/du-lieu/tom-tat.json
+    nguon_khoa: "h4.mo_phong"
+    duoc_noi: "Mức tác động nhỏ nhất phát hiện được là 16,4% ở khoảng 59 người xem đồng thời (mô phỏng); 5–15 người xem cho 300.000 đ quảng cáo vẫn là ƯỚC TÍNH, chưa đo."
+    cam:
+      - '20,1\s*%'
+      - '5\s*[–-]\s*15 người xem[^.]*(đo được|thực đo)'
+    ngay_do: "2026-09-25"
+
+  # ---------------------------------------------------------------------------
+  # NLP (radar ý định, tín hiệu phụ)
+  # ---------------------------------------------------------------------------
+  - id: nlp_6_lop
+    gia_tri: {truoc: 0.370, sau: 0.572}
+    hien_thi: "0,370 → 0,572"
+    nhan: NHÃN AI
+    nguon_tep: docs/benchmarks/intent-eval/results.json
+    nguon_khoa: "dòng A9 (0,3701 [0,3064; 0,4324]) và A8 (0,5717 [0,4712; 0,6668])"
+    duoc_noi: "Cùng thang 6 lớp, macro-F1 tăng từ 0,370 lên 0,572 trên 393 bình luận thật của 3 buổi, nhãn tham chiếu do AI gán."
+    cam:
+      - '0,271'
+      - '0,870(?!.*0,(211|542|370|572))'
+    ngay_do: "2026-09-25"
+
+  - id: nlp_11_lop
+    gia_tri: {truoc: 0.211, sau: 0.542}
+    hien_thi: "0,211 → 0,542"
+    nhan: NHÃN AI
+    nguon_tep: docs/benchmarks/intent-eval/results.json
+    nguon_khoa: "dòng B2 (0,2115 [0,1723; 0,247]) và C2 (0,5423 [0,4782; 0,6245])"
+    duoc_noi: "Chỉ ở chân slide: thang 11 lớp 0,211 → 0,542. Không ghép chéo với cặp 6 lớp."
+    cam: []
+    ngay_do: "2026-09-25"
+
+  - id: binh_luan_quan_sat
+    gia_tri: {binh_luan: 19126, buoi: 16}
+    hien_thi: "19.126 bình luận, 16 buổi"
+    nhan: QUAN SÁT
+    nguon_tep: docs/benchmarks/live-fire-da-nguon.md
+    nguon_khoa: "§1 (lô đo 10/09/2026)"
+    duoc_noi: "19.126 bình luận công khai của 16 buổi live, chỉ phân tích quan sát. Tải bằng yt-dlp trước 17/09; từ 17/09 nhóm chỉ dùng API chính thức."
+    cam:
+      - '14\.903 bình luận(?!.*cũ)'
+    ngay_do: "2026-09-10"
+    ghi_chu: "Luôn đi kèm câu về API. Không đưa lên poster."
+
+  - id: kuailive
+    gia_tri: 1160000
+    hien_thi: "1,16 triệu phòng live shop"
+    nhan: THẬT · dữ liệu ngoài
+    nguon_tep: docs/benchmarks/kuailive-calibration.md
+    nguon_khoa: "KuaiLive (SIGIR 2026), 21 ngày Kuaishou: 1.157.314 phòng shop"
+    duoc_noi: "LiveRoomSim chỉ lấy hình dạng phân phối từ KuaiLive (1,16 triệu phòng live shop thật), không lấy mức tuyệt đối."
+    cam: []
+    ngay_do: "2026-09-02"
+
+  # ---------------------------------------------------------------------------
+  # Bằng chứng thật và thiết kế
+  # ---------------------------------------------------------------------------
+  - id: phien_nguoi_ban_that
+    gia_tri: 0
+    hien_thi: "0 phiên"
+    nhan: THẬT
+    nguon_tep: docs/competition/FACT-SHEET.md
+    nguon_khoa: "dòng 'Số phiên thí nghiệm ngẫu nhiên THẬT đã chạy'"
+    duoc_noi: "Hôm nay có 0 phiên với người bán thật."
+    cam:
+      - 'đã có kết quả (thật|với người bán)'
+      - '18\s*[–-]\s*20/10'
+    ngay_do: "2026-10-19"
+    ghi_chu: "Trên deck chỉ nói một lần, ở slide trạng thái."
+
+  - id: phong_van
+    gia_tri: 0
+    hien_thi: "0 phỏng vấn"
+    nhan: THẬT
+    nguon_tep: docs/competition/FACT-SHEET.md
+    nguon_khoa: "§4 Giá gói"
+    duoc_noi: "Chưa phỏng vấn người bán nào; giá là giả thuyết."
+    cam: []
+    ngay_do: "2026-10-19"
+
+  - id: su_co
+    gia_tri: 122
+    hien_thi: "122 sự cố"
+    nhan: THẬT
+    nguon_tep: docs/incident-log.md
+    nguon_khoa: "đếm hàng bảng bắt đầu bằng '| dd/mm/yyyy |' (tests/test_so_cong_bo.py)"
+    duoc_noi: "122 sự cố đã ghi sổ kèm nguyên nhân gốc."
+    cam: []
+    ngay_do: "2026-10-15"
+    ghi_chu: "Số sống: sổ thêm hàng thì số đổi theo, test sẽ báo."
+
+  - id: phien_90_khoi
+    gia_tri: {phut: 90, khoi: 16, bat: 8, tat: 8}
+    hien_thi: "phiên 90 phút = 16 khối (8 BẬT / 8 TẮT)"
+    nhan: THẬT
+    nguon_tep: docs/competition/sang-tao-tre-2026/hinh/NGUON.md
+    nguon_khoa: "dòng h1-switchback.png: generate_schedule(90, DesignParams(), seed=42)"
+    duoc_noi: "Phiên 90 phút chia 16 khối, 8 BẬT và 8 TẮT; khối đầu và cuối dài gấp đôi."
+    cam:
+      - '18 khối'
+    ngay_do: "2026-09-25"
+
+  # ---------------------------------------------------------------------------
+  # Thị trường (THỨ CẤP, ghi kèm năm và đơn vị đo)
+  # ---------------------------------------------------------------------------
+  - id: tmdt_vn_h1_2026
+    gia_tri: [264.8, 291.6]
+    hien_thi: "264,8–291,6 nghìn tỷ đồng (nửa đầu 2026)"
+    nhan: THỨ CẤP
+    nguon_tep: "https://youneteci.com/vi/bao-cao-toan-canh-tmdt-viet-nam-nua-dau-nam-2026/ ; https://metric.vn/resource/blog/metric-bao-cao-thuong-mai-dien-tu-viet-nam-6-thang-dau-nam-2026"
+    nguon_khoa: "YouNet ECI 264,8 (+19%); Metric 291,6 (+44,11%); docs/research/2026-10-15-tong-quan-nghien-cuu-va-thi-truong.md C6, C7"
+    duoc_noi: "Thương mại điện tử Việt Nam nửa đầu 2026 khoảng 264,8–291,6 nghìn tỷ đồng, tuỳ đơn vị đo (YouNet ECI; Metric)."
+    cam:
+      - '2,5 triệu (phiên|buổi)'
+      - '>\s*50\.000 nhà bán'
+    ngay_do: "2026-10-15"
+
+  - id: tmdt_vn_9t_2026
+    gia_tri: 411.8
+    hien_thi: "411,8 nghìn tỷ đồng (9 tháng 2026)"
+    nhan: THỨ CẤP
+    nguon_tep: "https://youneteci.com/vi/bao-cao-toan-canh-tmdt-viet-nam-q3-2026/"
+    nguon_khoa: "YouNet ECI quý 3/2026 (14/10/2026), +22%; tổng quan 15/10 C8"
+    duoc_noi: "9 tháng đầu 2026: 411,8 nghìn tỷ đồng (YouNet ECI)."
+    cam: []
+    ngay_do: "2026-10-15"
+
+  - id: dna_content_commerce
+    gia_tri: 0.37
+    hien_thi: "37% GMV sàn"
+    nhan: THỨ CẤP
+    nguon_tep: "https://thelowdown.momentum.asia/new-report-southeast-asias-content-commerce-on-track-to-reach-us77-9b-in-2026/"
+    nguon_khoa: "Momentum Works, Live Commerce in Southeast Asia 2026; tổng quan 15/10 C11"
+    duoc_noi: "Ở Đông Nam Á, content commerce (live, video ngắn, tiếp thị liên kết) chiếm 37% GMV sàn (Momentum Works)."
+    cam:
+      - 'live(stream)? chiếm 37\s*%'
+    ngay_do: "2026-10-15"
+
+  - id: tq_gmv_live_2025
+    gia_tri: 5000000000000
+    hien_thi: "> 5 nghìn tỷ NDT (2025)"
+    nhan: THỨ CẤP
+    nguon_tep: "https://swt.fujian.gov.cn/xxgk/jgzn/jgcs/sctxjsc/gzdt_386/202602/t20260228_7103174.htm"
+    nguon_khoa: "《2025直播电商行业发展白皮书》, 市场监管总局发展研究中心 và 中国社会科学院财经战略研究院; tổng quan 15/10 B1"
+    duoc_noi: "GMV livestream Trung Quốc năm 2025 trên 5 nghìn tỷ NDT (sách trắng 2025, Trung tâm nghiên cứu phát triển của 市场监管总局)."
+    cam: []
+    ngay_do: "2026-10-15"
+
+  - id: tq_dian_bo
+    gia_tri: 0.50
+    hien_thi: "店播 > 50%"
+    nhan: THỨ CẤP
+    nguon_tep: "https://swt.fujian.gov.cn/xxgk/jgzn/jgcs/sctxjsc/gzdt_386/202602/t20260228_7103174.htm"
+    nguon_khoa: "\"店播GMV占比超过50%\" (sách trắng 2025)"
+    duoc_noi: "Shop tự live (店播) chiếm trên 50% GMV livestream Trung Quốc năm 2025."
+    cam:
+      - 'khoảng một nửa'
+    ngay_do: "2026-10-15"
+
+  - id: tq_nguoi_dan_vua_nho
+    gia_tri: 0.8934
+    hien_thi: "89,34%"
+    nhan: THỨ CẤP
+    nguon_tep: "https://swt.fujian.gov.cn/xxgk/jgzn/jgcs/sctxjsc/gzdt_386/202602/t20260228_7103174.htm"
+    nguon_khoa: "\"中小主播提升至89.34%\" (sách trắng 2025)"
+    duoc_noi: "Người dẫn vừa và nhỏ mang về 89,34% GMV livestream Trung Quốc năm 2025."
+    cam: []
+    ngay_do: "2026-10-15"
+
+  - id: tiktok_738
+    gia_tri: 0.0738
+    hien_thi: "+7,38% GMV"
+    nhan: THỨ CẤP
+    nguon_tep: "https://seller-vn.tiktok.com/university/essay?knowledge_id=4898053111744273&lang=vi-VN"
+    nguon_khoa: "TikTok Seller University VN, 24/06/2026; 'dựa trên dữ liệu nội bộ tại SEA năm 2025'"
+    duoc_noi: "TikTok ghi gợi ý AI trong LIVE giúp tăng GMV tới 7,38%, theo dữ liệu nội bộ, không công bố nhóm đối chứng."
+    cam:
+      - 'estimated GMV'
+      - 'GMV ước tính'
+    ngay_do: "2026-10-19"
+
+  - id: luopan_tuong_quan
+    gia_tri: "相关性"
+    hien_thi: "\"相关性\" (tương quan)"
+    nhan: THỨ CẤP
+    nguon_tep: "https://school.jinritemai.com/doudian/web/articlev0/aHSMTiukjMnW"
+    nguon_khoa: "罗盘 của 抖音, 08/06/2023: \"识别动作与指标及流量变化趋势的相关性\""
+    duoc_noi: "罗盘 của 抖音 tự mô tả dòng thời gian hành động là đo 相关性, tức tương quan."
+    cam: []
+    ngay_do: "2026-10-15"
+    ghi_chu: "Trích dẫn, không phải số. Giữ ở đây để mọi nơi trích cùng một câu."
+
+  # ---------------------------------------------------------------------------
+  # Giá (GIẢ THUYẾT cho LiveLift; THỨ CẤP cho đối thủ, kiểm 19/10/2026)
+  # ---------------------------------------------------------------------------
+  - id: gia_pro
+    gia_tri: 990000
+    hien_thi: "990.000 đ/tháng"
+    nhan: GIẢ THUYẾT
+    nguon_tep: docs/competition/FACT-SHEET.md
+    nguon_khoa: "§4 Giá gói"
+    duoc_noi: "Gói Pro dự kiến 990.000 đ/tháng, chưa phỏng vấn người bán nào."
+    cam:
+      - 'tăng (doanh số|doanh thu) \d'
+    ngay_do: "2026-09-25"
+
+  - id: gia_agency
+    gia_tri: 3900000
+    hien_thi: "3.900.000 đ/tháng"
+    nhan: GIẢ THUYẾT
+    nguon_tep: docs/competition/FACT-SHEET.md
+    nguon_khoa: "§4 Giá gói"
+    duoc_noi: "Gói Agency dự kiến 3.900.000 đ/tháng."
+    cam: []
+    ngay_do: "2026-09-25"
+
+  - id: gia_chanmama
+    gia_tri: 29.99
+    hien_thi: "29,99 USD/tháng"
+    nhan: THỨ CẤP
+    nguon_tep: "https://apps.apple.com/us/app/id1508944184"
+    nguon_khoa: "蝉妈妈, gói cá nhân, App Store Mỹ bản 4.31.1"
+    duoc_noi: "蝉妈妈 gói cá nhân 29,99 USD/tháng (App Store, kiểm 19/10/2026)."
+    cam: []
+    ngay_do: "2026-10-19"
+
+  - id: gia_bambuser
+    gia_tri: [0, 249]
+    hien_thi: "0–249 USD/tháng"
+    nhan: THỨ CẤP
+    nguon_tep: "https://bambuser.com/pricing"
+    nguon_khoa: "Free 0, Essential 79, Pro 249 USD/tháng (trả theo năm); Enterprise báo giá riêng"
+    duoc_noi: "Bambuser 0–249 USD/tháng, chưa tính gói doanh nghiệp (kiểm 19/10/2026)."
+    cam: []
+    ngay_do: "2026-10-19"

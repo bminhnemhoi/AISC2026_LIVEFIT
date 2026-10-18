@@ -24,11 +24,38 @@ import httpx
 
 from livelift.console import configure
 
+#: Hàng mẫu của phòng xem khi không truyền ``--san-pham``. Tên khác bộ ``DEMO_PRODUCTS`` của
+#: ``/demo/seed`` để danh mục dùng chung không có hai món trùng tên. Giá chỉ để minh hoạ, đặt
+#: theo mức bán lẻ thường gặp, không lấy từ dữ liệu sàn; người xem mua bằng tiền ảo.
 SAN_PHAM_MAC_DINH: list[dict[str, Any]] = [
-    {"product_id": "LAB-1", "name": "Sản phẩm 1", "cost": 20000, "price": 59000, "stock": 100},
-    {"product_id": "LAB-2", "name": "Sản phẩm 2", "cost": 30000, "price": 89000, "stock": 100},
-    {"product_id": "LAB-3", "name": "Sản phẩm 3", "cost": 40000, "price": 129000, "stock": 100},
-    {"product_id": "LAB-4", "name": "Sản phẩm 4", "cost": 15000, "price": 45000, "stock": 100},
+    {
+        "product_id": "LAB-1",
+        "name": "Áo thun cotton basic",
+        "cost": 45000,
+        "price": 129000,
+        "stock": 100,
+    },
+    {
+        "product_id": "LAB-2",
+        "name": "Túi tote canvas",
+        "cost": 30000,
+        "price": 89000,
+        "stock": 100,
+    },
+    {
+        "product_id": "LAB-3",
+        "name": "Bình giữ nhiệt inox 750ml",
+        "cost": 60000,
+        "price": 159000,
+        "stock": 100,
+    },
+    {
+        "product_id": "LAB-4",
+        "name": "Set 3 kẹp tóc càng cua",
+        "cost": 12000,
+        "price": 39000,
+        "stock": 100,
+    },
 ]
 
 
@@ -45,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--api", default="http://127.0.0.1:8000")
     ap.add_argument("--san-pham", type=Path, help="tệp JSON danh sách sản phẩm của phòng")
     ap.add_argument("--phut", type=int, default=180, help="thời lượng phiên (phút)")
-    ap.add_argument("--tieu-de", default="Phòng live dàn dựng LiveLift")
+    ap.add_argument("--tieu-de", default="Phòng xem LiveLift")
     ap.add_argument("--dong-y", default="2026-10-15", help="phiên bản lời đồng ý")
     ap.add_argument("--video", default=None, help="đường dẫn video người dẫn (mp4/YouTube embed)")
     ap.add_argument("--bat-dau", action="store_true", help="bắt đầu phát ngay")

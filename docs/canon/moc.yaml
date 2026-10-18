@@ -1,0 +1,62 @@
+# Mốc thời gian AISC'26 của đội AISC26-0039 (track Data Driven Business)
+#
+# Nguồn: thể lệ chính thức, kiểm lại 19/10/2026 (docs/competition/AISC26-THE-LE.md).
+# Ngày nào đổi thì sửa ở đây trước, rồi FACT-SHEET, rồi mọi nơi khác.
+
+phien_ban: "2026-10-19"
+
+moc:
+  - id: vong1_nop
+    ngay: "2026-09-14"
+    viec: "Nộp hồ sơ Vòng 1"
+    trang_thai: xong
+
+  - id: vong2_slide
+    ngay: "2026-10-19"
+    gio: "23:59"
+    viec: "Nộp slide Vòng 2"
+    ten_tep: "AISC26-0039-LiveLift_Slide"
+
+  - id: thu_noi_bo
+    ngay: "2026-10-20"
+    gio: "20:00"
+    viec: "Thử nội bộ phòng xem (chỉ người trong nhóm, nhãn DÀN DỰNG · THỬ NỘI BỘ)"
+    noi_bo: true
+
+  - id: dong_bang_giao_dien
+    ngay: "2026-10-21"
+    gio: "09:00"
+    viec: "Đóng băng giao diện (12:00 đóng băng mã)"
+    noi_bo: true
+
+  - id: vong2_thi
+    ngay: "2026-10-22"
+    noi: "UIT"
+    viec: "Thi Vòng 2 (thứ Năm): 15 phút trình bày + 5 phút hỏi đáp, ít nhất 2 người, mang thẻ sinh viên, kèm mockup giao diện"
+
+  - id: vong2_poster
+    ngay: "2026-10-25"
+    gio: "23:59"
+    viec: "Nộp poster và đoạn giới thiệu"
+    ten_tep: "AISC26-0039-LiveLift_Poster"
+    ghi_chu: "Khung BTC 4933×6634. Mục tiêu nội bộ: nộp trước 18:00."
+
+  - id: vong3_binh_chon
+    tu: "2026-11-01"
+    den: "2026-11-10"
+    viec: "Bình chọn poster Vòng 3 (20% điểm chung kết)"
+
+  - id: chung_ket
+    tu: "2026-11-20"
+    den: "2026-12-10"
+    uoc_tinh: true
+    viec: "Chung kết, khoảng 20/11 đến đầu 12/2026; bắt buộc demo kết nối cơ sở dữ liệu"
+    ghi_chu: "Thể lệ ghi 'dự kiến đầu tháng 12/2026' (80% điểm chung cuộc). Nhóm lập lịch ngược từ 20/11 cho chắc; 'den' là mốc giả định."
+
+cam:
+  - mau: 'Vòng 2[^.\n]{0,40}15/10'
+    ly_do: "Vòng 2 đã dời sang 22/10/2026"
+  - mau: 'chung kết[^.\n]{0,20}26/11'
+    ly_do: "lịch cũ"
+  - mau: 'bình chọn[^.\n]{0,20}21\s*[–-]\s*31/10'
+    ly_do: "lịch cũ; bình chọn là 01–10/11"

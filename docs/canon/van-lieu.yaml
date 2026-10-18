@@ -1,0 +1,62 @@
+# Văn liệu đã kiểm (19/10/2026) và con số được phép trích
+#
+# Chi tiết, nguyên văn và mức tin cậy: docs/research/2026-10-15-tong-quan-nghien-cuu-va-thi-truong.md
+# (mục 2, 3 và phụ lục A). Preprint phải ghi "preprint" khi trích.
+
+phien_ban: "2026-10-19"
+
+van_lieu:
+  - id: bojinov_2023
+    trich: "Bojinov, Simchi-Levi, Zhao, Management Science 69(7), 2023"
+    doi: "10.1287/mnsc.2022.4583"
+    dung_cho: "Khối đầu và khối cuối dài gấp đôi; độ dài khối xấp xỉ thời lượng dư âm."
+
+  - id: liu_zhong_2026
+    trich: "Liu, Zhong, arXiv 2602.23257 (2026, preprint, v2 29/09/2026)"
+    so: "báo nhầm 4,0–6,0% với 30–300 khối (mô phỏng gọi xe)"
+    dung_cho: "Kiểm định chính xác cho số khối nhỏ; kiểm định dư âm và không tiên liệu."
+
+  - id: missault_2025
+    trich: "Missault và cs., arXiv 2506.12654 (2025, preprint)"
+    so: "MSE 0,318 (chia theo sản phẩm) / 0,062 (switchback) / 0,011 (thiết kế cân bằng)"
+    dung_cho: "Cân bằng số khối BẬT và TẮT là đòn bẩy phương sai lớn nhất."
+
+  - id: farias_2023
+    trich: "Farias và cs., RecSys 2023 (Douyin)"
+    doi: "10.1145/3604915.3608808"
+    so: "ước lượng ngây thơ sai dấu, khoảng −800% (mô phỏng hiệu chỉnh theo Douyin)"
+    dung_cho: "Rủi ro giao thoa khi đo kiểu thông thường trong livestream."
+
+  - id: chen_2026
+    trich: "Chen, Bai, Zheng, Si, EC 2026 (arXiv 2501.11996)"
+    dung_cho: "Tồn kho làm switchback ước lượng thấp; ghi tồn kho trong mỗi phiên."
+
+  - id: ham_2026
+    trich: "Ham, Lindon, Tingley, Bojinov, Management Science 2026"
+    doi: "10.1287/mnsc.2024.08235"
+    dung_cho: "Dãy tin cậy cho việc theo dõi giữa phiên và dừng vì hại (lộ trình)."
+
+  - id: xie_2025
+    trich: "Xie, Sharma, Mehra, Production and Operations Management 34(12), 2025"
+    doi: "10.1177/10591478251314455"
+    dung_cho: "Trình bày lâu hơn tăng doanh thu món đó nhưng có thể giảm doanh thu cả phiên (quan sát)."
+    cam: ["chữ U ngược"]
+
+  - id: wang_isr_2025
+    trich: "Wang và cs., Information Systems Research 36(4), 2025"
+    doi: "10.1287/isre.2023.0103"
+    so: "+3,00% doanh số (trợ lý AI cho người mua, thí nghiệm do nền tảng chạy)"
+
+  - id: he_misq_2025
+    trich: "He và cs., MIS Quarterly 49(4), 2025"
+    so: "+40,21% hàng đặt trước (cho người dẫn xem số bán thời gian thực, nền tảng chạy)"
+    cam: ["gán con số này cho LiveLift"]
+
+  - id: liveforesighter_2025
+    trich: "LiveForesighter (Kuaishou), arXiv 2502.06557 (preprint)"
+    so: "+0,86% GMV trong A/B ở phòng bán hàng"
+    dung_cho: "Hiệu ứng thật trong livestream thường nhỏ; LiveLift chỉ bắt được hiệu ứng lớn."
+
+quy_tac:
+  - "Không trích bài báo của giảng viên hướng dẫn."
+  - "Số của văn liệu mang nhãn của chính bài (mô phỏng hay thực địa), không mượn sang LiveLift."

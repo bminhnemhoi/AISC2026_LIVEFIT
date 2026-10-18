@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import random
 import secrets
-from datetime import timedelta
+from datetime import timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter
@@ -44,6 +44,14 @@ from livelift.nlp.intent import classify_with_confidence
 from livelift.sim.simulator import SimParams, simulate_session
 
 router = APIRouter()
+
+#: Giờ Việt Nam cho chữ người đọc thấy (tiêu đề phiên mẫu). Không có giờ mùa hè nên
+#: độ lệch cố định là đủ, cùng cách với ``routes/sessions.py``.
+GIO_VN = timezone(timedelta(hours=7))
+
+#: Tiền tố tên phiên "đang phát" mà mỗi lần ``/demo/seed`` sinh đúng một cái; đếm nó
+#: là đếm số lần đã gieo.
+TIEN_TO_PHIEN_DANG_PHAT = "Phiên đang phát (mô phỏng)"
 
 DEMO_PRODUCTS = [
     {
@@ -281,11 +289,19 @@ def seed_demo(body: DemoSeedRequest, store: StoreDep) -> DemoSeedOut:
     # tên, nên sau bốn lần bấm màn kết quả có bốn dòng "Phiên mô phỏng
     # seed=1000" không tài nào phân biệt.
     #
-    # Nhãn phải có phần NGẪU NHIÊN chứ không chỉ giờ-phút: người dùng bấm hai
-    # lần liên tiếp thì hai lần rơi vào cùng một phút, và cổng kiểm thử đã bắt
-    # đúng lỗi ấy. Giờ-phút giữ lại để người đọc biết dòng nào mới gieo.
+    # Giờ-phút không đủ: bấm hai lần liên tiếp thì hai lần rơi vào cùng một
+    # phút, và cổng kiểm thử đã bắt đúng lỗi ấy. Bản 14/09 thêm mã ngẫu nhiên
+    # (·a3f2) vào tên, người đọc không hiểu. Từ 19/10/2026 tên dùng giờ Việt
+    # Nam và số thứ tự lần gieo ("lần 2"), đếm từ số phiên "đang phát" mẫu đã
+    # có. Mã ngẫu nhiên chỉ còn ở mã link, nơi người bán không phải đọc.
     run_tag = secrets.token_hex(2)
-    lan_gieo = f"{service.now_utc().strftime('%d/%m %H:%M')}·{run_tag}"
+    lan_thu = 1 + sum(
+        1
+        for s in store.list_sessions()
+        if s.get("is_demo") and str(s.get("title") or "").startswith(TIEN_TO_PHIEN_DANG_PHAT)
+    )
+    gio = service.now_utc().astimezone(GIO_VN)
+    lan_gieo = f"{gio:%H:%M %d/%m}" + (f" (lần {lan_thu})" if lan_thu > 1 else "")
     product_ids, codes = _seed_products_and_links(store, run_tag)
 
     session_ids = []
@@ -309,7 +325,7 @@ def seed_demo(body: DemoSeedRequest, store: StoreDep) -> DemoSeedOut:
         seed=999,
         start_offset_ago_min=body.duration_min // 2,
         leave_live=True,
-        title=f"Phiên đang phát (mô phỏng) · gieo {lan_gieo}",
+        title=f"{TIEN_TO_PHIEN_DANG_PHAT} · gieo {lan_gieo}",
     )
     return DemoSeedOut(
         session_ids=session_ids,

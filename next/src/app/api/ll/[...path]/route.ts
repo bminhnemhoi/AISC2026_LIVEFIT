@@ -16,7 +16,7 @@ async function forward(req: NextRequest, params: Promise<{ path: string[] }>, me
   const { path } = await params;
   const joined = path.join("/");
   if (!isAllowed(method, joined)) {
-    return NextResponse.json({ detail: "Đường này không mở qua bàn trợ live." }, { status: 404 });
+    return NextResponse.json({ detail: "Đường này không mở qua bàn thí nghiệm." }, { status: 404 });
   }
   const headers: Record<string, string> = { Accept: "application/json" };
   const token = process.env.LIVELIFT_API_TOKEN;

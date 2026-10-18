@@ -1,0 +1,168 @@
+# Thuật ngữ chuẩn, nhãn nguồn và từ cấm của LiveLift
+#
+# Áp dụng cho mọi chữ công khai: deck, poster, kịch bản, hỏi đáp, README, chữ trên
+# giao diện next/src/**, câu tổng kết sinh từ narrate.py. Tên biến, tên route và
+# đường dẫn trong mã không đổi theo tệp này.
+#
+# Lập 19/10/2026 từ kiểm toán đồng bộ cùng ngày (36 chỗ lệch).
+
+phien_ban: "2026-10-19"
+
+thuat_ngu:
+  - dung: "LiveLift"
+    cam: ["LIVEFIT"]
+    ghi_chu: "LIVEFIT chỉ là tên kho mã trên GitHub; bị hỏi thì giải thích."
+
+  - dung: "thí nghiệm bật/tắt theo khối thời gian (switchback)"
+    cam: ["luân phiên", "A/B"]
+    ghi_chu: "A/B chỉ dùng khi nói về chia người xem, thứ người bán không làm được."
+
+  - dung: "khối, khối BẬT, khối TẮT"
+    cam: ["lát", "bucket"]
+
+  - dung: "bốc thăm"
+    cam: ["random"]
+
+  - dung: "niêm phong lịch (dấu vân tay SHA-256)"
+    cam: ["khoá lịch"]
+
+  - dung: "bỏ 60 giây đầu khối"
+    cam: ["burn-in"]
+    ghi_chu: "burn-in chỉ được đứng trong ngoặc sau chữ tiếng Việt."
+
+  - dung: "dư âm"
+    cam: ["hiệu ứng lưu"]
+    ghi_chu: "hiệu ứng lưu (carryover) chỉ được đứng trong ngoặc."
+
+  - dung: "báo nhầm"
+    cam: ["dương tính giả"]
+
+  - dung: "lực phát hiện"
+    cam: []
+
+  - dung: "KTC 95%"
+    cam: []
+
+  - dung: "kiểm định ngẫu nhiên hoá"
+    cam: ["kiểm định hoán vị"]
+
+  - dung: "lượt nhấp hợp lệ / 1.000 giây·người xem"
+    cam: ["click / 1.000 giây", "lượt nhấp trên 1.000 giây xem"]
+
+  - dung: "bàn thí nghiệm"
+    nghia: "màn /phien/{id} của next/: theo lịch khối, ghim, xem kết quả"
+    cam: ["bàn trợ live", "bàn điều hành"]
+
+  - dung: "màn người dẫn"
+    nghia: "/nguoi-dan; làm mù MỘT PHẦN (người dẫn vẫn thấy món đang ghim)"
+    cam: ["người dẫn bị làm mù hoàn toàn"]
+
+  - dung: "phòng xem"
+    nghia: "/xem/{code}, nhãn DÀN DỰNG; tiền ảo, không lưu thông tin cá nhân"
+    cam: ["phòng live dàn dựng"]
+
+  - dung: "thử nội bộ"
+    nghia: "buổi phòng xem chỉ có người trong nhóm (tối 20/10/2026); người ngoài nhóm từ Vòng 3"
+    cam: []
+
+  - dung: "tổng kết ĐỔI / GIỮ / ĐO THÊM"
+    cam: ["DƯƠNG/NULL", "DƯƠNG, NULL, CHƯA ĐỦ"]
+    ghi_chu: "DƯƠNG/NULL chỉ còn là tên phiên mẫu trong bộ demo vàng."
+
+  - dung: "Live Desk minh hoạ"
+    nghia: "/start → /desk/{id}; lớp minh hoạ, không phải bàn thí nghiệm"
+    cam: []
+
+  - dung: "Chế độ Thí nghiệm"
+    cam: []
+
+  - dung: "chế độ ghim: Tự ghim / Chỉ gợi ý / Quan sát"
+    cam: ["Đề xuất (trọng tâm)"]
+
+  - dung: "radar ý định (tín hiệu phụ)"
+    cam: []
+
+  - dung: "người bán, người trợ live, người dẫn"
+    cam: ["nhà bán", "người vận hành"]
+
+  - dung: "người đi thuê sân"
+    nghia: "người bán không sở hữu nền tảng, không chia được người xem"
+    cam: []
+
+  - dung: "MÔ PHỎNG"
+    cam: ["SIMULATED"]
+    ghi_chu: "SIMULATED chỉ dùng trên bản tiếng Anh."
+
+cau_ghim: >-
+  LiveLift bốc thăm. Ở khối BẬT, Shopee ghim qua API (chưa nối); TikTok và Facebook
+  ghim tay theo thẻ lịch; trong demo và phòng xem, autopilot ghim.
+
+nhan_nguon:
+  - id: THAT
+    hien_thi: "THẬT"
+    nghia: "đo trên dữ liệu hoặc sự kiện có thật, chạy lại được"
+  - id: DAN_DUNG
+    hien_thi: "DÀN DỰNG"
+    nghia: "phòng xem: người thật bấm, tiền ảo, video người dẫn quay sẵn"
+  - id: THU_NOI_BO
+    hien_thi: "THỬ NỘI BỘ"
+    nghia: "buổi dàn dựng chỉ có người trong nhóm"
+  - id: MO_PHONG
+    hien_thi: "MÔ PHỎNG"
+    nghia: "sinh từ LiveRoomSim hoặc bộ mô phỏng gốc, biết trước đáp án"
+  - id: GIA_THUYET
+    hien_thi: "GIẢ THUYẾT"
+    nghia: "chưa kiểm chứng (giá, mức sẵn lòng trả)"
+  - id: THU_CAP
+    hien_thi: "THỨ CẤP"
+    nghia: "số của đơn vị khác, ghi tên nguồn và năm"
+  - id: NHAN_AI
+    hien_thi: "NHÃN AI"
+    nghia: "đo so với nhãn tham chiếu do tác tử AI gán, chưa có nhãn người"
+  - id: QUAN_SAT
+    hien_thi: "QUAN SÁT"
+    nghia: "dữ liệu có thật nhưng không có bốc thăm hay can thiệp"
+  - id: MINH_HOA
+    hien_thi: "MINH HOẠ"
+    nghia: "hình hoặc số để giải thích, không phải kết quả"
+  - id: MAN_MAU
+    hien_thi: "MÀN MẪU"
+    nghia: "ảnh giao diện chạy bằng dữ liệu mẫu"
+
+tu_cam:
+  # Số và khẳng định đã bị thay hoặc không có nguồn
+  - mau: '2,5 triệu (phiên|buổi)'
+    ly_do: "ước tính năm 2024 của AccessTrade, chưa truy được gốc"
+  - mau: '>\s*50\.000 nhà bán'
+    ly_do: "cùng nguồn với dòng trên"
+  - mau: '4,5\s*%'
+    ly_do: "A/A ngày 30/08, không tái lập được"
+  - mau: '0,271'
+    ly_do: "macro-F1 ngày 08/09, không tái lập được"
+  - mau: 'tăng doanh số'
+    ly_do: "LiveLift đo, không hứa tăng"
+  - mau: 'Mall/Preferred'
+    ly_do: "không thấy điều kiện này trong tài liệu Shopee Open Platform"
+  - mau: 'không bao giờ tự ghim'
+    ly_do: "trái với chế độ Tự ghim và autopilot của phòng xem"
+  - mau: 'estimated GMV'
+    ly_do: "chưa thấy trang chính thức nào của TikTok mô tả"
+  - mau: '(là|đội|công cụ|sản phẩm) đầu tiên'
+    ly_do: "không chứng minh được; kết luận 'chưa thấy' chỉ dựa trên tìm kiếm có phạm vi"
+  - mau: '18 khối'
+    ly_do: "phiên 90 phút có 16 khối"
+  # Văn phong
+  - mau: '—'
+    ly_do: "không dùng dấu gạch dài trong chữ công khai"
+  - mau: 'đột phá|toàn diện|nâng tầm|hệ sinh thái|then chốt|cốt lõi'
+    ly_do: "từ nghe giống văn máy"
+  - mau: 'không chỉ\b.{0,80}\bmà còn'
+    ly_do: "cấu trúc nghe giống văn máy"
+
+quy_tac_khac:
+  - "Không nhắc bài báo của giảng viên hướng dẫn trong bất kỳ tài liệu công khai nào."
+  - "Đội khác chỉ gọi bằng mã đội (ví dụ AISC26-0027), không nêu tên người."
+
+chinh_ta:
+  dung: ["khoá", "hoá", "xoá", "minh hoạ", "tuỳ"]
+  cam: ["khóa", "hóa", "xóa", "minh họa", "tùy"]
