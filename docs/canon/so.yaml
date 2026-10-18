@@ -194,7 +194,9 @@ so:
     nhan: THẬT · dữ liệu ngoài
     nguon_tep: docs/benchmarks/kuailive-calibration.md
     nguon_khoa: "KuaiLive (SIGIR 2026), 21 ngày Kuaishou: 1.157.314 phòng shop"
-    duoc_noi: "LiveRoomSim chỉ lấy hình dạng phân phối từ KuaiLive (1,16 triệu phòng live shop thật), không lấy mức tuyệt đối."
+    # 19/10/2026 (soát K2): simulator.py:125–140 lấy cả mức (thời gian ở lại TB 10 phút, nhịp bình luận, thả tim),
+    # nên câu cũ "không lấy mức tuyệt đối" nói chặt hơn mã. Không lấy tỷ lệ nhấp: "click" của KuaiLive là vào phòng.
+    duoc_noi: "LiveRoomSim chỉnh thời gian ở lại và nhịp bình luận theo KuaiLive (1,16 triệu phòng live shop thật); không lấy tỷ lệ nhấp vì KuaiLive đếm lượt vào phòng."
     cam: []
     ngay_do: "2026-09-02"
 
