@@ -26,7 +26,11 @@ Research rules enforced here
 * **Consent first**: any action before ``dong_y`` is refused (403).
 * **Withdrawal** (``rut_lui``): every trace of the viewer — room log, clicks,
   comments, play-money orders — is deleted and the exposure ticks they were part
-  of are recomputed; later events from that viewer are refused (410).
+  of are recomputed; later events from that viewer are refused (410). Withdrawal
+  is accepted in EVERY room state (not open yet, open, closed, even switched off)
+  because the right to withdraw outlives the broadcast; every other kind still
+  needs an open room (409). A repeated withdrawal changes nothing and answers
+  ``duplicate``.
 * **No personal data**: the client sends a random ``viewer_id``; the server stores
   only ``sha256(session_id:viewer_id)``. Comment text goes through the same PII
   scrubber as real comments before anything is stored. No IP address is stored.
@@ -153,10 +157,13 @@ def _status(session: dict[str, Any]) -> Literal["chua_mo", "dang_mo", "da_dong"]
     return "chua_mo"
 
 
-def _require_room(store: Any, code: str) -> tuple[dict[str, Any], dict[str, Any]]:
+def _require_room(
+    store: Any, code: str, *, ca_khi_tat: bool = False
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """``ca_khi_tat``: vẫn trả phòng đã bị người vận hành tắt (chỉ dùng cho rút lui)."""
     session = store.find_session_by_room_code(code)
     room = _room(session) if session else {}
-    if session is None or not room.get("enabled"):
+    if session is None or not (room.get("enabled") or ca_khi_tat):
         raise HTTPException(status_code=404, detail="Phòng xem không tồn tại hoặc đã tắt.")
     return session, room
 
@@ -303,8 +310,14 @@ def trang_thai(code: str, response: Response, store: StoreDep) -> XemTrangThai:
 @cong_khai
 @router.post(API_PREFIX + "/{code}/su-kien", response_model=XemSuKienOut)
 def su_kien(code: str, body: XemSuKienIn, request: Request, store: StoreDep) -> XemSuKienOut:
-    session, room = _require_room(store, code)
-    if _status(session) != "dang_mo":
+    # Quyền rút lui sống lâu hơn buổi phát (19/10/2026): cổng 409 từng đứng TRƯỚC
+    # mọi xét loại sự kiện, nên người bấm "Rút lui" sau khi phòng đóng nhận 409
+    # và dữ liệu của họ ở lại. Nay rút lui qua được mọi trạng thái phòng (chưa mở,
+    # đã đóng, cả khi đã tắt); mọi loại khác vẫn cần phòng đang mở. Rút lui vẫn
+    # chịu trần tần suất và vẫn cần đã đồng ý (không có gì để xoá thì không ghi gì).
+    la_rut_lui = body.kind == "rut_lui"
+    session, room = _require_room(store, code, ca_khi_tat=la_rut_lui)
+    if not la_rut_lui and _status(session) != "dang_mo":
         raise HTTPException(status_code=409, detail="Phòng chưa mở hoặc đã đóng.")
     sid = session["session_id"]
     vhash = viewer_hash(sid, body.viewer_id)
@@ -312,6 +325,10 @@ def su_kien(code: str, body: XemSuKienIn, request: Request, store: StoreDep) -> 
 
     history = [e for e in store.list_lab_events(sid) if e["viewer_hash"] == vhash]
     if any(e["kind"] == "rut_lui" for e in history):
+        if la_rut_lui:
+            # Rút lui lần hai (bấm lại, máy gửi lại sau lỗi mạng): dữ liệu đã xoá
+            # từ lần đầu, không xoá hay ghi gì thêm, trả lời như một bản trùng.
+            return XemSuKienOut(accepted=False, duplicate=True)
         raise HTTPException(status_code=410, detail="Bạn đã rút lui khỏi nghiên cứu này.")
     if body.kind != "dong_y" and not any(e["kind"] == "dong_y" for e in history):
         raise HTTPException(status_code=403, detail="Cần đồng ý tham gia trước khi vào phòng.")

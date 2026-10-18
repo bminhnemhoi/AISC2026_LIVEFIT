@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { blockStrip, estimateState, fmtFixed, fmtP, funnel, mmss, sourceLabel } from "../desk";
-import type { BaoCao, Block, Tick } from "../types";
+import { SessionSchema, type BaoCao, type Block, type Tick } from "../types";
 
 const block = (i: number, arm: "ON" | "OFF" | null, start: number, end: number): Block => ({
   block_id: `b${i}`,
@@ -28,6 +28,33 @@ describe("sourceLabel — simulated data is never presented as real", () => {
 
   it("synthetic comments downgrade a real-looking session to CHẠY THỬ", () => {
     expect(sourceLabel({ platform: "youtube", is_demo: false, dry_run: false }, 12).kind).toBe("chay_thu");
+  });
+
+  it("a dry_run lab room (mo_phong_xem.py --thu-noi-bo) says DÀN DỰNG · THỬ NỘI BỘ, never THẬT or plain CHẠY THỬ", () => {
+    const l = sourceLabel({ platform: "lab", is_demo: false, dry_run: true });
+    expect(l.text).toBe("DÀN DỰNG · THỬ NỘI BỘ");
+    expect(l.kind).toBe("dan_dung");
+    expect(l.note).toContain("không vào kết quả gộp");
+    // Synthetic comments do not change it either: the lab branch decides first.
+    expect(sourceLabel({ platform: "lab", is_demo: false, dry_run: true }, 5).text).toBe("DÀN DỰNG · THỬ NỘI BỘ");
+  });
+
+  it("a lab room without dry_run keeps the plain DÀN DỰNG label", () => {
+    expect(sourceLabel({ platform: "lab", is_demo: false, dry_run: false }).text).toBe("DÀN DỰNG");
+  });
+
+  it("the API's dry_run field reaches the label after parsing (SessionSchema keeps it)", () => {
+    const s = SessionSchema.parse({
+      session_id: "s-1",
+      platform: "lab",
+      title: "Thử nội bộ · Phòng xem LiveLift",
+      mode: "auto",
+      status: "live",
+      planned_duration_min: 180,
+      dry_run: true,
+      is_demo: false,
+    });
+    expect(sourceLabel(s).text).toBe("DÀN DỰNG · THỬ NỘI BỘ");
   });
 });
 

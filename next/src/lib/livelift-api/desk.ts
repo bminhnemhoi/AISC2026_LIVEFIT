@@ -13,9 +13,20 @@ export interface SourceLabel {
   note: string;
 }
 
-/** The label that must be visible on every screen state. Simulated data is never presented as real. */
+/**
+ * The label that must be visible on every screen state. Simulated data is never presented as real.
+ * A `lab` session created with `dry_run` (scripts/mo_phong_xem.py --thu-noi-bo) is the team's own internal trial:
+ * it keeps kind `dan_dung` (same badge style) but says THỬ NỘI BỘ, because the server keeps it out of the pooled result.
+ */
 export function sourceLabel(session: Pick<Session, "platform" | "is_demo" | "dry_run">, syntheticComments = 0): SourceLabel {
   if (session.platform === "lab") {
+    if (session.dry_run) {
+      return {
+        kind: "dan_dung",
+        text: "DÀN DỰNG · THỬ NỘI BỘ",
+        note: "Nhóm tự thử phòng dàn dựng, mua bằng tiền ảo. Khai báo lúc tạo phiên nên không vào kết quả gộp.",
+      };
+    }
     return { kind: "dan_dung", text: "DÀN DỰNG", note: "Người thật ẩn danh trong phòng dàn dựng, mua bằng tiền ảo." };
   }
   if (session.is_demo || session.platform === "sim" || session.platform === "replay") {
