@@ -76,7 +76,7 @@ export function PhienList() {
             <p className="ph-sub">Mọi phiên trên máy chủ LiveLift. Nhãn nguồn cho biết số đến từ đâu: thật, phòng dàn dựng hay mô phỏng.</p>
           </div>
           <div className="xem-actions">
-            <button type="button" className="ph-btn" disabled={busy} onClick={() => void seed("vang")}>Bộ demo vàng</button>
+            <button type="button" className="ph-btn" disabled={busy} onClick={() => void seed("vang")}>Bộ phiên mẫu</button>
             <button type="button" className="ph-btn" disabled={busy} onClick={() => void seed("demo")}>Gieo phiên mẫu đang phát</button>
           </div>
         </div>

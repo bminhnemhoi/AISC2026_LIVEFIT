@@ -70,7 +70,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
         <div className="ph-grid">
           <main>
             <section className="ph-card" aria-labelledby="h-strip">
-              <h2 id="h-strip">Lịch bốc thăm (chỉ người vận hành thấy)</h2>
+              <h2 id="h-strip">Lịch bốc thăm (chỉ người bán thấy)</h2>
               <div className="ph-strip" role="img" aria-label={`Lịch ${strip.length} khối, khối BẬT màu xanh, khối TẮT màu xám`}>
                 {strip.map(b => (
                   <span key={b.index} data-arm={b.arm} data-state={b.state} style={{ width: `${b.widthPct}%` }} title={`Khối ${b.index + 1}: ${b.arm === "WASH" ? "trôi" : ARM_TEXT[b.arm]}`} />
@@ -120,12 +120,12 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
               <div className="ph-kpis">
                 <div><div className="ph-kpi-num">{fmtNum(viewersNow, 0)}</div><div className="ph-kpi-label">người xem lúc này</div></div>
                 <div><div className="ph-kpi-num">{fmtNum(f.viewerMinutes, 0)}</div><div className="ph-kpi-label">phút·người xem</div></div>
-                <div><div className="ph-kpi-num">{f.clicks}</div><div className="ph-kpi-label">click hợp lệ</div></div>
+                <div><div className="ph-kpi-num">{f.clicks}</div><div className="ph-kpi-label">lượt nhấp hợp lệ</div></div>
                 <div><div className="ph-kpi-num">{f.orders}</div><div className="ph-kpi-label">đơn{session.platform === "lab" ? " (tiền ảo)" : ""}</div></div>
               </div>
               <p className="ph-small" style={{ marginTop: 12 }}>
-                Click / 1.000 giây·người xem: <strong>{f.clickRate == null ? "chưa đủ dữ liệu" : fmtNum(f.clickRate, 3)}</strong>
-                {" · "}Đơn / click (CTOR): <strong>{f.ctor == null ? "chưa có" : `${fmtNum(f.ctor * 100, 1)}%`}</strong>
+                Lượt nhấp / 1.000 giây·người xem: <strong>{f.clickRate == null ? "chưa đủ dữ liệu" : fmtNum(f.clickRate, 3)}</strong>
+                {" · "}Đơn / lượt nhấp: <strong>{f.ctor == null ? "chưa có" : `${fmtNum(f.ctor * 100, 1)}%`}</strong>
               </p>
             </section>
 
@@ -162,7 +162,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
                       <td className="ph-small">dải {fmtNum(pulse.viewersBand[0], 0)}–{fmtNum(pulse.viewersBand[1], 0)}</td>
                     </tr>
                     <tr>
-                      <th>Click / 1.000 giây</th>
+                      <th>Lượt nhấp / 1.000 giây</th>
                       <td>{fmtNum(pulse.last.clickRate, 2)}</td>
                       <td className="ph-small">dải {fmtNum(pulse.clickBand[0], 2)}–{fmtNum(pulse.clickBand[1], 2)}</td>
                     </tr>
@@ -190,7 +190,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
               <h2>Liên kết</h2>
               <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}/tong-ket`}>Tổng kết phiên</Link></p>
               <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}/nguoi-dan`}>Màn người dẫn (làm mù một phần)</Link></p>
-              <p className="ph-small">Cập nhật {data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString("vi-VN") : "—"}</p>
+              <p className="ph-small" data-testid="desk-updated">{data.updatedAt ? `Cập nhật ${new Date(data.updatedAt).toLocaleTimeString("vi-VN")}` : "Chưa cập nhật"}</p>
             </section>
           </aside>
         </div>

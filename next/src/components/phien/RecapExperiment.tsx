@@ -55,10 +55,10 @@ export function RecapExperiment({ sessionId }: { sessionId: string }) {
               <table className="ph-table">
                 <tbody>
                   <tr><th>Phút·người xem</th><td>{fmtNum(f.viewerMinutes, 0)}</td></tr>
-                  <tr><th>Click hợp lệ</th><td>{f.clicks}</td></tr>
-                  <tr><th>Click / 1.000 giây·người xem</th><td>{f.clickRate == null ? "—" : fmtNum(f.clickRate, 3)}</td></tr>
+                  <tr><th>Lượt nhấp hợp lệ</th><td>{f.clicks}</td></tr>
+                  <tr><th>Lượt nhấp / 1.000 giây·người xem</th><td>{f.clickRate == null ? "chưa có" : fmtNum(f.clickRate, 3)}</td></tr>
                   <tr><th>Đơn{session.platform === "lab" ? " (tiền ảo)" : ""}</th><td>{f.orders}</td></tr>
-                  <tr><th>Bình luận</th><td>{report?.tong_quan.tong_binh_luan ?? "—"}</td></tr>
+                  <tr><th>Bình luận</th><td>{report?.tong_quan.tong_binh_luan ?? "chưa có"}</td></tr>
                 </tbody>
               </table>
             </section>

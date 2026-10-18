@@ -44,7 +44,7 @@ export function EstimateCard({ state }: { state: EstimateState }) {
         <div data-testid="estimate-card">
           <div className="ph-est-num">{state.estimate >= 0 ? "+" : ""}{fmtFixed(state.estimate, 3)}</div>
           <p className="ph-muted" style={{ margin: 0 }}>
-            click / 1.000 giây·người xem · KTC 95% [{fmtFixed(state.ciLow, 3)}; {fmtFixed(state.ciHigh, 3)}]
+            lượt nhấp / 1.000 giây·người xem · khoảng tin cậy 95% [{fmtFixed(state.ciLow, 3)}; {fmtFixed(state.ciHigh, 3)}]
             {state.pText && ` · ${state.pText}`}
           </p>
           <CiLine lo={state.ciLow} hi={state.ciHigh} est={state.estimate} />

@@ -173,7 +173,7 @@ Chuyển sang **tab 3** (`/ket-qua`). Kéo xuống mục **PHIÊN DEMO**.
 Ở đây có sáu phiên demo vàng, phủ **cả ba trạng thái** mà màn kết quả có thể
 rơi vào. Mở theo đúng thứ tự này — thứ tự là một lập luận, đừng đảo:
 
-### 4a. Mở "Demo vàng · DƯƠNG rõ #1" (bấm **Kết quả**)
+### 4a. Mở "Demo vàng · ĐỔI #1" (bấm **Kết quả**)
 
 > Đây là dữ liệu MẪU, có tác động cài sẵn trong mô phỏng — màn hình dán nhãn DEMO
 > và con dấu ghi "HIỆU ỨNG RÕ", không ghi "thật". Nó cho thấy hệ thống trình bày
@@ -185,7 +185,7 @@ rơi vào. Mở theo đúng thứ tự này — thứ tự là một lập luậ
 > nằm ở đâu trong phân bố đó. Làm vậy vì một phiên chỉ có 16 đến 24 khối, cỡ mẫu
 > đó quá nhỏ để công thức thông thường cho sai số đúng.
 
-### 4b. Mở "Demo vàng · NULL (KTC chứa 0) #1"
+### 4b. Mở "Demo vàng · ĐO THÊM #1"
 
 > Vẫn là dữ liệu mẫu. Tác động −0,173, khoảng tin cậy từ −0,490 đến 0,181.
 > Khoảng này chứa 0, nên **không** kết luận được là có tác động.
@@ -195,7 +195,7 @@ rơi vào. Mở theo đúng thứ tự này — thứ tự là một lập luậ
 > chỉ tôn vinh kết quả đẹp thì sớm muộn người dùng sẽ học được rằng cứ chạy lại
 > đến khi ra số đẹp thì thôi.
 
-### 4c. Mở "Demo vàng · CHƯA ĐỦ ĐIỀU KIỆN" — **đây là điểm nhấn của cả bài**
+### 4c. Mở "Demo vàng · CHƯA ĐỦ KHỐI" — **đây là điểm nhấn của cả bài**
 
 > Phiên này hệ thống **từ chối trả về một con số**, và nói rõ vì sao: 3 khối đo
 > được, cần ít nhất 4. Nó không hạ ngưỡng, không nội suy, không đưa ra một con

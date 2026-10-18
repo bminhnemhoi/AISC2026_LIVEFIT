@@ -410,12 +410,14 @@ def seed_demo_vang(store: Any) -> dict[str, Any]:
         nhom[ten_nhom].append(sid)
         return sid
 
+    # Tên hiển thị theo bộ chữ người bán đọc: ĐỔI / ĐO THÊM / CHƯA ĐỦ KHỐI (19/10/2026).
+    # Mã nhóm nội bộ (duong/null/thieu) giữ nguyên; tiền tố VANG_TITLE_PREFIX cũng giữ.
     for i, (seed, effect, duration) in enumerate(VANG_DUONG, 1):
-        _mot_phien("duong", seed, effect, duration, f"Demo vàng · DƯƠNG rõ #{i}")
+        _mot_phien("duong", seed, effect, duration, f"Demo vàng · ĐỔI #{i}")
     for i, (seed, effect, duration) in enumerate(VANG_NULL, 1):
-        _mot_phien("null", seed, effect, duration, f"Demo vàng · NULL (KTC chứa 0) #{i}")
+        _mot_phien("null", seed, effect, duration, f"Demo vàng · ĐO THÊM #{i}")
     seed, effect, duration = VANG_THIEU
-    _mot_phien("thieu", seed, effect, duration, "Demo vàng · CHƯA ĐỦ ĐIỀU KIỆN")
+    _mot_phien("thieu", seed, effect, duration, "Demo vàng · CHƯA ĐỦ KHỐI")
 
     ket_qua: dict[str, dict[str, Any]] = {}
     for ten_nhom, sids in nhom.items():
