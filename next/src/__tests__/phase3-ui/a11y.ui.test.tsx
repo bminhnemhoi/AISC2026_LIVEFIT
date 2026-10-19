@@ -473,12 +473,12 @@ describe("page chrome: skip link, live regions and the dynamic-rendering contrac
     const tree = await RootLayout({ children: <main id="main-content">Body</main> });
     expect(connection).toHaveBeenCalledTimes(1); // per-request rendering, so the platform's CSP nonce can be applied
     const html = renderToStaticMarkup(tree);
-    expect(html).toContain('<html lang="en"');
-    expect(html).toMatch(/<a href="#main-content"[^>]*>Skip to main content<\/a>/);
+    expect(html).toContain('<html lang="vi"');
+    expect(html).toMatch(/<a href="#main-content"[^>]*>Bỏ qua, tới nội dung chính<\/a>/);
     expect(html).toContain('data-keep-live');
     expect(html).toContain('role="status"');
     expect(html).toContain('role="alert"');
-    expect(html.indexOf("Skip to main content")).toBeLessThan(html.indexOf("Body")); // first in tab order
+    expect(html.indexOf("Bỏ qua, tới nội dung chính")).toBeLessThan(html.indexOf("Body")); // first in tab order
     expect(html).not.toMatch(/nonce|unsafe-inline|dangerouslySetInnerHTML|<script/i); // the layout adds no inline script or style of its own
   });
 

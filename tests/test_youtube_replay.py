@@ -205,7 +205,7 @@ def test_replay_route_end_to_end(client, monkeypatch):
 
     # report: OBSERVATIONAL — no experiment language, no diff, no blocks
     report = client.get(f"/sessions/{sid}/report").json()
-    assert report["label"] == "phân tích quan sát — không phải thí nghiệm"
+    assert report["label"] == "phân tích quan sát, không phải thí nghiệm"
     assert report["diff_in_means"] is None
     assert report["blocks"] == []
     assert report["n_blocks"] == 0

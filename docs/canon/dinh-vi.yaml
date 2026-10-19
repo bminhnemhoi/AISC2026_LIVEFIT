@@ -1,0 +1,47 @@
+# Định vị LiveLift: một câu và ba thông điệp
+#
+# Câu định vị dùng nguyên văn ở deck, poster, README, trang chủ next/ và phần giới
+# thiệu đội. Ba thông điệp là khung cho mọi bài nói; số trong đó lấy từ so.yaml.
+
+phien_ban: "2026-10-19"
+
+cau_dinh_vi: >-
+  LiveLift giúp người bán livestream tự đo xem việc ghim một sản phẩm có thật sự
+  làm khách bấm mua nhiều hơn, bằng cách bốc thăm bật/tắt theo từng khối 5 phút
+  thay vì đoán theo tương quan.
+
+cach_ke: >-
+  LiveLift là sản phẩm giúp người bán khỏi mất tiền vì một quyết định sai. Phương
+  pháp là lý do để tin, không phải câu chuyện chính.
+
+thong_diep:
+  - id: van_de
+    tieu_de: "Vấn đề"
+    noi_dung: >-
+      Công cụ hiện nay, kể cả gợi ý ghim của TikTok, chỉ cho thấy tương quan. Con số
+      +7,38% của TikTok là dữ liệu nội bộ, không công bố nhóm đối chứng. Người bán đi
+      thuê sân nên không chia được người xem để làm A/B.
+    so: [tiktok_738, luopan_tuong_quan]
+
+  - id: cach_lam
+    tieu_de: "Cách làm"
+    noi_dung: >-
+      Chia thời gian thay vì chia người. Lịch được niêm phong trước giờ live. Kết quả
+      là KTC 95%, hoặc câu "chưa đủ dữ liệu". Trên mô phỏng, phép đo báo nhầm trung
+      bình 4,3%, bắt được 95% tác động +30% với khối 5 phút, và khi sai thì sai về
+      phía thận trọng.
+    so: [bao_nham_tb, luc_khoi_5p, du_am_h300]
+
+  - id: trung_thuc
+    tieu_de: "Trung thực và đường ra"
+    noi_dung: >-
+      Mô phỏng, phòng xem và live thật đi chung một lõi phân tích, nhãn nguồn luôn
+      hiện trên màn. Hôm nay có 0 phiên với người bán thật. Shopee có API ghim;
+      TikTok và Facebook ghim tay theo lịch. Giá vẫn là giả thuyết.
+    so: [phien_nguoi_ban_that, gia_pro]
+
+khong_noi:
+  - "LiveLift làm tăng doanh số."
+  - "LiveLift là công cụ đầu tiên."
+  - "LiveLift gợi ý nên ghim gì." # định vị cũ của trang chủ, đi ngược lõi đo nhân quả
+  - "Người dẫn bị làm mù hoàn toàn."

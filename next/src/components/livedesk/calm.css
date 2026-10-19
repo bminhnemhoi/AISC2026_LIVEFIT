@@ -157,10 +157,12 @@
   --target: 44px;
   --journey-w: 480px;
 
-  /* the three tilted objects (nothing else tilts) */
-  --tilt-card: -0.8deg;
-  --tilt-stamp: -1.5deg;
-  --tilt-phone: 1.2deg;
+  /* Giao diện 2.0 (kế hoạch 3.1, mục 3): không phần tử nào chứa nút được nghiêng. Ba token cũ giữ tên để các quy
+     tắc dùng chúng vẫn chạy, nhưng bằng 0. Chỉ hình trang trí aria-hidden (và giả phần tử ::before/::after) được
+     nghiêng, tối đa 2°; test components/nen/__tests__/calm-css.test.ts kiểm. */
+  --tilt-card: 0deg;
+  --tilt-stamp: 0deg;
+  --tilt-phone: 0deg;
 
   /* light theme: Calm Studio */
   color-scheme: light;
@@ -294,8 +296,8 @@
 }
 
 /* "Calm Studio with tape pin". No cards: regions are separated by an ink rule, rows by a light
-   rule. Only three things tilt (pinned card, SIMULATED stamp, host phone), with the individual
-   `rotate` property so the FLIP list animation (which uses `transform`) never fights it. */
+   rule. Nothing that holds a control tilts (the --tilt-* tokens are 0); only decorative tape and
+   aria-hidden stickers lean, at most 2 degrees, via the individual `rotate` property. */
 
 /* ---------- base ---------- */
 .ld *,
@@ -729,7 +731,7 @@
 }
 
 /* ---------- tags ---------- */
-/* SIMULATED is a rotated outline stamp. In running text it stays a quiet, straight word. */
+/* SIMULATED is an outline stamp (straight since 3.1). In running text it stays a quiet word. */
 .ld .sim-tag {
   display: inline-flex;
   align-items: center;
@@ -994,7 +996,7 @@
   width: 78px;
   height: 22px;
   translate: -50% 0;
-  rotate: -3deg;
+  rotate: -1.5deg;
   background: var(--kraft);
   box-shadow: 0 1px 2px rgba(42, 37, 34, 0.2);
 }
@@ -3615,7 +3617,7 @@
   }
 }
 /* The pinned card drops into place and its tape settles a beat later (transform and opacity only).
-   The tilt uses the separate `rotate` property, so the drop never fights it. */
+   The card itself stays straight; only its tape leans, via the separate `rotate` property. */
 .ld .product.is-pinned {
   animation: pin-drop var(--t-slow) var(--ease) both;
 }
@@ -4408,7 +4410,7 @@
     right: var(--s-24);
     display: block;
     width: 120px;
-    rotate: 4deg;
+    rotate: 2deg;
   }
   /* the heading keeps clear of the note, in either language */
   .ld .unknowns h2 {

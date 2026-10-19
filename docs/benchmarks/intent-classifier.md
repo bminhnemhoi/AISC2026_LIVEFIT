@@ -3,6 +3,11 @@
 *Cập nhật 08/09/2026 · sinh lại bằng `python -m livelift.nlp.train_intent`*
 *Bổ sung 14/09/2026 — xem khối 🆕 ngay dưới trước khi đọc phần còn lại.*
 
+> **Cập nhật 19/10/2026: số hiện hành nằm ở [`docs/competition/FACT-SHEET.md`](../competition/FACT-SHEET.md),
+> không ở trang này.** Số 0.271 trong khối ngay dưới là số cũ, không tái lập được, không trích ở đâu nữa.
+> Trên 393 bình luận thật của 3 buổi live, nhãn tham chiếu do tác tử AI gán (NHÃN AI): thang 11 lớp
+> **0,211 → 0,542**; khi nói mức tăng thì dùng cặp cùng thang 6 lớp **0,370 → 0,572**.
+
 > ⚠️ **ĐỌC TRƯỚC KHI TRÍCH BẤT KỲ CON SỐ NÀO.** Con số 0.870 dưới đây đo trên **320 câu
 > mẫu do AI (Claude) soạn** ngày 01/09, cùng phân phối với dữ liệu huấn luyện. Trên chat
 > bán hàng **thật**, cùng mô hình đó đạt **macro-F1 0.271** và precision gộp **11%** —
@@ -95,8 +100,7 @@ Câu hỏi đúng — và câu trả lời có ba tầng:
    trên bộ biên soạn được thay bằng con số trên bộ thật, ghi rõ nguồn gốc.
 3. **Đủ 2–3k nhãn thật:** fine-tune ViSoBERT (EMNLP 2023 — pretrain đúng trên
    text mạng xã hội Việt), benchmark so với chính mô hình TF-IDF này làm
-   ablation. Kỳ vọng thực tế theo văn liệu: macro-F1 0.80–0.88 trên dữ liệu
-   thật nhiễu hơn.
+   ablation.
 
 ### Ngưỡng tự tin — bài học từ live-fire video thật (02/09)
 

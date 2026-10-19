@@ -76,6 +76,33 @@ jobs:
       - name: Build
         run: npm run build
 
+  next:
+    # Mặt tiền next/ (D-034): trước 19/10 CI chỉ build web/ di sản nên next/ không được kiểm.
+    # Bộ server V3 (src/lib/server) chỉ xanh trên Linux, nên chạy đủ ở đây.
+    name: next/ (tsc + lint + vitest + build)
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: next
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: next/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests (vitest)
+        run: npx vitest run
+      - name: Build
+        run: npm run build
+
   nightly:
     name: pytest (slow statistical validation)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

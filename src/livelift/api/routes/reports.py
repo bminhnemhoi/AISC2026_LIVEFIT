@@ -66,7 +66,7 @@ caveat prints, and the final analysis re-runs the gate offline at full depth.
 """
 
 ICS_FROZEN_NOTE = (
-    "Tiền đăng ký §7: cổng mẫu số cũng bị khóa cho tới ngày mở — nó kiểm định "
+    "Tiền đăng ký §7: cổng mẫu số cũng bị khoá cho tới ngày mở, vì nó kiểm định "
     "trên MỘT đại lượng hậu can thiệp (viewer-giây), nên đọc nó sớm vẫn là nhìn "
     "trộm tác động của can thiệp"
 )
@@ -88,13 +88,13 @@ def _results_freeze_reason(now: datetime) -> str | None:
     except ValueError:
         return (
             "Tiền đăng ký §7: cấu hình RESULTS_FREEZE_UNTIL không hợp lệ "
-            f"('{raw}' — cần dạng YYYY-MM-DD) nên ước lượng hiệu ứng bị khóa "
-            "cho đến khi cấu hình được sửa — chỉ hiển thị số liệu vận hành"
+            f"('{raw}', cần dạng YYYY-MM-DD) nên ước lượng hiệu ứng bị khoá "
+            "cho đến khi cấu hình được sửa; chỉ hiển thị số liệu vận hành"
         )
     if now.date() < freeze:
         return (
-            f"Tiền đăng ký §7: ước lượng hiệu ứng bị khóa đến {freeze.isoformat()} "
-            "— chỉ hiển thị số liệu vận hành"
+            f"Tiền đăng ký §7: ước lượng hiệu ứng bị khoá đến {freeze.isoformat()}; "
+            "chỉ hiển thị số liệu vận hành"
         )
     return None
 
@@ -212,7 +212,7 @@ def _compliance(session: dict[str, Any], store) -> ComplianceStats:
     )
 
 
-OBSERVATIONAL_LABEL = "phân tích quan sát — không phải thí nghiệm"
+OBSERVATIONAL_LABEL = "phân tích quan sát, không phải thí nghiệm"
 
 
 #: One definition, shared with every other route (``service.is_analysis_only``).
@@ -258,14 +258,14 @@ def _in_analysis_sample(session: dict[str, Any], demo: bool = False) -> bool:
 
 #: Vietnamese labels for the §8.2 exclusions, in the order they are tested.
 SAMPLE_EXCLUSION_LABELS = {
-    "demo": "phiên DEMO — dữ liệu mẫu, không bao giờ vào kết quả thật (tiền đăng ký §8.2)",
+    "demo": "phiên DEMO: dữ liệu mẫu, không bao giờ vào kết quả thật (tiền đăng ký §8.2)",
     "chua_ket_thuc": "phiên chưa kết thúc hoặc đã huỷ (không có khối đo hoàn tất)",
     "quan_sat": "phiên phân tích quan sát (không có lịch gán ngẫu nhiên)",
     "chay_thu": "phiên CHẠY THỬ, khai báo lúc tạo phiên (tiền đăng ký §8.2)",
 }
 
 #: Label for real sessions withheld from the DEMO view (mirror of "demo").
-REAL_EXCLUSION_LABEL = "phiên THẬT — không thuộc bản gộp dữ liệu mẫu (xem env=real)"
+REAL_EXCLUSION_LABEL = "phiên THẬT, không thuộc bản gộp dữ liệu mẫu (xem env=real)"
 
 
 def _excluded_session_counts(sessions: list[dict[str, Any]], demo: bool = False) -> dict[str, int]:
@@ -374,7 +374,7 @@ def session_report(session_id: str, store: StoreDep) -> SessionReport:
     )
 
 
-DEMO_SUMMARY_LABEL = "kết quả MÔ PHỎNG — dữ liệu mẫu (demo), KHÔNG phải kết quả thật"
+DEMO_SUMMARY_LABEL = "kết quả MÔ PHỎNG: dữ liệu mẫu (demo), KHÔNG phải kết quả thật"
 
 
 def _cau_list(cau: list[narrate.Cau]) -> list[CauTomTat]:
@@ -741,12 +741,12 @@ def session_signals(session_id: str, store: StoreDep) -> SignalCoverageOut:
 # Báo cáo sau phiên (post-live report)
 # ---------------------------------------------------------------------------
 
-OBS_SUFFIX = " — quan sát, chưa kiểm chứng nhân quả"
+OBS_SUFFIX = " (quan sát, chưa kiểm chứng nhân quả)"
 
 INTENT_CAVEAT = (
     "LƯU Ý BẮT BUỘC: nhãn ý định do bộ phân loại tự động gán; precision thực tế "
     "phụ thuộc TỶ LỆ NỀN của từng lớp trong phiên (đối chiếu live-fire 19.126 "
-    "bình luận thật — docs/benchmarks/live-fire-da-nguon.md). Phân bố này chỉ "
+    "bình luận thật, docs/benchmarks/live-fire-da-nguon.md). Phân bố này chỉ "
     "mô tả, không dùng để suy diễn nhân quả."
 )
 
@@ -756,7 +756,7 @@ MIN_BAO_CAO_BLOCKS = 4
 
 BAO_CAO_FREEZE_NOTE = (
     "Chỉ số vận hành (số khối, số bình luận, khoảnh khắc) vẫn hiển thị; "
-    "ước lượng hiệu ứng bị khóa theo tiền đăng ký §7."
+    "ước lượng hiệu ứng bị khoá theo tiền đăng ký §7."
 )
 
 
@@ -789,18 +789,18 @@ def _ly_do_khoa_chua_ket_thuc(session: dict[str, Any]) -> str | None:
         return None
     if status == "live":
         return (
-            "Phiên đang chạy — ước lượng nhân quả chỉ tính sau khi phiên kết thúc "
+            "Phiên đang chạy: ước lượng nhân quả chỉ tính sau khi phiên kết thúc "
             "(tiền đăng ký §7: không nhìn trộm giữa phiên); chỉ hiển thị số liệu vận hành"
         )
     if status == "cancelled":
         # Chỉ huỷ được từ planned/scheduled (routes/sessions.py): phiên huỷ CHƯA
         # TỪNG lên sóng — không có khối đo, không bao giờ vào mẫu (tiền đăng ký §8.2).
         return (
-            "Phiên đã huỷ trước khi lên sóng — không có buổi phát nào nên không có ước "
+            "Phiên đã huỷ trước khi lên sóng: không có buổi phát nào nên không có ước "
             "lượng nhân quả cho phiên này (tiền đăng ký §8.2); chỉ hiển thị số liệu vận hành"
         )
     return (
-        "Phiên chưa lên sóng — ước lượng nhân quả chỉ tính sau khi phiên phát xong "
+        "Phiên chưa lên sóng: ước lượng nhân quả chỉ tính sau khi phiên phát xong "
         "và kết thúc; chỉ hiển thị số liệu vận hành"
     )
 
@@ -825,31 +825,31 @@ def _ly_do_ktc_khong_xac_dinh(res: Any) -> str | None:
     bien = [float(v) for v in (res.ci_low, res.ci_high) if v is not None]
     if len(bien) < 2 or any(np.isnan(v) for v in bien):
         chi_tiet = (
-            "thống kê kiểm định không xác định — thường do mọi khối đo được có cùng giá "
+            "thống kê kiểm định không xác định, thường do mọi khối đo được có cùng giá "
             "trị, ví dụ 0 lượt nhấp hợp lệ ở mọi khối"
         )
     elif any(np.isinf(v) for v in bien):
         chi_tiet = (
-            "khoảng không bị chặn ở một phía — dữ liệu chưa đủ thông tin để khoanh vùng tác động"
+            "khoảng không bị chặn ở một phía: dữ liệu chưa đủ thông tin để khoanh vùng tác động"
         )
     else:
         chi_tiet = "ước lượng hoặc p-value không phải số hữu hạn"
     return (
         f"Không công bố ước lượng: khoảng tin cậy 95% không xác định được ({chi_tiet}). "
-        "Tuyên bố thiếu, không trả số."
+        "Máy không đưa ra con số."
     )
 
 
 VIEC_NEN_LAM_KTC = (
-    "kiểm tra link đo đã dán vào bình luận ghim và có người bấm — cần lượt nhấp ở "
+    "kiểm tra link đo đã dán vào bình luận ghim và có người bấm: cần lượt nhấp ở "
     "cả khối BẬT lẫn khối TẮT thì mới có khoảng tin cậy"
 )
 VIEC_NEN_LAM_THIEU_LINK = (
-    "tạo link đo (/r/…) cho sản phẩm và dán vào bình luận ghim TRƯỚC giờ phát — không "
+    "tạo link đo (/r/…) cho sản phẩm và dán vào bình luận ghim TRƯỚC giờ phát; không "
     "có lượt nhấp hợp lệ thì chỉ số chính không tồn tại, kéo dài phiên cũng không giúp gì"
 )
 VIEC_NEN_LAM_LOC_GIVT = (
-    "kiểm tra nguồn truy cập của link đo — mọi lượt bấm đã ghi đều bị bộ lọc GIVT-lite "
+    "kiểm tra nguồn truy cập của link đo: mọi lượt bấm đã ghi đều bị bộ lọc GIVT-lite "
     "gắn cờ không hợp lệ (bot, xem trước link, bấm dồn); chỉ lượt nhấp HỢP LỆ của người "
     "xem mới vào chỉ số chính, nên tạo thêm link hay kéo dài phiên đều không giúp gì"
 )
@@ -901,7 +901,7 @@ def _bao_cao_tong_quan(
         )
     else:
         thieu["dinh_binh_luan"] = (
-            "không có điểm đo nhịp bình luận nào mang giá trị — chưa xác định được đỉnh"
+            "không có điểm đo nhịp bình luận nào mang giá trị, chưa xác định được đỉnh"
         )
 
     viewer_vals = [float(t["viewers"]) for t in ticks if float(t.get("viewers") or 0.0) > 0.0]
@@ -980,7 +980,7 @@ def _bao_cao_khoanh_khac(
     if len(ticks) <= DEFAULT_WINDOW:
         return [], (
             f"Chuỗi quá ngắn để phát hiện khoảnh khắc: cần hơn {DEFAULT_WINDOW} "
-            f"điểm đo 30 giây làm nền, hiện có {len(ticks)} — không suy diễn từ chuỗi ngắn."
+            f"điểm đo 30 giây làm nền, hiện có {len(ticks)}; không suy diễn từ chuỗi ngắn."
         )
     base = session.get("start_ts") or ticks[0]["ts_bucket"]
     buckets = [
@@ -989,7 +989,7 @@ def _bao_cao_khoanh_khac(
     ]
     moments = detect_comment_spikes(buckets)
     if not moments:
-        return [], "Không có spike bình luận vượt ngưỡng trong phiên — nhịp chat tương đối đều."
+        return [], "Không có spike bình luận vượt ngưỡng trong phiên; nhịp chat tương đối đều."
 
     by_offset = {round((t["ts_bucket"] - base).total_seconds()): t for t in ticks}
     out: list[KhoanhKhacOut] = []
@@ -1085,8 +1085,8 @@ def _bao_cao_ket_qua(
             n_on=n_on,
             n_off=n_off,
             message=(
-                f"Chưa đủ khối đo được để ước lượng ({len(frame)} khối, cần ≥ "
-                f"{MIN_BAO_CAO_BLOCKS}) — tuyên bố thiếu, không trả số."
+                f"Chưa đủ khối đo được (có {len(frame)}, cần ít nhất "
+                f"{MIN_BAO_CAO_BLOCKS}); máy không đưa ra con số."
             ),
         )
 
@@ -1101,7 +1101,7 @@ def _bao_cao_ket_qua(
             n_off=n_off,
             message=(
                 "Chỉ số chính (lượt nhấp HỢP LỆ qua link đo) đang THIẾU nguồn: "
-                f"{clicks.detail}. THIẾU không phải 0 — không ước lượng, không trả số."
+                f"{clicks.detail}. THIẾU không phải 0: máy không đưa ra con số."
             ),
         )
 
@@ -1192,11 +1192,11 @@ def _viec_nen_lam(kq: KetQuaThiNghiem) -> str | None:
 
 
 NHAN_QUAN_SAT = (
-    "báo cáo sau phiên — phiên QUAN SÁT: chỉ số mô tả, KHÔNG có số nhân quả "
+    "báo cáo sau phiên, phiên QUAN SÁT: chỉ số mô tả, KHÔNG có số nhân quả "
     "(không có lịch gán ngẫu nhiên để suy diễn)"
 )
 NHAN_THI_NGHIEM = (
-    "báo cáo sau phiên — phiên thí nghiệm: phần nhân quả chạy đúng đường phân tích tiền đăng ký"
+    "báo cáo sau phiên, phiên thí nghiệm: phần nhân quả chạy đúng đường phân tích tiền đăng ký"
 )
 
 

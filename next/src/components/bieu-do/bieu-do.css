@@ -1,0 +1,791 @@
+/*
+ * Bộ biểu đồ LiveLift 2.0 (U2). Màu chuỗi theo D-026 (lib/bieu-do/mau.ts), chữ dùng mực của Calm Studio.
+ * Biến chữ và nền lấy từ khung chung (--ink, --line, --surface của .ld; hoặc --n-* của components/nen) nếu có,
+ * không thì dùng giá trị Calm Studio sáng. Màu chuỗi --bd-* trùng giá trị nen.css khai báo ở :root.
+ * Giao diện tối: theo thuộc tính data-theme="dark" của khung (không tự lật theo hệ điều hành, để biểu đồ không tối
+ * trong một trang sáng).
+ */
+
+.bd {
+  --bd-bat: #3d6b4f;
+  --bd-tat: #8a8f98;
+  --bd-nguoi-xem: #2f74b5;
+  --bd-luot-nhap: #c8691c;
+  --bd-don: #9b4fb0;
+  --bd-trung: #6e6359;
+
+  --bd-bat-nen: rgba(61, 107, 79, 0.13);
+  --bd-tat-nen: rgba(138, 143, 152, 0.1);
+  /* viền chấm TẮT và sọc của dấu TẮT (chấm, ô chú giải): đậm hơn màu tô để đạt ≥ 3:1 (WCAG 1.4.11, lib/bieu-do VIEN_TAT) */
+  --bd-tat-vien: var(--n-tat-chu, #4a4f57);
+  --bd-tat-soc: var(--bd-tat-vien);
+  /* sọc của dải nền khối TẮT trên đường thời gian: nhạt, là vân nền; chữ T ở đầu dải mang thông tin */
+  --bd-tat-soc-nen: rgba(110, 115, 124, 0.55);
+  --bd-vung-doi: rgba(61, 107, 79, 0.09);
+  --bd-vung-giu: rgba(110, 99, 89, 0.09);
+
+  /* chữ và nền: biến của khung cũ Calm Studio (.ld, có giao diện tối) trước, rồi token nền 2.0 của U1 (--n-*) */
+  --bd-chu: var(--ink, var(--n-muc, #2a2522));
+  --bd-chu-2: var(--ink-2, var(--n-muc-2, #5a5047));
+  --bd-chu-3: var(--ink-3, var(--n-muc-3, #6e6359));
+  --bd-nen: var(--surface, var(--n-nen, #f6f3ee));
+  --bd-the: var(--paper, var(--n-be-mat, #fbf7ef));
+  --bd-luoi: var(--line, var(--n-vach, #d8d0c4));
+  --bd-truc: #8a7d6c;
+  --bd-noi-bat: var(--surface-2, var(--n-be-mat-2, #eae3d8));
+  --bd-tieu-diem: var(--focus, var(--n-muc, #2a2522));
+
+  color: var(--bd-chu);
+  font-variant-numeric: normal;
+}
+
+.ld[data-theme="dark"] .bd,
+[data-theme="dark"] .bd,
+.bd[data-theme="dark"] {
+  --bd-bat: #58a878;
+  --bd-tat: #686d76;
+  --bd-nguoi-xem: #3f86cc;
+  --bd-luot-nhap: #d0782a;
+  --bd-don: #a865c0;
+  --bd-trung: #b9a891;
+
+  --bd-bat-nen: rgba(88, 168, 120, 0.18);
+  --bd-tat-nen: rgba(160, 165, 174, 0.1);
+  --bd-tat-vien: #a0a5ae;
+  --bd-tat-soc: var(--bd-tat-vien);
+  --bd-tat-soc-nen: rgba(160, 165, 174, 0.5);
+  --bd-vung-doi: rgba(88, 168, 120, 0.12);
+  --bd-vung-giu: rgba(185, 168, 145, 0.1);
+
+  --bd-chu: var(--ink, #f3ece1);
+  --bd-chu-2: var(--ink-2, #cdc2b3);
+  --bd-chu-3: var(--ink-3, #ad9f8e);
+  --bd-nen: var(--surface, #1f1a17);
+  --bd-the: var(--paper, #2e2722);
+  --bd-luoi: var(--line, #463c34);
+  --bd-truc: #8a7d6c;
+  --bd-noi-bat: var(--surface-2, #332b25);
+  --bd-tieu-diem: var(--focus, #f3ece1);
+}
+
+/* ---------- khung chung ---------- */
+
+/* Khung là một "container": bố cục bên trong đổi theo bề rộng của chính khung, không theo cửa sổ (một biểu đồ có
+   thể nằm trong cột hẹp của màn rộng). Vì vậy khung chiếm đủ bề ngang của chỗ chứa nó. */
+.bd-khung {
+  container-type: inline-size;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.bd-dau {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+}
+
+.bd-dau-chu {
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.bd-tieu-de {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 650;
+  color: var(--bd-chu);
+}
+
+.bd-phu-de {
+  margin: 2px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--bd-chu-2);
+}
+
+/* Phụ đề hai bản: khung rộng đọc bản dài, khung hẹp (dưới 440 px) giữ một dòng ngắn. */
+.bd-phu-de-ngan {
+  display: none;
+}
+
+@container (max-width: 440px) {
+  .bd-phu-de-dai {
+    display: none;
+  }
+  .bd-phu-de-ngan {
+    display: inline;
+  }
+}
+
+.bd-dau-phai {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bd-nhan {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--bd-noi-bat);
+  color: var(--bd-chu);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.bd-nut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--bd-luoi);
+  border-radius: 999px;
+  background: var(--bd-the);
+  color: var(--bd-chu);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.bd-nut:hover {
+  background: var(--bd-noi-bat);
+}
+
+.bd-nut:focus-visible,
+.bd-ve:focus-visible {
+  outline: 2px solid var(--bd-tieu-diem);
+  outline-offset: 2px;
+}
+
+/* nhãn nút không đổi; trạng thái "đang xem bảng" thấy được bằng viền mực và nền đậm hơn */
+.bd-nut[aria-pressed="true"] {
+  border-color: var(--bd-chu);
+  background: var(--bd-noi-bat);
+}
+
+.bd-ve {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  transition: opacity 200ms ease;
+}
+
+.bd-dang-tai .bd-ve {
+  opacity: 0.6;
+}
+
+.bd-ve svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.bd-ghi-chu {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--bd-chu-2);
+}
+
+.bd-dong-khoa {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--bd-chu-2);
+}
+
+.bd-trong {
+  margin: 0;
+  padding: 24px 16px;
+  border: 1px dashed var(--bd-luoi);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--bd-chu-2);
+}
+
+/* chữ trong SVG: luôn màu mực, không bao giờ màu chuỗi */
+.bd-svg text {
+  fill: var(--bd-chu-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nhãn số nằm trên nền có vạch: viền màu nền quanh chữ để vạch không cắt qua chữ. */
+.bd-svg .bd-chu-vien {
+  paint-order: stroke;
+  stroke: var(--bd-nen);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+/* Cụm "trung bình 0,71" không bị bẻ dòng. */
+.bd-lien {
+  white-space: nowrap;
+}
+
+.bd-svg .bd-chu-dam {
+  fill: var(--bd-chu);
+  font-weight: 650;
+}
+
+.bd-svg .bd-chu-nhat {
+  fill: var(--bd-chu-3);
+}
+
+.bd-svg .bd-luoi {
+  stroke: var(--bd-luoi);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.bd-svg .bd-truc {
+  stroke: var(--bd-truc);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.bd-svg .bd-vach-0 {
+  stroke: var(--bd-chu);
+  stroke-width: 1.5;
+}
+
+.bd-svg .bd-duong {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.bd-svg .bd-ngang {
+  stroke: var(--bd-chu-3);
+  stroke-width: 1;
+}
+
+/* ---------- chú giải ---------- */
+
+.bd-chu-giai {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: var(--bd-chu-2);
+}
+
+.bd-chu-giai li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bd-mau-o {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.bd-mau-net {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+  height: 0;
+  border-top: 2px solid currentColor;
+}
+
+.bd-mau-cham {
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.bd-o-bat {
+  background: var(--bd-bat);
+}
+
+/* ô chú giải của dải nền TẮT: cùng vân với dải trên biểu đồ, viền đậm cho đủ 3:1 */
+.bd-o-tat {
+  background: repeating-linear-gradient(45deg, var(--bd-tat-soc-nen) 0 1.5px, transparent 1.5px 5px), var(--bd-tat-nen);
+  box-shadow: inset 0 0 0 1.5px var(--bd-tat-vien);
+}
+
+.bd-cham-tat {
+  background: repeating-linear-gradient(45deg, var(--bd-tat-soc) 0 1.5px, transparent 1.5px 4px);
+  box-shadow: inset 0 0 0 2px var(--bd-tat-vien);
+}
+
+/* ---------- bảng thay biểu đồ ---------- */
+
+.bd-bang-cuon {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--bd-luoi);
+  border-radius: 12px;
+}
+
+.bd-bang {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.bd-bang caption {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 0.8125rem;
+  color: var(--bd-chu-2);
+}
+
+.bd-bang th,
+.bd-bang td {
+  padding: 8px 12px;
+  border-top: 1px solid var(--bd-luoi);
+  text-align: left;
+  vertical-align: top;
+}
+
+.bd-bang th {
+  font-weight: 650;
+  color: var(--bd-chu);
+  white-space: nowrap;
+}
+
+.bd-bang td {
+  color: var(--bd-chu);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- nhắc khi rê chuột ---------- */
+
+.bd-nhac {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  min-width: 140px;
+  max-width: 240px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--bd-the);
+  box-shadow: 0 1px 1px rgba(42, 37, 34, 0.08), 0 6px 16px rgba(42, 37, 34, 0.16);
+  color: var(--bd-chu);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.bd-nhac-dau {
+  color: var(--bd-chu-2);
+  margin-bottom: 4px;
+}
+
+.bd-nhac-dong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bd-nhac-dong strong {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bd-nhac-dong span {
+  color: var(--bd-chu-2);
+}
+
+/* ---------- khoá §7 ---------- */
+
+.bd-khoa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--bd-luoi);
+  border-radius: 12px;
+  background: var(--bd-the);
+  color: var(--bd-chu);
+}
+
+.bd-khoa svg {
+  flex: none;
+}
+
+.bd-khoa p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.bd-khoa strong {
+  display: block;
+  font-size: 0.9375rem;
+}
+
+/* ---------- thước khoảng tin cậy ---------- */
+
+.bd-vung-ds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bd-vung {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--bd-luoi);
+  border-radius: 12px;
+  color: var(--bd-chu-2);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.bd-vung-chu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--bd-chu-2);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+}
+
+.bd-vung[aria-current="true"] {
+  border-color: var(--bd-chu);
+  background: var(--bd-the);
+  color: var(--bd-chu);
+  box-shadow: inset 0 0 0 1px var(--bd-chu);
+}
+
+.bd-vung[aria-current="true"] .bd-vung-chu {
+  color: var(--bd-chu);
+}
+
+.bd-thuoc-so {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--bd-chu);
+}
+
+.bd-thuoc-so strong {
+  font-weight: 700;
+}
+
+.bd-vung-ds.is-gon .bd-vung {
+  align-self: start;
+}
+
+@container (max-width: 560px) {
+  .bd-vung-ds {
+    grid-template-columns: 1fr;
+  }
+  .bd-vung:not([aria-current="true"]) .bd-vung-cau {
+    display: none;
+  }
+}
+
+/* ---------- biểu đồ rừng ---------- */
+
+.bd-rung {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(150px, 2fr) minmax(72px, auto);
+  column-gap: 12px;
+  align-items: stretch;
+}
+
+.bd-rung-cot {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bd-rung-o {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  min-width: 0;
+  font-size: 0.875rem;
+}
+
+.bd-rung-ten-khoi {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.bd-rung-ten,
+.bd-rung-nguon {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bd-rung-nguon {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--bd-chu-2);
+}
+
+.bd-rung-o.is-gop {
+  font-weight: 700;
+  border-top: 1px solid var(--bd-luoi);
+}
+
+.bd-rung-dau {
+  height: 28px;
+}
+
+.bd-rung-chan {
+  height: 24px;
+}
+
+.bd-rung-ket-luan {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.bd-rung-ly-do {
+  color: var(--bd-chu-3);
+  font-size: 0.8125rem;
+}
+
+@container (max-width: 560px) {
+  .bd-rung {
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 1.3fr) auto;
+    column-gap: 8px;
+  }
+  .bd-rung-o {
+    font-size: 0.8125rem;
+  }
+}
+
+/* ---------- thanh ý định ---------- */
+
+.bd-thanh-ds {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Ba cột: tên (co được, xuống dòng), thanh (luôn còn ít nhất 56 px), số. Thanh tỷ lệ với số đếm. */
+.bd-thanh {
+  display: grid;
+  grid-template-columns: minmax(64px, 9rem) minmax(56px, 1fr) max-content;
+  grid-template-areas: "ten ray so";
+  align-items: center;
+  gap: 4px 12px;
+  font-size: 0.875rem;
+}
+
+.bd-thanh-ten {
+  grid-area: ten;
+  min-width: 0;
+  color: var(--bd-chu);
+  overflow-wrap: anywhere;
+}
+
+.bd-thanh-ray {
+  grid-area: ray;
+}
+
+.bd-thanh-so {
+  grid-area: so;
+}
+
+/* Ngăn hẹp (ngăn phải của bàn, khoảng 240 px): tên và số ở dòng trên, thanh rộng hết dòng dưới. */
+@container (max-width: 320px) {
+  .bd-thanh {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas:
+      "ten so"
+      "ray ray";
+    gap: 2px 8px;
+  }
+  .bd-thanh .bd-thanh-ray {
+    height: 14px;
+  }
+}
+
+.bd-thanh-ray {
+  position: relative;
+  height: 20px;
+}
+
+.bd-thanh-dac {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 2px;
+  border-radius: 0 4px 4px 0;
+  background: var(--bd-trung);
+}
+
+.bd-thanh-so {
+  color: var(--bd-chu);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bd-thanh-so span {
+  color: var(--bd-chu-2);
+}
+
+.bd-pheu-noi-don-vi {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--bd-chu-2);
+}
+
+/* ---------- từ xem đến mua ---------- */
+
+.bd-pheu {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bd-pheu-buoc {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 1px solid var(--bd-luoi);
+  border-radius: 12px;
+  background: var(--bd-the);
+  min-width: 0;
+}
+
+.bd-pheu-ten {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--bd-chu-2);
+}
+
+.bd-pheu-so {
+  font-size: 1.5rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--bd-chu);
+}
+
+.bd-pheu-don-vi,
+.bd-pheu-thieu {
+  font-size: 0.8125rem;
+  color: var(--bd-chu-2);
+}
+
+.bd-pheu-noi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  max-width: 7rem;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--bd-chu-2);
+}
+
+.bd-pheu-noi strong {
+  font-size: 0.9375rem;
+  color: var(--bd-chu);
+  font-variant-numeric: tabular-nums;
+}
+
+.bd-pheu-mui {
+  color: var(--bd-chu-3);
+}
+
+.bd-pheu-mui .bd-pheu-mui-doc {
+  display: none;
+}
+
+@container (max-width: 520px) {
+  .bd-pheu {
+    grid-template-columns: 1fr;
+  }
+  .bd-pheu-noi {
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-width: none;
+    gap: 4px 8px;
+  }
+  .bd-pheu-mui .bd-pheu-mui-ngang {
+    display: none;
+  }
+  .bd-pheu-mui .bd-pheu-mui-doc {
+    display: inline;
+  }
+}
+
+/* ---------- đường nhỏ ---------- */
+
+.bd-duong-nho {
+  display: inline-block;
+  vertical-align: middle;
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd,
+  .bd * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .bd-svg .bd-duong {
+    stroke: CanvasText;
+  }
+  .bd-vung[aria-current="true"] {
+    outline: 2px solid CanvasText;
+  }
+}

@@ -1,0 +1,363 @@
+{
+ "_nguon": "GET http://127.0.0.1:8000 19/10/2026, phien mau (is_demo/dry_run), binh luan da bo chu",
+ "phien": {
+  "session_id": "47aa4392-d67b-45b3-9b22-28cdad71dc50",
+  "platform": "sim",
+  "title": "Demo vàng · CHƯA ĐỦ KHỐI",
+  "mode": "auto",
+  "status": "ended",
+  "planned_duration_min": 15,
+  "start_ts": "2026-10-18T21:22:33.521075Z",
+  "end_ts": "2026-10-18T21:37:33.521075Z",
+  "dry_run": false,
+  "is_demo": true
+ },
+ "khoi": [
+  {
+   "block_id": "e2935ed7-b3ea-4686-807f-a15deb0702b5",
+   "block_index": 0,
+   "phase": "early",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 0,
+   "end_offset_s": 300
+  },
+  {
+   "block_id": "dc1e74c3-5d30-49da-8732-aa3f610aeb0b",
+   "block_index": 1,
+   "phase": "mid",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 300,
+   "end_offset_s": 600
+  },
+  {
+   "block_id": "41ef8771-65a6-4bfc-aedb-6ab810a88476",
+   "block_index": 2,
+   "phase": "late",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 600,
+   "end_offset_s": 900
+  }
+ ],
+ "ticks": [
+  {
+   "ts_bucket": "2026-10-18T21:22:33.521075Z",
+   "viewers": 0.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:23:03.521075Z",
+   "viewers": 1.6666666666666667,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:23:33.521075Z",
+   "viewers": 2.8333333333333335,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:24:03.521075Z",
+   "viewers": 5.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:24:33.521075Z",
+   "viewers": 8.666666666666666,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:25:03.521075Z",
+   "viewers": 11.833333333333334,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:25:33.521075Z",
+   "viewers": 13.166666666666666,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:26:03.521075Z",
+   "viewers": 12.333333333333334,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:26:33.521075Z",
+   "viewers": 16.333333333333332,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:27:03.521075Z",
+   "viewers": 20.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:27:33.521075Z",
+   "viewers": 24.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:28:03.521075Z",
+   "viewers": 28.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T21:28:33.521075Z",
+   "viewers": 33.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:29:03.521075Z",
+   "viewers": 37.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T21:29:33.521075Z",
+   "viewers": 38.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T21:30:03.521075Z",
+   "viewers": 42.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T21:30:33.521075Z",
+   "viewers": 47.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T21:31:03.521075Z",
+   "viewers": 53.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T21:31:33.521075Z",
+   "viewers": 54.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T21:32:03.521075Z",
+   "viewers": 55.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T21:32:33.521075Z",
+   "viewers": 52.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T21:33:03.521075Z",
+   "viewers": 51.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T21:33:33.521075Z",
+   "viewers": 51.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T21:34:03.521075Z",
+   "viewers": 52.833333333333336,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T21:34:33.521075Z",
+   "viewers": 56.0,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T21:35:03.521075Z",
+   "viewers": 58.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 5
+  },
+  {
+   "ts_bucket": "2026-10-18T21:35:33.521075Z",
+   "viewers": 59.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T21:36:03.521075Z",
+   "viewers": 57.333333333333336,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T21:36:33.521075Z",
+   "viewers": 55.333333333333336,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T21:37:03.521075Z",
+   "viewers": 49.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  }
+ ],
+ "binhLuan": [
+  {
+   "comment_id": "c0",
+   "ts": "2026-10-18T21:25:25.040472Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c1",
+   "ts": "2026-10-18T21:28:37.276080Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c2",
+   "ts": "2026-10-18T21:33:57.522402Z",
+   "text": "",
+   "intent": "hoi_size",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c3",
+   "ts": "2026-10-18T21:34:16.471115Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c4",
+   "ts": "2026-10-18T21:35:02.815905Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c5",
+   "ts": "2026-10-18T21:35:26.399274Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c6",
+   "ts": "2026-10-18T21:36:11.043436Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c7",
+   "ts": "2026-10-18T21:36:56.870246Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  }
+ ],
+ "baoCao": {
+  "session_id": "47aa4392-d67b-45b3-9b22-28cdad71dc50",
+  "tieu_de": "Demo vàng · CHƯA ĐỦ KHỐI",
+  "platform": "sim",
+  "loai_phien": "thi_nghiem",
+  "nhan": "báo cáo sau phiên — phiên thí nghiệm: phần nhân quả chạy đúng đường phân tích tiền đăng ký",
+  "is_demo": true,
+  "dry_run": false,
+  "binh_luan_tong_hop": 0,
+  "tong_quan": {
+   "thoi_luong_s": 900.0,
+   "tong_binh_luan": 8,
+   "dinh_binh_luan": {
+    "gia_tri_per_phut": 2.0,
+    "offset_s": 150.0,
+    "ts": "2026-10-18T21:25:03.521075Z"
+   },
+   "nguoi_xem": {
+    "dinh": 59.166666666666664,
+    "trung_binh": 36.218390804597696,
+    "n_diem_do": 29
+   },
+   "luot_nhap_hop_le": 37,
+   "luot_nhap_tho": 37,
+   "reactions": null,
+   "thieu": {
+    "reactions": "chưa có nguồn sự kiện tim/quà/Super Chat cho phiên này"
+   }
+  },
+  "ket_qua_thi_nghiem": {
+   "source": "experiment",
+   "khoa": false,
+   "ly_do_khoa": null,
+   "estimable": false,
+   "n_blocks": 3,
+   "n_on": 1,
+   "n_off": 2,
+   "estimate": null,
+   "ci_low": null,
+   "ci_high": null,
+   "p_value": null,
+   "n_draws": null,
+   "message": "Chưa đủ khối đo được để ước lượng (3 khối, cần ≥ 4) — tuyên bố thiếu, không trả số."
+  },
+  "tom_tat_3_cau": [
+   {
+    "text": "Thiết kế chưa đủ điều kiện để ước lượng tác động: Chưa đủ khối đo được để ước lượng (3 khối, cần ≥ 4) — tuyên bố thiếu, không trả số.",
+    "badge": "thieu_du_lieu",
+    "refs": [
+     "ket_qua_thi_nghiem.message",
+     "ket_qua_thi_nghiem.estimable"
+    ]
+   },
+   {
+    "text": "Hiện trạng đo được: 3 khối (1 BẬT / 2 TẮT), 8 bình luận, 37 lượt nhấp hợp lệ, thời lượng 15 phút.",
+    "badge": "quan_sat",
+    "refs": [
+     "ket_qua_thi_nghiem.n_blocks",
+     "ket_qua_thi_nghiem.n_on",
+     "ket_qua_thi_nghiem.n_off",
+     "tong_quan.tong_binh_luan",
+     "tong_quan.luot_nhap_hop_le",
+     "tong_quan.thoi_luong_s"
+    ]
+   },
+   {
+    "text": "Việc nên làm: phiên tới kéo dài thời lượng để có ít nhất 4 khối đo được (mỗi khối là một lượt so sánh BẬT/TẮT); phần mô tả của phiên này vẫn dùng được nguyên vẹn.",
+    "badge": "thieu_du_lieu",
+    "refs": [
+     "ket_qua_thi_nghiem.n_blocks"
+    ]
+   }
+  ]
+ },
+ "don": {
+  "tong_don": 0,
+  "tong_san_pham": 0,
+  "tong_doanh_thu": 0.0
+ }
+}

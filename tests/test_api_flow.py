@@ -387,7 +387,7 @@ def test_summary_locked_before_freeze_date(client, monkeypatch):
     assert summary["estimable"] is False
     for field in ("estimate", "ci_low", "ci_high", "p_value", "n_draws"):
         assert summary[field] is None, f"{field} lọt qua khóa §7"
-    assert "khóa đến 2999-01-01" in summary["message"]
+    assert "khoá đến 2999-01-01" in summary["message"]
     assert "§7" in summary["message"]
     # operational numbers still served
     assert summary["n_sessions"] >= 3

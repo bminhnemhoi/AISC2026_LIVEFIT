@@ -1,0 +1,994 @@
+{
+ "_nguon": "GET http://127.0.0.1:8000 19/10/2026, phien mau (is_demo/dry_run), binh luan da bo chu",
+ "phien": {
+  "session_id": "c79068d1-3e16-4e4a-a94a-c458c3e4a036",
+  "platform": "replay",
+  "title": "Phiên đang phát (mô phỏng) · gieo 12:22 19/10",
+  "mode": "auto",
+  "status": "live",
+  "planned_duration_min": 90,
+  "start_ts": "2026-10-19T04:37:33.887691Z",
+  "end_ts": null,
+  "dry_run": false,
+  "is_demo": true
+ },
+ "khoi": [
+  {
+   "block_id": "4845bbe3-0849-4337-a62b-6e2bada9d6c1",
+   "block_index": 0,
+   "phase": "early",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 0,
+   "end_offset_s": 600
+  },
+  {
+   "block_id": "9c124d87-4ba8-45a5-96a5-fc1b6548e227",
+   "block_index": 1,
+   "phase": "early",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 600,
+   "end_offset_s": 900
+  },
+  {
+   "block_id": "cc9c805a-91be-464f-820c-67f02aa31d92",
+   "block_index": 2,
+   "phase": "early",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 900,
+   "end_offset_s": 1200
+  },
+  {
+   "block_id": "2f56bcd8-d930-4840-bfcd-420575cf1564",
+   "block_index": 3,
+   "phase": "early",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 1200,
+   "end_offset_s": 1500
+  },
+  {
+   "block_id": "9d8025f9-6d2f-486f-8d63-5aaec227d599",
+   "block_index": 4,
+   "phase": "early",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 1500,
+   "end_offset_s": 1800
+  },
+  {
+   "block_id": "6012b0e9-4205-4f75-b92e-07d722280299",
+   "block_index": 5,
+   "phase": "mid",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 1800,
+   "end_offset_s": 2100
+  },
+  {
+   "block_id": "0582ae3d-c9df-4cba-b93b-1a84b92f5de8",
+   "block_index": 6,
+   "phase": "mid",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 2100,
+   "end_offset_s": 2400
+  },
+  {
+   "block_id": "e6316b35-c587-4bd4-8710-49ea56069ac9",
+   "block_index": 7,
+   "phase": "mid",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 2400,
+   "end_offset_s": 2700
+  },
+  {
+   "block_id": "6e62496f-ec9e-446f-b1b3-fac1bdba223c",
+   "block_index": 8,
+   "phase": "mid",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 2700,
+   "end_offset_s": 3000
+  },
+  {
+   "block_id": "b8d51897-cb16-47d9-ad71-039470f1d9f3",
+   "block_index": 9,
+   "phase": "mid",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 3000,
+   "end_offset_s": 3300
+  },
+  {
+   "block_id": "554ab513-71ad-49b0-918e-261d26a97582",
+   "block_index": 10,
+   "phase": "mid",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 3300,
+   "end_offset_s": 3600
+  },
+  {
+   "block_id": "11ffc14c-d143-4151-a01b-1f7a5af2d855",
+   "block_index": 11,
+   "phase": "late",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 3600,
+   "end_offset_s": 3900
+  },
+  {
+   "block_id": "2f3f3d7b-a97c-4756-8bb7-3b2f1ea21536",
+   "block_index": 12,
+   "phase": "late",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 3900,
+   "end_offset_s": 4200
+  },
+  {
+   "block_id": "73ad1177-e314-4bbb-8142-077a21e9fa16",
+   "block_index": 13,
+   "phase": "late",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 4200,
+   "end_offset_s": 4500
+  },
+  {
+   "block_id": "db1d8353-4be9-420f-851b-a38485fb3a37",
+   "block_index": 14,
+   "phase": "late",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 4500,
+   "end_offset_s": 4800
+  },
+  {
+   "block_id": "437f3c95-a555-4f25-8ffc-270c79055f85",
+   "block_index": 15,
+   "phase": "late",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 4800,
+   "end_offset_s": 5400
+  }
+ ],
+ "ticks": [
+  {
+   "ts_bucket": "2026-10-19T04:37:33.887691Z",
+   "viewers": 1.0,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:38:03.887691Z",
+   "viewers": 3.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:38:33.887691Z",
+   "viewers": 5.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:39:03.887691Z",
+   "viewers": 7.0,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:39:33.887691Z",
+   "viewers": 9.166666666666666,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:40:03.887691Z",
+   "viewers": 10.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:40:33.887691Z",
+   "viewers": 12.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:41:03.887691Z",
+   "viewers": 13.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:41:33.887691Z",
+   "viewers": 13.333333333333334,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:42:03.887691Z",
+   "viewers": 13.333333333333334,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:42:33.887691Z",
+   "viewers": 14.666666666666666,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:43:03.887691Z",
+   "viewers": 15.666666666666666,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T04:43:33.887691Z",
+   "viewers": 17.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:44:03.887691Z",
+   "viewers": 18.166666666666668,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T04:44:33.887691Z",
+   "viewers": 19.833333333333332,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T04:45:03.887691Z",
+   "viewers": 19.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:45:33.887691Z",
+   "viewers": 18.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:46:03.887691Z",
+   "viewers": 21.5,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:46:33.887691Z",
+   "viewers": 23.333333333333332,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:47:03.887691Z",
+   "viewers": 25.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:47:33.887691Z",
+   "viewers": 24.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:48:03.887691Z",
+   "viewers": 26.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:48:33.887691Z",
+   "viewers": 26.666666666666668,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:49:03.887691Z",
+   "viewers": 26.833333333333332,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:49:33.887691Z",
+   "viewers": 27.666666666666668,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:50:03.887691Z",
+   "viewers": 30.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:50:33.887691Z",
+   "viewers": 31.833333333333332,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T04:51:03.887691Z",
+   "viewers": 31.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:51:33.887691Z",
+   "viewers": 32.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T04:52:03.887691Z",
+   "viewers": 31.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:52:33.887691Z",
+   "viewers": 30.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:53:03.887691Z",
+   "viewers": 30.333333333333332,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T04:53:33.887691Z",
+   "viewers": 30.5,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:54:03.887691Z",
+   "viewers": 31.333333333333332,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:54:33.887691Z",
+   "viewers": 32.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:55:03.887691Z",
+   "viewers": 32.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:55:33.887691Z",
+   "viewers": 34.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:56:03.887691Z",
+   "viewers": 35.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T04:56:33.887691Z",
+   "viewers": 34.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:57:03.887691Z",
+   "viewers": 35.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T04:57:33.887691Z",
+   "viewers": 36.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T04:58:03.887691Z",
+   "viewers": 36.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-19T04:58:33.887691Z",
+   "viewers": 37.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T04:59:03.887691Z",
+   "viewers": 35.5,
+   "comment_rate": 2.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-19T04:59:33.887691Z",
+   "viewers": 35.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:00:03.887691Z",
+   "viewers": 33.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-19T05:00:33.887691Z",
+   "viewers": 34.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T05:01:03.887691Z",
+   "viewers": 36.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:01:33.887691Z",
+   "viewers": 38.5,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:02:03.887691Z",
+   "viewers": 40.5,
+   "comment_rate": 2.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-19T05:02:33.887691Z",
+   "viewers": 44.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:03:03.887691Z",
+   "viewers": 44.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:03:33.887691Z",
+   "viewers": 40.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:04:03.887691Z",
+   "viewers": 39.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:04:33.887691Z",
+   "viewers": 40.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:05:03.887691Z",
+   "viewers": 41.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:05:33.887691Z",
+   "viewers": 44.5,
+   "comment_rate": 4.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:06:03.887691Z",
+   "viewers": 44.5,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:06:33.887691Z",
+   "viewers": 46.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:07:03.887691Z",
+   "viewers": 43.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:07:33.887691Z",
+   "viewers": 42.0,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:08:03.887691Z",
+   "viewers": 41.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T05:08:33.887691Z",
+   "viewers": 43.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:09:03.887691Z",
+   "viewers": 43.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-19T05:09:33.887691Z",
+   "viewers": 46.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T05:10:03.887691Z",
+   "viewers": 47.333333333333336,
+   "comment_rate": 4.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:10:33.887691Z",
+   "viewers": 45.333333333333336,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T05:11:03.887691Z",
+   "viewers": 44.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:11:33.887691Z",
+   "viewers": 43.833333333333336,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:12:03.887691Z",
+   "viewers": 44.333333333333336,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:12:33.887691Z",
+   "viewers": 44.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:13:03.887691Z",
+   "viewers": 45.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-19T05:13:33.887691Z",
+   "viewers": 47.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:14:03.887691Z",
+   "viewers": 46.0,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:14:33.887691Z",
+   "viewers": 48.5,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:15:03.887691Z",
+   "viewers": 51.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:15:33.887691Z",
+   "viewers": 55.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:16:03.887691Z",
+   "viewers": 60.333333333333336,
+   "comment_rate": 4.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:16:33.887691Z",
+   "viewers": 58.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:17:03.887691Z",
+   "viewers": 58.833333333333336,
+   "comment_rate": 2.0,
+   "click_count": 5
+  },
+  {
+   "ts_bucket": "2026-10-19T05:17:33.887691Z",
+   "viewers": 58.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-19T05:18:03.887691Z",
+   "viewers": 60.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:18:33.887691Z",
+   "viewers": 61.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-19T05:19:03.887691Z",
+   "viewers": 62.0,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:19:33.887691Z",
+   "viewers": 60.5,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-19T05:20:03.887691Z",
+   "viewers": 61.666666666666664,
+   "comment_rate": 4.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:20:33.887691Z",
+   "viewers": 59.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-19T05:21:03.887691Z",
+   "viewers": 60.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:21:33.887691Z",
+   "viewers": 58.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-19T05:22:03.887691Z",
+   "viewers": 58.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-19T05:22:33.887691Z",
+   "viewers": 62.0,
+   "comment_rate": 2.0,
+   "click_count": 4
+  }
+ ],
+ "binhLuan": [
+  {
+   "comment_id": "c0",
+   "ts": "2026-10-19T04:38:02.408281Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c1",
+   "ts": "2026-10-19T04:39:29.091269Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c2",
+   "ts": "2026-10-19T04:46:19.388946Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c3",
+   "ts": "2026-10-19T04:46:46.451353Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c4",
+   "ts": "2026-10-19T04:49:01.838821Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c5",
+   "ts": "2026-10-19T04:49:58.636983Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c6",
+   "ts": "2026-10-19T04:53:39.125667Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c7",
+   "ts": "2026-10-19T04:56:42.316702Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c8",
+   "ts": "2026-10-19T04:59:13.468277Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c9",
+   "ts": "2026-10-19T05:02:29.906409Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c10",
+   "ts": "2026-10-19T05:04:31.116903Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c11",
+   "ts": "2026-10-19T05:05:53.739536Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c12",
+   "ts": "2026-10-19T05:06:01.085736Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c13",
+   "ts": "2026-10-19T05:07:47.149753Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c14",
+   "ts": "2026-10-19T05:10:06.855651Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c15",
+   "ts": "2026-10-19T05:10:09.472343Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c16",
+   "ts": "2026-10-19T05:10:50.782552Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c17",
+   "ts": "2026-10-19T05:11:47.640845Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c18",
+   "ts": "2026-10-19T05:12:33.373732Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c19",
+   "ts": "2026-10-19T05:13:27.206527Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c20",
+   "ts": "2026-10-19T05:13:36.744811Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c21",
+   "ts": "2026-10-19T05:14:03.962460Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c22",
+   "ts": "2026-10-19T05:16:18.010703Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c23",
+   "ts": "2026-10-19T05:16:20.761242Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c24",
+   "ts": "2026-10-19T05:16:42.356240Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c25",
+   "ts": "2026-10-19T05:17:28.953898Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c26",
+   "ts": "2026-10-19T05:19:49.487387Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c27",
+   "ts": "2026-10-19T05:20:09.419663Z",
+   "text": "",
+   "intent": "hoi_size",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c28",
+   "ts": "2026-10-19T05:20:16.362754Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  }
+ ],
+ "baoCao": {
+  "session_id": "c79068d1-3e16-4e4a-a94a-c458c3e4a036",
+  "tieu_de": "Phiên đang phát (mô phỏng) · gieo 12:22 19/10",
+  "platform": "replay",
+  "loai_phien": "thi_nghiem",
+  "nhan": "báo cáo sau phiên — phiên thí nghiệm: phần nhân quả chạy đúng đường phân tích tiền đăng ký",
+  "is_demo": true,
+  "dry_run": false,
+  "binh_luan_tong_hop": 0,
+  "tong_quan": {
+   "thoi_luong_s": null,
+   "tong_binh_luan": 29,
+   "dinh_binh_luan": {
+    "gia_tri_per_phut": 4.0,
+    "offset_s": 1680.0,
+    "ts": "2026-10-19T05:05:33.887691Z"
+   },
+   "nguoi_xem": {
+    "dinh": 62.0,
+    "trung_binh": 36.417582417582416,
+    "n_diem_do": 91
+   },
+   "luot_nhap_hop_le": 139,
+   "luot_nhap_tho": 139,
+   "reactions": null,
+   "thieu": {
+    "thoi_luong": "phiên chưa có đủ mốc bắt đầu/kết thúc",
+    "reactions": "chat replay của buổi này không chứa sự kiện Super Chat/quà/hội viên nào — và YouTube không lưu tim/like vào chat replay; ô trống là THIẾU nguồn, không phải phép đo bằng 0"
+   }
+  },
+  "ket_qua_thi_nghiem": {
+   "source": "experiment",
+   "khoa": false,
+   "ly_do_khoa": null,
+   "estimable": true,
+   "n_blocks": 8,
+   "n_on": 4,
+   "n_off": 4,
+   "estimate": 0.5113454735140479,
+   "ci_low": -0.8279531535796978,
+   "ci_high": 1.4083798030243724,
+   "p_value": 0.21878121878121878,
+   "n_draws": 1000,
+   "message": null
+  },
+  "tom_tat_3_cau": [
+   {
+    "text": "Chưa đủ bằng chứng để kết luận hệ thống làm tăng hay giảm lượt nhấp (ước lượng +0,511, KTC 95% [-0,828; +1,408] còn chứa 0) — và đó là một kết quả hợp lệ, không phải thất bại.",
+    "badge": "thi_nghiem",
+    "refs": [
+     "ket_qua_thi_nghiem.estimate",
+     "ket_qua_thi_nghiem.ci_low",
+     "ket_qua_thi_nghiem.ci_high"
+    ]
+   },
+   {
+    "text": "Bằng chứng: 8 khối đo được (4 BẬT / 4 TẮT); kiểm định hoán vị 1.000 lần vẽ lại cho p = 0,219.",
+    "badge": "thi_nghiem",
+    "refs": [
+     "ket_qua_thi_nghiem.n_blocks",
+     "ket_qua_thi_nghiem.n_on",
+     "ket_qua_thi_nghiem.n_off",
+     "ket_qua_thi_nghiem.p_value",
+     "ket_qua_thi_nghiem.n_draws"
+    ]
+   },
+   {
+    "text": "Việc nên làm: một phiên 8 khối chỉ phát hiện nổi hiệu ứng rất lớn — tích lũy thêm phiên cùng thiết kế rồi đọc bản gộp; nếu chuỗi vẫn null, hiệu ứng thật (nếu có) nhỏ hơn ngưỡng phát hiện.",
+    "badge": "thieu_du_lieu",
+    "refs": [
+     "ket_qua_thi_nghiem.n_blocks"
+    ]
+   }
+  ]
+ },
+ "don": {
+  "tong_don": 0,
+  "tong_san_pham": 0,
+  "tong_doanh_thu": 0.0
+ }
+}

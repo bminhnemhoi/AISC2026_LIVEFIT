@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import random
 import secrets
-from datetime import timedelta
+from datetime import timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter
@@ -45,30 +45,48 @@ from livelift.sim.simulator import SimParams, simulate_session
 
 router = APIRouter()
 
+#: Giờ Việt Nam cho chữ người đọc thấy (tiêu đề phiên mẫu). Không có giờ mùa hè nên
+#: độ lệch cố định là đủ, cùng cách với ``routes/sessions.py``.
+GIO_VN = timezone(timedelta(hours=7))
+
+#: Tiền tố tên phiên "đang phát" mà mỗi lần ``/demo/seed`` sinh đúng một cái; đếm nó
+#: là đếm số lần đã gieo.
+TIEN_TO_PHIEN_DANG_PHAT = "Phiên đang phát (mô phỏng)"
+
+#: Bộ hàng dùng chung (D-025, 19/10/2026): cùng bốn món, cùng mã ``LAB-1``..``LAB-4``,
+#: cùng giá với ``scripts/mo_phong_xem.py`` (``SAN_PHAM_MAC_DINH``), Live Desk minh hoạ
+#: (``next/src/components/minh-hoa/hang.tsx``) và kịch bản người dẫn AI. Các trường giữ
+#: y hệt ``SAN_PHAM_MAC_DINH`` (không ``category``) vì ``POST /products`` ghi đè theo
+#: ``product_id``: hai nơi gieo khác trường thì danh mục đổi qua đổi lại theo nơi gieo
+#: sau cùng. Giá chỉ để minh hoạ, không lấy từ dữ liệu sàn.
 DEMO_PRODUCTS = [
     {
-        "product_id": "P-SAP",
-        "name": "Sáp thơm để xe hương cà phê",
-        "category": "nhà cửa",
-        "cost": 18000,
-        "price": 45000,
-        "stock": 120,
+        "product_id": "LAB-1",
+        "name": "Áo thun cotton basic",
+        "cost": 45000,
+        "price": 129000,
+        "stock": 100,
     },
     {
-        "product_id": "P-BINH",
-        "name": "Bình giữ nhiệt 500ml",
-        "category": "nhà cửa",
-        "cost": 42000,
-        "price": 95000,
-        "stock": 80,
+        "product_id": "LAB-2",
+        "name": "Túi tote canvas",
+        "cost": 30000,
+        "price": 89000,
+        "stock": 100,
     },
     {
-        "product_id": "P-KHAN",
-        "name": "Set 5 khăn lau đa năng",
-        "category": "nhà cửa",
-        "cost": 15000,
+        "product_id": "LAB-3",
+        "name": "Bình giữ nhiệt inox 750ml",
+        "cost": 60000,
+        "price": 159000,
+        "stock": 100,
+    },
+    {
+        "product_id": "LAB-4",
+        "name": "Set 3 kẹp tóc càng cua",
+        "cost": 12000,
         "price": 39000,
-        "stock": 200,
+        "stock": 100,
     },
 ]
 
@@ -84,7 +102,7 @@ DEMO_COMMENTS = [
     "mua 2 tặng 1 thật không",
     "khi nào tới lượt sản phẩm số 3",
     "chất liệu gì vậy shop",
-    "lấy 1 set khăn nha",
+    "lấy 1 set kẹp tóc nha",
     "mắc quá shop ơi",
     "giao COD được không",
     "bình này giữ nhiệt mấy tiếng",
@@ -236,6 +254,20 @@ def _seed_one_session(
             session_id,
             {"status": "ended", "end_ts": start_ts + timedelta(minutes=duration_min)},
         )
+    else:
+        # Dấu "gieo_xong" (T1b, 19/10/2026; trường duy nhất T1b thêm vào tệp này):
+        # ghi SAU CÙNG, khi mọi tick, lượt nhấp, bình luận và lần ghim ở trên đã vào
+        # kho. Bộ phát tiếp (livelift.api.phat_tiep, KHOA_GIEO_XONG) chỉ chạm phiên có
+        # dấu này, nên không lượt nào chen vào giữa lúc gieo, và đọc đúng hiệu ứng,
+        # seed, giây đã gieo tới. Chỉ máy chủ đặt được: POST /sessions lưu design=None
+        # và /schedule thay cả design.
+        design = dict((store.get_session(session_id) or {}).get("design") or {})
+        design["gieo_xong"] = {
+            "hieu_ung": float(effect),
+            "seed": int(seed),
+            "den_s": float(horizon_s),
+        }
+        store.update_session(session_id, {"design": design})
     return session_id
 
 
@@ -281,11 +313,19 @@ def seed_demo(body: DemoSeedRequest, store: StoreDep) -> DemoSeedOut:
     # tên, nên sau bốn lần bấm màn kết quả có bốn dòng "Phiên mô phỏng
     # seed=1000" không tài nào phân biệt.
     #
-    # Nhãn phải có phần NGẪU NHIÊN chứ không chỉ giờ-phút: người dùng bấm hai
-    # lần liên tiếp thì hai lần rơi vào cùng một phút, và cổng kiểm thử đã bắt
-    # đúng lỗi ấy. Giờ-phút giữ lại để người đọc biết dòng nào mới gieo.
+    # Giờ-phút không đủ: bấm hai lần liên tiếp thì hai lần rơi vào cùng một
+    # phút, và cổng kiểm thử đã bắt đúng lỗi ấy. Bản 14/09 thêm mã ngẫu nhiên
+    # (·a3f2) vào tên, người đọc không hiểu. Từ 19/10/2026 tên dùng giờ Việt
+    # Nam và số thứ tự lần gieo ("lần 2"), đếm từ số phiên "đang phát" mẫu đã
+    # có. Mã ngẫu nhiên chỉ còn ở mã link, nơi người bán không phải đọc.
     run_tag = secrets.token_hex(2)
-    lan_gieo = f"{service.now_utc().strftime('%d/%m %H:%M')}·{run_tag}"
+    lan_thu = 1 + sum(
+        1
+        for s in store.list_sessions()
+        if s.get("is_demo") and str(s.get("title") or "").startswith(TIEN_TO_PHIEN_DANG_PHAT)
+    )
+    gio = service.now_utc().astimezone(GIO_VN)
+    lan_gieo = f"{gio:%H:%M %d/%m}" + (f" (lần {lan_thu})" if lan_thu > 1 else "")
     product_ids, codes = _seed_products_and_links(store, run_tag)
 
     session_ids = []
@@ -309,7 +349,7 @@ def seed_demo(body: DemoSeedRequest, store: StoreDep) -> DemoSeedOut:
         seed=999,
         start_offset_ago_min=body.duration_min // 2,
         leave_live=True,
-        title=f"Phiên đang phát (mô phỏng) · gieo {lan_gieo}",
+        title=f"{TIEN_TO_PHIEN_DANG_PHAT} · gieo {lan_gieo}",
     )
     return DemoSeedOut(
         session_ids=session_ids,
@@ -394,12 +434,14 @@ def seed_demo_vang(store: Any) -> dict[str, Any]:
         nhom[ten_nhom].append(sid)
         return sid
 
+    # Tên hiển thị theo bộ chữ người bán đọc: ĐỔI / ĐO THÊM / CHƯA ĐỦ KHỐI (19/10/2026).
+    # Mã nhóm nội bộ (duong/null/thieu) giữ nguyên; tiền tố VANG_TITLE_PREFIX cũng giữ.
     for i, (seed, effect, duration) in enumerate(VANG_DUONG, 1):
-        _mot_phien("duong", seed, effect, duration, f"Demo vàng · DƯƠNG rõ #{i}")
+        _mot_phien("duong", seed, effect, duration, f"Demo vàng · ĐỔI #{i}")
     for i, (seed, effect, duration) in enumerate(VANG_NULL, 1):
-        _mot_phien("null", seed, effect, duration, f"Demo vàng · NULL (KTC chứa 0) #{i}")
+        _mot_phien("null", seed, effect, duration, f"Demo vàng · ĐO THÊM #{i}")
     seed, effect, duration = VANG_THIEU
-    _mot_phien("thieu", seed, effect, duration, "Demo vàng · CHƯA ĐỦ ĐIỀU KIỆN")
+    _mot_phien("thieu", seed, effect, duration, "Demo vàng · CHƯA ĐỦ KHỐI")
 
     ket_qua: dict[str, dict[str, Any]] = {}
     for ten_nhom, sids in nhom.items():

@@ -26,7 +26,13 @@ Research rules enforced here
 * **Consent first**: any action before ``dong_y`` is refused (403).
 * **Withdrawal** (``rut_lui``): every trace of the viewer — room log, clicks,
   comments, play-money orders — is deleted and the exposure ticks they were part
-  of are recomputed; later events from that viewer are refused (410).
+  of are recomputed; later events from that viewer are refused (410). Withdrawal
+  is accepted in EVERY room state (not open yet, open, closed, even switched off)
+  because the right to withdraw outlives the broadcast; every other kind still
+  needs an open room (409). A repeated withdrawal changes nothing and answers
+  ``duplicate``. A switched-off room answers only viewers who took part (consent
+  or an earlier withdrawal); anyone else gets the very 404 of an unknown code,
+  so a stranger cannot learn that the code ever existed.
 * **No personal data**: the client sends a random ``viewer_id``; the server stores
   only ``sha256(session_id:viewer_id)``. Comment text goes through the same PII
   scrubber as real comments before anything is stored. No IP address is stored.
@@ -105,6 +111,9 @@ class XemPhong(BaseModel):
     video_url: str | None = None
     consent_version: str
     source_label: str = SOURCE_LABEL
+    # Phòng của buổi chạy thử (phiên dry_run, chip THỬ NỘI BỘ). Cờ cố định cả
+    # phiên, không đổi theo khối, nên không lộ nhánh BẬT/TẮT.
+    dry_run: bool = False
 
 
 class XemTrangThai(BaseModel):
@@ -153,12 +162,29 @@ def _status(session: dict[str, Any]) -> Literal["chua_mo", "dang_mo", "da_dong"]
     return "chua_mo"
 
 
-def _require_room(store: Any, code: str) -> tuple[dict[str, Any], dict[str, Any]]:
+LOI_KHONG_CO_PHONG = "Phòng xem không tồn tại hoặc đã tắt."
+"""Một câu 404 duy nhất cho mã sai, phòng đã tắt và người lạ gửi rút lui vào
+phòng đã tắt: ba trường hợp phải trông giống hệt nhau từ ngoài nhìn vào."""
+
+
+def _require_room(
+    store: Any, code: str, *, ca_khi_tat: bool = False
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """``ca_khi_tat``: vẫn trả phòng đã bị người vận hành tắt (chỉ dùng cho rút lui)."""
     session = store.find_session_by_room_code(code)
     room = _room(session) if session else {}
-    if session is None or not room.get("enabled"):
-        raise HTTPException(status_code=404, detail="Phòng xem không tồn tại hoặc đã tắt.")
+    if session is None or not (room.get("enabled") or ca_khi_tat):
+        raise HTTPException(status_code=404, detail=LOI_KHONG_CO_PHONG)
     return session, room
+
+
+def _tung_tham_gia(store: Any, sid: str, vhash: str) -> bool:
+    """Người xem này đã từng đồng ý (còn dòng ``dong_y``) hoặc đã rút lui (chỉ
+    còn dòng ``rut_lui``, vì rút lui xoá mọi dòng khác của họ)."""
+    return any(
+        e["viewer_hash"] == vhash and e["kind"] in ("dong_y", "rut_lui")
+        for e in store.list_lab_events(sid)
+    )
 
 
 def _product_card(store: Any, product_id: str) -> XemSanPham | None:
@@ -249,7 +275,11 @@ def bat_phong_xem(session_id: str, body: PhongXemIn, store: StoreDep) -> PhongXe
             "enabled": body.enabled,
             "consent_version": body.consent_version,
             "products": list(dict.fromkeys(body.products)),
-            "video_url": body.video_url,
+            # Thân yêu cầu không có trường video_url thì giữ video cũ (gửi lại phòng để đổi bộ
+            # hàng không được làm mất video người dẫn); muốn bỏ video thì gửi video_url=null.
+            "video_url": (
+                body.video_url if "video_url" in body.model_fields_set else room.get("video_url")
+            ),
             "title": body.title or session.get("title") or "Phòng live dàn dựng",
         }
     )
@@ -292,6 +322,7 @@ def trang_thai(code: str, response: Response, store: StoreDep) -> XemTrangThai:
             status=_status(session),
             video_url=room.get("video_url"),
             consent_version=room.get("consent_version", ""),
+            dry_run=bool(session.get("dry_run")),
         ),
         pinned=pinned,
         products=products,
@@ -303,15 +334,32 @@ def trang_thai(code: str, response: Response, store: StoreDep) -> XemTrangThai:
 @cong_khai
 @router.post(API_PREFIX + "/{code}/su-kien", response_model=XemSuKienOut)
 def su_kien(code: str, body: XemSuKienIn, request: Request, store: StoreDep) -> XemSuKienOut:
-    session, room = _require_room(store, code)
-    if _status(session) != "dang_mo":
+    # Quyền rút lui sống lâu hơn buổi phát (19/10/2026): cổng 409 từng đứng TRƯỚC
+    # mọi xét loại sự kiện, nên người bấm "Rút lui" sau khi phòng đóng nhận 409
+    # và dữ liệu của họ ở lại. Nay rút lui qua được mọi trạng thái phòng (chưa mở,
+    # đã đóng, cả khi đã tắt); mọi loại khác vẫn cần phòng đang mở. Rút lui vẫn
+    # chịu trần tần suất và vẫn cần đã đồng ý (không có gì để xoá thì không ghi gì).
+    la_rut_lui = body.kind == "rut_lui"
+    session, room = _require_room(store, code, ca_khi_tat=la_rut_lui)
+    if not la_rut_lui and _status(session) != "dang_mo":
         raise HTTPException(status_code=409, detail="Phòng chưa mở hoặc đã đóng.")
     sid = session["session_id"]
     vhash = viewer_hash(sid, body.viewer_id)
+    if not room.get("enabled") and not _tung_tham_gia(store, sid, vhash):
+        # Phòng đã tắt chỉ còn mở cho người từng tham gia (V2-loi-ghim, 19/10/2026).
+        # Người lạ gửi rút lui vào mã của phòng đã tắt phải nhận ĐÚNG 404 của mã
+        # không tồn tại, không phải 403 "cần đồng ý": 403 thú nhận phòng có thật.
+        # Đứng TRƯỚC trần tần suất người xem vì cùng lý do: mã sai không bao giờ
+        # trả 429 theo người xem, nên một 429 ở đây cũng là lời thú nhận.
+        raise HTTPException(status_code=404, detail=LOI_KHONG_CO_PHONG)
     _per_viewer_limit(request, vhash)
 
     history = [e for e in store.list_lab_events(sid) if e["viewer_hash"] == vhash]
     if any(e["kind"] == "rut_lui" for e in history):
+        if la_rut_lui:
+            # Rút lui lần hai (bấm lại, máy gửi lại sau lỗi mạng): dữ liệu đã xoá
+            # từ lần đầu, không xoá hay ghi gì thêm, trả lời như một bản trùng.
+            return XemSuKienOut(accepted=False, duplicate=True)
         raise HTTPException(status_code=410, detail="Bạn đã rút lui khỏi nghiên cứu này.")
     if body.kind != "dong_y" and not any(e["kind"] == "dong_y" for e in history):
         raise HTTPException(status_code=403, detail="Cần đồng ý tham gia trước khi vào phòng.")

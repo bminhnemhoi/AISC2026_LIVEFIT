@@ -310,13 +310,42 @@ def gan_nhip_binh_luan(
     return out
 
 
+def ghim_cua_moc(
+    session_id: str, store: StoreDep, bucket: datetime, ts: datetime, now: datetime
+) -> str | None:
+    """Món ghim ghi vào tick của mốc ``bucket`` (sửa 19/10/2026, V2-loi-ghim).
+
+    Trước đây luôn là món đang ghim LÚC GHI. Đúng với tick sống, sai với mọi lần
+    ghi lại một mốc ĐÃ QUA: khi người xem rút lui, phòng xem tính lại tick của
+    các mốc họ từng có mặt (``xem._refresh_tick``) và mỗi mốc cũ bị đóng dấu món
+    đang ghim lúc bấm rút lui, sau khi phiên kết thúc là món ghim CUỐI CÙNG. Thẻ
+    bàn thí nghiệm và câu "khoảnh khắc" của tổng kết đọc cột này.
+
+    * Mốc đang chạy (chưa trôi hết 30 giây): món đang ghim, như cũ.
+    * Mốc đã qua và đã có tick: GIỮ món đã lưu. Tick ấy được ghi khi mốc còn
+      chạy, là quan sát sát nhất; một lần ghi lại (rút lui, bộ thu gửi lại cùng
+      tick) không biết gì hơn về lúc đó.
+    * Mốc đã qua, chưa có tick (bộ thu gửi bù sau khi kho sống lại): phát lại
+      nhật ký ghim đến đúng thời điểm của tick, không lấy món của mốc sau.
+    """
+    if bucket + timedelta(seconds=TICK_S) > now:
+        return service.current_pinned_product_id(store.list_interventions(session_id))
+    for t in store.list_ticks(session_id):
+        if t["ts_bucket"] == bucket:
+            return t.get("pinned_product_id")
+    return service.current_pinned_product_id(
+        [i for i in store.list_interventions(session_id) if i.get("ts") is None or i["ts"] <= ts]
+    )
+
+
 def _store_tick(session_id: str, body: TickIn, store: StoreDep) -> TickOut:
     session = service.require_session(store, session_id)
-    ts = body.ts_utc or service.now_utc()
+    now = service.now_utc()
+    ts = body.ts_utc or now
     # snap to the 30s bucket grid, aligned to session start when live
     bucket = _tick_bucket(session, ts)
 
-    pinned = service.current_pinned_product_id(store.list_interventions(session_id))
+    pinned = ghim_cua_moc(session_id, store, bucket, ts, now)
     row = {
         "ts_bucket": bucket,
         "viewers": body.viewers,

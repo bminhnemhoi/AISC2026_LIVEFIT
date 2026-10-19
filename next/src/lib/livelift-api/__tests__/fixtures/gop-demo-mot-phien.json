@@ -1,0 +1,56 @@
+{
+  "label": "kết quả MÔ PHỎNG — dữ liệu mẫu (demo), KHÔNG phải kết quả thật",
+  "source": "experiment",
+  "env": "demo",
+  "n_sessions": 1,
+  "n_blocks": 16,
+  "n_on": 8,
+  "n_off": 8,
+  "raw_clicks": 384,
+  "valid_clicks": 384,
+  "sessions_excluded": {
+    "phiên chưa kết thúc hoặc đã huỷ (không có khối đo hoàn tất)": 1
+  },
+  "estimate": null,
+  "ci_low": null,
+  "ci_high": null,
+  "p_value": null,
+  "n_draws": null,
+  "measured_cv": null,
+  "measured_compliance": null,
+  "cv_poisson_floor": null,
+  "reducible_share": null,
+  "power_table": [],
+  "denominator_check": null,
+  "message": "Chưa đủ dữ liệu cho phân tích gộp (cần ≥ 2 phiên đã kết thúc và ≥ 8 khối). Kết quả sẽ xuất hiện khi chuỗi thí nghiệm tích lũy thêm.",
+  "tom_tat_3_cau": [
+    {
+      "text": "Thiết kế chưa đủ điều kiện để ước lượng tác động: Chưa đủ dữ liệu cho phân tích gộp (cần ≥ 2 phiên đã kết thúc và ≥ 8 khối). Kết quả sẽ xuất hiện khi chuỗi thí nghiệm tích lũy thêm.",
+      "badge": "thieu_du_lieu",
+      "refs": [
+        "message",
+        "estimable"
+      ]
+    },
+    {
+      "text": "Hiện trạng đo được: 1 phiên trong mẫu, 16 khối (8 BẬT / 8 TẮT), 384 lượt nhấp hợp lệ.",
+      "badge": "quan_sat",
+      "refs": [
+        "n_sessions",
+        "n_blocks",
+        "n_on",
+        "n_off",
+        "valid_clicks"
+      ]
+    },
+    {
+      "text": "Việc nên làm: chạy thêm phiên có lịch bốc thăm trước giờ phát — cần thêm 1 phiên để đạt ngưỡng ước lượng (2 phiên, 8 khối).",
+      "badge": "thieu_du_lieu",
+      "refs": [
+        "n_sessions",
+        "n_blocks"
+      ]
+    }
+  ],
+  "estimable": false
+}

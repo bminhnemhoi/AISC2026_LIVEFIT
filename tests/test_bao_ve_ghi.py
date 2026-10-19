@@ -84,6 +84,12 @@ BANG_MUC_BAO_VE: dict[tuple[str, str], str] = {
     # riêng, chỉ ghi được vào phòng đang mở (tests/test_api_xem.py).
     ("POST", "/sessions/{session_id}/phong-xem"): MUC_TOKEN,
     ("POST", "/xem-api/{code}/su-kien"): MUC_CONG_KHAI,
+    # Tài khoản (D-017, 19/10/2026): chỉ máy chủ Next (có token lõi) gọi được;
+    # trình duyệt không bao giờ có token lõi (tests/test_tai_khoan.py).
+    ("POST", "/auth/dang-ky"): MUC_TOKEN,
+    ("POST", "/auth/dang-nhap"): MUC_TOKEN,
+    ("POST", "/auth/dang-xuat"): MUC_TOKEN,
+    ("POST", "/quan-tri/tai-khoan"): MUC_TOKEN,
 }
 
 
@@ -223,6 +229,16 @@ def _yeu_cau_ghi(sid: str) -> dict[tuple[str, str], tuple[str, dict[str, Any] | 
             "/xem-api/khong-co-phong/su-kien",
             {"viewer_id": "v" * 20, "event_id": "e-1", "kind": "dong_y"},
         ),
+        # Tài khoản (D-017). Đăng nhập và sửa tài khoản cố ý thiếu trường ⇒ 422 SAU
+        # cổng; đủ trường thì nghiệp vụ trả 401 (sai mật khẩu, chưa đăng nhập), mà
+        # test "có token thì qua" không phân biệt được 401 đó với 401 của cổng.
+        ("POST", "/auth/dang-ky"): (
+            "/auth/dang-ky",
+            {"ten_dang_nhap": "kiem-thu-cong", "mat_khau": "mat-khau-kiem-thu-cong"},
+        ),
+        ("POST", "/auth/dang-nhap"): ("/auth/dang-nhap", {"ten_dang_nhap": "kiem-thu-cong"}),
+        ("POST", "/auth/dang-xuat"): ("/auth/dang-xuat", None),
+        ("POST", "/quan-tri/tai-khoan"): ("/quan-tri/tai-khoan", {}),
     }
 
 

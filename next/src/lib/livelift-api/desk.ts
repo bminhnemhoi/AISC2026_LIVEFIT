@@ -1,4 +1,5 @@
 import type { BaoCao, Block, KetQua, OrderSummary, Session, Tick } from "./types";
+import { KET_LUAN_THEO_MA, LOI_THUONG } from "@/lib/tu-ngu";
 
 /**
  * Pure mappings from API payloads to what the experiment desk shows. No fetching, no React: every number on the
@@ -13,9 +14,22 @@ export interface SourceLabel {
   note: string;
 }
 
-/** The label that must be visible on every screen state. Simulated data is never presented as real. */
+/**
+ * The label that must be visible on every screen state. Simulated data is never presented as real.
+ * A `lab` session created with `dry_run` (scripts/mo_phong_xem.py --thu-noi-bo) is the team's own internal trial:
+ * it keeps kind `dan_dung` (same badge style) but says THỬ NỘI BỘ, because the server keeps it out of the pooled result.
+ * Only when NOT `is_demo`: the server marks a session `is_demo` when a guest created it without the operator token on
+ * the public showcase (auth.py), and a guest's room is never the team's internal trial; it keeps plain DÀN DỰNG.
+ */
 export function sourceLabel(session: Pick<Session, "platform" | "is_demo" | "dry_run">, syntheticComments = 0): SourceLabel {
   if (session.platform === "lab") {
+    if (session.dry_run && !session.is_demo) {
+      return {
+        kind: "dan_dung",
+        text: "DÀN DỰNG · THỬ NỘI BỘ",
+        note: "Nhóm tự thử phòng dàn dựng, mua bằng tiền ảo. Khai báo lúc tạo phiên nên không vào kết quả gộp.",
+      };
+    }
     return { kind: "dan_dung", text: "DÀN DỰNG", note: "Người thật ẩn danh trong phòng dàn dựng, mua bằng tiền ảo." };
   }
   if (session.is_demo || session.platform === "sim" || session.platform === "replay") {
@@ -143,7 +157,7 @@ function quartiles(xs: number[]): [number, number] {
  * SEVERAL signals stay bad together (AISC26-0068) — here viewers AND click rate under their band for two windows
  * in a row, so one noisy minute never pages the operator. It never feeds the causal estimate.
  */
-export function roomPulse(ticks: Tick[]): RoomPulse {
+export function roomPulse(ticks: Tick[], tuyChon: { chiNguoiXem?: boolean } = {}): RoomPulse {
   const per = PULSE_WINDOW_S / BUCKET_S;
   const windows: PulseWindow[] = [];
   for (let i = 0; i + per <= ticks.length; i += per) {
@@ -158,11 +172,26 @@ export function roomPulse(ticks: Tick[]): RoomPulse {
     return { windows, last, viewersBand: null, clickBand: null, alert: false, note: "Chưa đủ lịch sử trong phiên để có dải bình thường (cần khoảng 30 phút)." };
   }
   const viewersBand = quartiles(ref.map(w => w.viewers));
-  const clickBand = quartiles(ref.map(w => w.clickRate));
   const tail = windows.slice(-2);
+  if (tuyChon.chiNguoiXem) {
+    // Khoá §7 (D-027): phiên có người bấm còn khoá thì không tính gì từ lượt nhấp theo cửa sổ (cửa sổ 5 phút gần trùng
+    // ranh giới khối). Cảnh báo chỉ theo người xem; không trả dải hay tỷ lệ nhấp của từng cửa sổ.
+    const alertXem = tail.length === 2 && tail.every(w => w.viewers < viewersBand[0]);
+    return {
+      windows: windows.map(w => ({ viewers: w.viewers, clickRate: 0 })),
+      last: last ? { viewers: last.viewers, clickRate: 0 } : null,
+      viewersBand,
+      clickBand: null,
+      alert: alertXem,
+      note: alertXem
+        ? "Người xem dưới dải bình thường 10 phút liền. Đây chỉ là mô tả, chưa nói được vì sao; lịch bốc thăm vẫn giữ nguyên."
+        : "Người xem trong hoặc trên dải bình thường của phiên.",
+    };
+  }
+  const clickBand = quartiles(ref.map(w => w.clickRate));
   const alert = tail.length === 2 && tail.every(w => w.viewers < viewersBand[0] && w.clickRate < clickBand[0]);
   const note = alert
-    ? "Người xem và lượt nhấp cùng dưới dải bình thường 10 phút liền. Đây là mô tả, không phải kết luận nhân quả; lịch thí nghiệm vẫn giữ nguyên."
+    ? "Người xem và lượt nhấp cùng dưới dải bình thường 10 phút liền. Đây chỉ là mô tả, chưa nói được vì sao; lịch bốc thăm vẫn giữ nguyên."
     : "Trong hoặc trên dải bình thường của phiên.";
   return { windows, last, viewersBand, clickBand, alert, note };
 }
@@ -181,37 +210,27 @@ export interface Verdict {
  * "measure more"; here the comparison is the randomized OFF arm, and the rule is the 95% interval alone.
  */
 export function verdict(state: EstimateState): Verdict {
+  // Một bộ câu cho ĐỔI / GIỮ / ĐO THÊM (thuat-ngu.yaml, khoá ket_luan): bàn, thước, CoChe và tổng kết nói giống nhau.
   switch (state.kind) {
     case "estimate":
       if (state.ciLow > 0) {
-        return {
-          kind: "doi",
-          label: "ĐỔI SANG cách ghim của LiveLift",
-          detail: "Khoảng tin cậy nằm hẳn trên 0: chiến lược ghim của LiveLift tạo thêm lượt nhấp so với cách làm thường lệ của đội.",
-        };
+        return { kind: "doi", label: KET_LUAN_THEO_MA.DOI.nhan_thuoc, detail: KET_LUAN_THEO_MA.DOI.cau };
       }
       if (state.ciHigh < 0) {
-        return {
-          kind: "giu",
-          label: "GIỮ cách làm cũ",
-          detail: "Khoảng tin cậy nằm hẳn dưới 0: ghim theo LiveLift làm giảm lượt nhấp. Tác dụng ngược cũng là một phép đo thật.",
-        };
+        return { kind: "giu", label: KET_LUAN_THEO_MA.GIU.nhan_thuoc, detail: KET_LUAN_THEO_MA.GIU.cau };
       }
-      return {
-        kind: "do_them",
-        label: "ĐO THÊM",
-        detail: "Khoảng tin cậy còn chứa 0: chưa đủ bằng chứng theo hướng nào. Chạy thêm phiên từ 90 phút, khối 5 phút, rồi gộp.",
-      };
+      return { kind: "do_them", label: KET_LUAN_THEO_MA.DO_THEM.nhan_thuoc, detail: KET_LUAN_THEO_MA.DO_THEM.cau };
     case "not_enough":
       return {
         kind: "do_them",
-        label: "ĐO THÊM",
-        detail: `Mới có ${state.nBlocks} khối đo được, chưa đủ để kết luận. Phiên thí nghiệm cần từ 90 phút với khối 5 phút.`,
+        label: KET_LUAN_THEO_MA.DO_THEM.nhan_thuoc,
+        // Câu ĐO THÊM duy nhất khi chưa đủ khối (D-028): tổng kết, bàn và danh sách cùng đọc LOI_THUONG.chuaDuKhoi.
+        detail: LOI_THUONG.chuaDuKhoi,
       };
     case "locked":
       return { kind: "cho", label: "CHỜ HẾT PHIÊN", detail: "Kết quả khoá đến khi phiên kết thúc, để không ai nhìn trộm giữa chừng." };
     case "observational":
-      return { kind: "cho", label: "KHÔNG CÓ QUYẾT ĐỊNH NHÂN QUẢ", detail: "Phiên quan sát: không có bốc thăm nên không kết luận được tác động." };
+      return { kind: "cho", label: "KHÔNG CÓ KẾT LUẬN NHÂN QUẢ", detail: "Phiên quan sát: không có bốc thăm nên không kết luận được tác động của việc ghim." };
   }
 }
 
