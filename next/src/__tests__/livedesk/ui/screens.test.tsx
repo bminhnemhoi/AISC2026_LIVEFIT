@@ -18,7 +18,7 @@ vi.mock("@/lib/livedesk/hooks", () => ({
   useDeskSimulation: () => ({ fault: simFault, setFault }),
 }));
 
-import HomePage from "@/app/page";
+import HomePage from "@/app/home/page";
 import StartPage from "@/app/start/page";
 import LegacyPage from "@/app/legacy/page";
 import DeskPage from "@/app/desk/[liveId]/page";
