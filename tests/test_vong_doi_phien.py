@@ -210,8 +210,10 @@ def test_the_dry_run_flag_cannot_be_flipped_after_the_fact(store, client):
     assert "SessionCreate" in mang_co
     # Schema ĐẦU RA được mang cờ để NÓI phiên là chạy thử — từ 25/09/2026 cả báo
     # cáo sau phiên (BaoCaoOut), để /ket-qua không đóng dấu "TÁC ĐỘNG THẬT" cho
-    # phiên chạy thử (tests/test_chay_thu_da_huy_2509.py).
-    assert mang_co <= {"SessionCreate", "SessionOut", "SessionDetail", "BaoCaoOut"}, (
+    # phiên chạy thử (tests/test_chay_thu_da_huy_2509.py). Từ 19/10/2026 cả trạng thái
+    # công khai của phòng xem (XemPhong, chỉ đọc) để chip DÀN DỰNG · THỬ NỘI BỘ không
+    # phải đoán theo tên phòng; phần dưới vẫn kiểm không thân yêu cầu nào nhận cờ.
+    assert mang_co <= {"SessionCreate", "SessionOut", "SessionDetail", "BaoCaoOut", "XemPhong"}, (
         f"có schema khác mang cờ chạy thử: {sorted(mang_co)}"
     )
     # ...nhưng chỉ MỘT schema ĐẦU VÀO nhận nó: thân yêu cầu tạo phiên.

@@ -39,7 +39,8 @@ canh:
   # ---------------------------------------------------------------- slide 01, 14, M1
   - ten: ban-thi-nghiem
     slide: ["01", "14", "M1"]
-    tuyen: /phien/{phien_live}
+    # ?anh-poster=1: điện thoại vẽ người dẫn bằng tay (MINH HOẠ), K8 không có mặt người dẫn AI (kế hoạch 3.1 mục 7)
+    tuyen: /phien/{phien_live}?anh-poster=1
     khung: [1600, 1000]
     dsf: 2
     ghi_chu: "Cả khung nhìn bàn thí nghiệm của phiên đang phát (MÔ PHỎNG). Ảnh K7 3200×2000, giữ cỡ để khung laptop của deck không đổi."
