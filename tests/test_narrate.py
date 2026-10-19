@@ -236,7 +236,18 @@ def test_gop_khoa_7_khong_lo_uoc_luong_ke_ca_khi_duoc_truyen():
     assert len(cau) == 3
     assert ly_do in cau[0].text, "lý do khóa phải được chép nguyên văn"
     ca_ba = " ".join(c.text for c in cau)
-    for cam in ("1.234", "1,234", "0.9", "0,9", "1.5", "1,5", "KTC", "khoảng tin cậy", "p =", "p <"):
+    for cam in (
+        "1.234",
+        "1,234",
+        "0.9",
+        "0,9",
+        "1.5",
+        "1,5",
+        "KTC",
+        "khoảng tin cậy",
+        "p =",
+        "p <",
+    ):
         assert cam not in ca_ba, f"khóa §7 mà vẫn lộ {cam!r}"
     assert all(c.badge != BADGE_THI_NGHIEM for c in cau)
 
@@ -385,15 +396,33 @@ def _moi_nhanh() -> list[list[narrate.Cau]]:
     return [
         tom_tat_gop(**GOP_DUONG),
         tom_tat_gop(**{**GOP_DUONG, "measured_compliance": None}),
-        tom_tat_gop(estimable=True, estimate=0.2, ci_low=-0.1, ci_high=0.4, p_value=0.2, power_table=power, **chung_gop),
-        tom_tat_gop(estimable=True, estimate=0.2, ci_low=-0.1, ci_high=0.4, p_value=0.2, **chung_gop),
-        tom_tat_gop(estimable=True, estimate=-0.8, ci_low=-1.2, ci_high=-0.4, p_value=0.002, **chung_gop),
+        tom_tat_gop(
+            estimable=True,
+            estimate=0.2,
+            ci_low=-0.1,
+            ci_high=0.4,
+            p_value=0.2,
+            power_table=power,
+            **chung_gop,
+        ),
+        tom_tat_gop(
+            estimable=True, estimate=0.2, ci_low=-0.1, ci_high=0.4, p_value=0.2, **chung_gop
+        ),
+        tom_tat_gop(
+            estimable=True, estimate=-0.8, ci_low=-1.2, ci_high=-0.4, p_value=0.002, **chung_gop
+        ),
         tom_tat_gop(estimable=False, n_sessions=1, n_blocks=3, n_on=2, n_off=1),
         tom_tat_gop(estimable=False, n_sessions=5, n_blocks=30, n_on=15, n_off=15),
         tom_tat_gop(estimable=False, khoa=True, n_sessions=4, n_blocks=64, n_on=32, n_off=32),
-        tom_tat_phien(**chung_phien, estimable=True, estimate=1.2, ci_low=0.9, ci_high=1.5, p_value=0.001),
-        tom_tat_phien(**chung_phien, estimable=True, estimate=-1.2, ci_low=-1.5, ci_high=-0.9, p_value=0.001),
-        tom_tat_phien(**chung_phien, estimable=True, estimate=0.2, ci_low=-0.1, ci_high=0.4, p_value=0.3),
+        tom_tat_phien(
+            **chung_phien, estimable=True, estimate=1.2, ci_low=0.9, ci_high=1.5, p_value=0.001
+        ),
+        tom_tat_phien(
+            **chung_phien, estimable=True, estimate=-1.2, ci_low=-1.5, ci_high=-0.9, p_value=0.001
+        ),
+        tom_tat_phien(
+            **chung_phien, estimable=True, estimate=0.2, ci_low=-0.1, ci_high=0.4, p_value=0.3
+        ),
         tom_tat_phien(**chung_phien, estimable=False),
         tom_tat_phien(**chung_phien, khoa=True),
         tom_tat_phien(loai_phien="quan_sat", tong_binh_luan=10),
