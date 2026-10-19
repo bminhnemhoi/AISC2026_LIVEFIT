@@ -6,7 +6,7 @@
 #
 # Lập 19/10/2026 từ kiểm toán đồng bộ cùng ngày (36 chỗ lệch).
 
-phien_ban: "2026-10-19"
+phien_ban: "2026-10-19b"  # bản 3.1: giao diện 2.0, người dẫn AI (D-022)
 
 thuat_ngu:
   - dung: "LiveLift"
@@ -18,13 +18,15 @@ thuat_ngu:
     ghi_chu: "A/B chỉ dùng khi nói về chia người xem, thứ người bán không làm được."
 
   - dung: "khối, khối BẬT, khối TẮT"
-    cam: ["lát", "bucket"]
+    cam: ["lát", "bucket", "khúc"]
+    phu_de: "mỗi khối 5 phút, máy tung đồng xu chọn khối nào ghim; BẬT: LiveLift ghim · TẮT: đội làm như thường"
 
   - dung: "bốc thăm"
     cam: ["random"]
 
   - dung: "niêm phong lịch (dấu vân tay SHA-256)"
     cam: ["khoá lịch"]
+    phu_de: "khoá bằng mã băm trước giờ live, không ai sửa lén được"
 
   - dung: "bỏ 60 giây đầu khối"
     cam: ["burn-in"]
@@ -40,14 +42,18 @@ thuat_ngu:
   - dung: "lực phát hiện"
     cam: []
 
-  - dung: "KTC 95%"
+  - dung: "khoảng tin cậy 95% (KTC 95%)"
     cam: []
+    ghi_chu: "Trên giao diện viết đủ chữ; KTC chỉ dùng trong slide phương pháp và tài liệu."
+    phu_de: "đo lại nhiều lần thì khoảng 95/100 dải như vậy chứa hiệu quả thật"
 
   - dung: "kiểm định ngẫu nhiên hoá"
     cam: ["kiểm định hoán vị"]
 
   - dung: "lượt nhấp hợp lệ / 1.000 giây·người xem"
-    cam: ["click / 1.000 giây", "lượt nhấp trên 1.000 giây xem"]
+    ngan: "Tỷ lệ nhấp"
+    cam: ["click / 1.000 giây", "lượt nhấp trên 1.000 giây xem", "lượt bấm trên 1.000 giây"]
+    ghi_chu: "Dạng ngắn 'Tỷ lệ nhấp' được dùng trên giao diện, luôn kèm phụ đề đầy đủ."
 
   - dung: "bàn thí nghiệm"
     nghia: "màn /phien/{id} của next/: theo lịch khối, ghim, xem kết quả"
@@ -67,10 +73,10 @@ thuat_ngu:
 
   - dung: "tổng kết ĐỔI / GIỮ / ĐO THÊM"
     cam: ["DƯƠNG/NULL", "DƯƠNG, NULL, CHƯA ĐỦ"]
-    ghi_chu: "DƯƠNG/NULL chỉ còn là tên phiên mẫu trong bộ demo vàng."
+    ghi_chu: "Phiên quá ngắn hiện ĐO THÊM; tên phiên mẫu dùng ĐỔI / ĐO THÊM / CHƯA ĐỦ KHỐI."
 
   - dung: "Live Desk minh hoạ"
-    nghia: "/start → /desk/{id}; lớp minh hoạ, không phải bàn thí nghiệm"
+    nghia: "/minh-hoa (vẫn giữ /start → /desk/{id}); lớp minh hoạ chạy trong trình duyệt, không phải bàn thí nghiệm (D-018)"
     cam: []
 
   - dung: "Chế độ Thí nghiệm"
@@ -78,6 +84,19 @@ thuat_ngu:
 
   - dung: "chế độ ghim: Tự ghim / Chỉ gợi ý / Quan sát"
     cam: ["Đề xuất (trọng tâm)"]
+    phu_de: "Tự ghim (autopilot): máy tự ghim ở khối BẬT"
+
+  - dung: "Các phiên live đang đo hiệu quả ghim"
+    nghia: "tiêu đề danh sách phiên /phien"
+    cam: ["Thí nghiệm có bốc thăm"]
+
+  - dung: "Ghim món của khối này"
+    nghia: "nút ghim ở khối BẬT; máy chọn trong nhóm gợi ý, món có thể khác thẻ gợi ý"
+    cam: ["Ghim theo gợi ý"]
+
+  - dung: "người dẫn AI"
+    nghia: "video người dẫn do AI tạo (khuôn mặt và giọng tổng hợp), luôn kèm nhãn NGƯỜI DẪN AI (D-015)"
+    cam: ["người dẫn ảo thật", "MC thật"]
 
   - dung: "radar ý định (tín hiệu phụ)"
     cam: []
@@ -95,7 +114,7 @@ thuat_ngu:
 
 cau_ghim: >-
   LiveLift bốc thăm. Ở khối BẬT, Shopee ghim qua API (chưa nối); TikTok và Facebook
-  ghim tay theo thẻ lịch; trong demo và phòng xem, autopilot ghim.
+  ghim tay theo thẻ lịch; trong demo và phòng xem, máy tự ghim (autopilot).
 
 nhan_nguon:
   - id: THAT
@@ -103,7 +122,7 @@ nhan_nguon:
     nghia: "đo trên dữ liệu hoặc sự kiện có thật, chạy lại được"
   - id: DAN_DUNG
     hien_thi: "DÀN DỰNG"
-    nghia: "phòng xem: người thật bấm, tiền ảo, video người dẫn quay sẵn"
+    nghia: "phòng xem: người thật bấm, tiền ảo; video người dẫn quay sẵn hoặc do AI tạo (khi đó kèm nhãn công bố NGƯỜI DẪN AI)"
   - id: THU_NOI_BO
     hien_thi: "THỬ NỘI BỘ"
     nghia: "buổi dàn dựng chỉ có người trong nhóm"
@@ -129,6 +148,18 @@ nhan_nguon:
     hien_thi: "MÀN MẪU"
     nghia: "ảnh giao diện chạy bằng dữ liệu mẫu"
 
+nhan_cong_bo:
+  # Nhãn công bố: không phải nhãn nguồn của số, mà là lời báo cho người xem (D-015, D-022, D-023)
+  - id: NGUOI_DAN_AI
+    hien_thi: "NGƯỜI DẪN AI · GIỌNG TỔNG HỢP"
+    nghia: "khuôn mặt và giọng người dẫn do AI tạo; hiện liên tục trên video và khung điện thoại"
+  - id: MAY_CHEP_LOI
+    hien_thi: "MÁY CHÉP LỜI"
+    nghia: "lời người dẫn do máy chép (faster-whisper), có thể sai; chỉ để hiển thị"
+  - id: CHUA_XAC_MINH
+    hien_thi: "DÀN DỰNG · CHƯA XÁC MINH"
+    nghia: "phiên do giám khảo hoặc tài khoản chưa xác minh tạo; không vào số nào"
+
 tu_cam:
   # Số và khẳng định đã bị thay hoặc không có nguồn
   - mau: '2,5 triệu (phiên|buổi)'
@@ -151,6 +182,8 @@ tu_cam:
     ly_do: "không chứng minh được; kết luận 'chưa thấy' chỉ dựa trên tìm kiếm có phạm vi"
   - mau: '18 khối'
     ly_do: "phiên 90 phút có 16 khối"
+  - mau: 'khúc 5 phút'
+    ly_do: "canon dùng 'khối 5 phút' (D-022)"
   # Văn phong
   - mau: '—'
     ly_do: "không dùng dấu gạch dài trong chữ công khai"

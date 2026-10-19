@@ -49,6 +49,7 @@ cd next; npx tsc --noEmit; npm run lint; npx vitest run
 ## Luật số và nhãn
 
 - Mọi con số công khai mang nhãn: THẬT · DÀN DỰNG · THỬ NỘI BỘ · MÔ PHỎNG · GIẢ THUYẾT · THỨ CẤP · NHÃN AI · QUAN SÁT · MINH HOẠ · MÀN MẪU.
+- Nhãn công bố (không phải nhãn nguồn của số): "NGƯỜI DẪN AI · GIỌNG TỔNG HỢP" luôn hiện cạnh video người dẫn do AI tạo; "MÁY CHÉP LỜI" cho lời chép bằng faster-whisper; "DÀN DỰNG · CHƯA XÁC MINH" cho phiên do giám khảo hoặc tài khoản chưa xác minh tạo (D-015, D-022, D-023 trong D:\AISC2026\QUYET-DINH.md).
 - Số lấy từ `docs/canon/so.yaml`. Số mới vào `FACT-SHEET.md` trước (kèm lệnh sinh lại), rồi `so.yaml`, rồi mới ra nơi khác.
 - Hôm nay có 0 phiên với người bán thật và 0 phỏng vấn. Không viết khác đi cho đến khi có.
 - Số tiêu đề: báo nhầm 4,3% (MÔ PHỎNG; A/A 3,50% chỉ ở chú thích); lực 95% với tác động +30%, khối 5 phút; dư âm −46% → −35%; NLP 0,370 → 0,572 cùng thang 6 lớp (NHÃN AI); phiên 90 phút = 16 khối.
@@ -58,7 +59,7 @@ cd next; npx tsc --noEmit; npm run lint; npx vitest run
 
 ## Luật làm việc
 
-- Làm trên nhánh riêng, mở PR. **Không push, không merge khi Minh chưa duyệt.** Tiến duyệt mã, Minh merge.
+- Làm trên nhánh riêng, mở PR. **Push theo D-020** (test xanh + người duyệt độc lập + quét bí mật, PR nháp, không push main, không --force). **Không merge**: Tiến duyệt mã, Minh merge.
 - Commit: tiếng Việt không dấu, dòng cuối:
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 - Không đụng container Docker của dự án khác trên máy.
