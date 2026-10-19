@@ -16,7 +16,11 @@
 
   --bd-bat-nen: rgba(61, 107, 79, 0.13);
   --bd-tat-nen: rgba(138, 143, 152, 0.1);
-  --bd-tat-soc: rgba(110, 115, 124, 0.55);
+  /* viền chấm TẮT và sọc của dấu TẮT (chấm, ô chú giải): đậm hơn màu tô để đạt ≥ 3:1 (WCAG 1.4.11, lib/bieu-do VIEN_TAT) */
+  --bd-tat-vien: var(--n-tat-chu, #4a4f57);
+  --bd-tat-soc: var(--bd-tat-vien);
+  /* sọc của dải nền khối TẮT trên đường thời gian: nhạt, là vân nền; chữ T ở đầu dải mang thông tin */
+  --bd-tat-soc-nen: rgba(110, 115, 124, 0.55);
   --bd-vung-doi: rgba(61, 107, 79, 0.09);
   --bd-vung-giu: rgba(110, 99, 89, 0.09);
 
@@ -27,7 +31,7 @@
   --bd-nen: var(--surface, var(--n-nen, #f6f3ee));
   --bd-the: var(--paper, var(--n-be-mat, #fbf7ef));
   --bd-luoi: var(--line, var(--n-vach, #d8d0c4));
-  --bd-truc: #a99b89;
+  --bd-truc: #8a7d6c;
   --bd-noi-bat: var(--surface-2, var(--n-be-mat-2, #eae3d8));
   --bd-tieu-diem: var(--focus, var(--n-muc, #2a2522));
 
@@ -47,7 +51,9 @@
 
   --bd-bat-nen: rgba(88, 168, 120, 0.18);
   --bd-tat-nen: rgba(160, 165, 174, 0.1);
-  --bd-tat-soc: rgba(160, 165, 174, 0.5);
+  --bd-tat-vien: #a0a5ae;
+  --bd-tat-soc: var(--bd-tat-vien);
+  --bd-tat-soc-nen: rgba(160, 165, 174, 0.5);
   --bd-vung-doi: rgba(88, 168, 120, 0.12);
   --bd-vung-giu: rgba(185, 168, 145, 0.1);
 
@@ -57,7 +63,7 @@
   --bd-nen: var(--surface, #1f1a17);
   --bd-the: var(--paper, #2e2722);
   --bd-luoi: var(--line, #463c34);
-  --bd-truc: #7d6f61;
+  --bd-truc: #8a7d6c;
   --bd-noi-bat: var(--surface-2, #332b25);
   --bd-tieu-diem: var(--focus, #f3ece1);
 }
@@ -154,8 +160,10 @@
   outline-offset: 2px;
 }
 
+/* nhãn nút không đổi; trạng thái "đang xem bảng" thấy được bằng viền mực và nền đậm hơn */
 .bd-nut[aria-pressed="true"] {
   border-color: var(--bd-chu);
+  background: var(--bd-noi-bat);
 }
 
 .bd-ve {
@@ -295,14 +303,15 @@
   background: var(--bd-bat);
 }
 
+/* ô chú giải của dải nền TẮT: cùng vân với dải trên biểu đồ, viền đậm cho đủ 3:1 */
 .bd-o-tat {
-  background: repeating-linear-gradient(45deg, var(--bd-tat) 0 2px, transparent 2px 5px);
-  box-shadow: inset 0 0 0 1.5px var(--bd-tat);
+  background: repeating-linear-gradient(45deg, var(--bd-tat-soc-nen) 0 1.5px, transparent 1.5px 5px), var(--bd-tat-nen);
+  box-shadow: inset 0 0 0 1.5px var(--bd-tat-vien);
 }
 
 .bd-cham-tat {
-  background: repeating-linear-gradient(45deg, var(--bd-tat) 0 1.5px, transparent 1.5px 4px);
-  box-shadow: inset 0 0 0 2px var(--bd-tat);
+  background: repeating-linear-gradient(45deg, var(--bd-tat-soc) 0 1.5px, transparent 1.5px 4px);
+  box-shadow: inset 0 0 0 2px var(--bd-tat-vien);
 }
 
 /* ---------- bảng thay biểu đồ ---------- */

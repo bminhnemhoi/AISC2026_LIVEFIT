@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { tuongPhan } from "@/components/nen/token";
 import { funnel } from "@/lib/livelift-api/desk";
 import { ExperimentSummarySchema } from "@/lib/livelift-api/gop";
 import { BaoCaoSchema, BlockSchema, CommentSchema, SessionSchema, TickSchema, type Block, type Tick } from "@/lib/livelift-api/types";
+import { KET_LUAN_THEO_MA } from "@/lib/tu-ngu";
 import gopVangJson from "@/lib/livelift-api/__tests__/fixtures/gop-demo-vang.json";
 import gopMotJson from "@/lib/livelift-api/__tests__/fixtures/gop-demo-mot-phien.json";
 import doi1Json from "./fixtures/phien-doi-1.json";
@@ -13,9 +15,14 @@ import liveJson from "./fixtures/phien-mo-phong-dang-live.json";
 import khoaJson from "./fixtures/phien-thu-noi-bo-khoa.json";
 import {
   BIEN,
+  BIEN_VIEN_TAT,
   KET_LUAN,
+  MA_CUA_VUNG,
+  MAT_THE,
   MAU,
   NEN,
+  TRUC,
+  VIEN_TAT,
   PHU_DE_BAT,
   PHU_DE_KHOANG_TIN_CAY,
   PHU_DE_TAT,
@@ -39,6 +46,7 @@ import {
   dongRungGop,
   dongRungTuBaoCao,
   duongDut,
+  duongNhoTyLeNhap,
   ganNhat,
   hinhThoi,
   hinhThoiKhoang,
@@ -62,7 +70,6 @@ import {
   thanhNgang,
   theoCuaSo,
   trungBinhNhanh,
-  tuongPhan,
   vachThoiGian,
   vachTu0,
   vungCua,
@@ -226,6 +233,33 @@ describe("chuỗi thời gian từ điểm đo thật của API", () => {
     expect(theoCuaSo(doi1.ticks, null)).toEqual([]);
   });
 
+  it("đường nhỏ Tỷ lệ nhấp: phiên THẬT hay THỬ NỘI BỘ đang live (khoá, không được mở sớm) thì không có chuỗi nào", () => {
+    const that = quyenToNenKhoi({ kind: "that", text: "THẬT" }, true);
+    expect(duongNhoTyLeNhap(live.ticks, live.phien, { khoa: true, toNen: that })).toBeNull();
+    const thuNoiBo = quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, true);
+    expect(duongNhoTyLeNhap(live.ticks, live.phien, { khoa: true, toNen: thuNoiBo })).toBeNull();
+    // Thiếu quyền thì coi như khoá.
+    expect(duongNhoTyLeNhap(live.ticks, live.phien, { khoa: true })).toBeNull();
+    expect(duongNhoTyLeNhap(live.ticks, live.phien, { khoa: true, toNen: null })).toBeNull();
+  });
+
+  it("đường nhỏ Tỷ lệ nhấp: MÔ PHỎNG (mở sớm) hay đã mở khoá thì có chuỗi, cửa sổ trượt không theo khối", () => {
+    const moPhong = quyenToNenKhoi({ kind: "mo_phong", text: "MÔ PHỎNG" }, true);
+    const c = duongNhoTyLeNhap(live.ticks, live.phien, { khoa: true, toNen: moPhong });
+    expect(Array.isArray(c)).toBe(true);
+    expect((c as Array<number | null>).length).toBeGreaterThan(2);
+    // Phiên đã mở khoá: có chuỗi, mỗi phút một điểm (90 phút: khoảng 90 điểm), không phải 18 điểm của từng khối 5 phút.
+    const daMo = duongNhoTyLeNhap(doi1.ticks, doi1.phien, { khoa: false }) as Array<number | null>;
+    expect(daMo.length).toBeGreaterThanOrEqual(85);
+    expect(daMo.length).toBeLessThanOrEqual(92);
+    // Mỗi điểm là cửa sổ trượt 2 phút, không phải tỷ lệ của một khối 5 phút.
+    const tron = chuoiThoiGian(doi1.ticks, doi1.phien.start_ts, 120).map((d) => d.tyLeNhap);
+    expect(daMo[daMo.length - 1]).toBe(tron[tron.length - 1]);
+    const khoi5 = theoCuaSo(doi1.ticks, doi1.phien.start_ts, 300).map((w) => w.tyLeNhap);
+    expect(daMo).not.toEqual(khoi5);
+    expect(duongNhoTyLeNhap(doi1.ticks, { start_ts: null }, { khoa: false })).toEqual([]);
+  });
+
   it("đỉnh người xem", () => {
     expect(dinhNguoiXem([])).toBeNull();
     expect(dinhNguoiXem(live.ticks)).toBe(62);
@@ -319,9 +353,14 @@ describe("khoá §7 phía giao diện", () => {
     expect(chanUocLuongKhiKhoa(doi1.baoCao)).toBe(doi1.baoCao);
   });
 
-  it("tô nền khối: MÔ PHỎNG và DÀN DỰNG được (mở khoá sớm), THẬT đang live thì không", () => {
+  it("tô nền khối: MÔ PHỎNG và DÀN DỰNG được (mở khoá sớm), THẬT và THỬ NỘI BỘ đang live thì không", () => {
     expect(quyenToNenKhoi({ kind: "mo_phong", text: "MÔ PHỎNG" }, true)).toEqual({ cho: true, dong: "mở khoá sớm vì MÔ PHỎNG" });
-    expect(quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, true)).toEqual({ cho: true, dong: "mở khoá sớm vì DÀN DỰNG" });
+    expect(quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG" }, true)).toEqual({ cho: true, dong: "mở khoá sớm vì DÀN DỰNG" });
+    const thuNoiBo = quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, true);
+    expect(thuNoiBo.cho).toBe(false);
+    expect(thuNoiBo.dong).toContain("THỬ NỘI BỘ đang live");
+    expect(thuNoiBo.dong).not.toMatch(/mở khoá sớm/);
+    expect(quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, false).cho).toBe(true);
     const that = quyenToNenKhoi({ kind: "that", text: "THẬT" }, true);
     expect(that.cho).toBe(false);
     expect(that.dong).toContain("không tô nền theo khối");
@@ -337,6 +376,17 @@ describe("ba vùng kết luận", () => {
     expect(vungCua(-1, -0.2)).toBe("giu");
     expect(vungCua(0, 1)).toBe("do_them");
     expect(vungCua(NaN, 1)).toBeNull();
+  });
+
+  it("chữ kết luận là bí danh của KET_LUAN trong tu-ngu (canon ket_luan), không chép lại", () => {
+    const yaml = readFileSync(path.resolve(process.cwd(), "../docs/canon/thuat-ngu.yaml"), "utf8");
+    for (const v of ["giu", "do_them", "doi"] as const) {
+      const canon = KET_LUAN_THEO_MA[MA_CUA_VUNG[v]];
+      expect(KET_LUAN[v]).toEqual({ chu: canon.chu, cau: canon.cau, nhanThuoc: canon.nhan_thuoc });
+      expect(yaml).toContain(`nhan_thuoc: "${KET_LUAN[v].nhanThuoc}"`);
+      expect(yaml).toContain(`cau: "${KET_LUAN[v].cau}"`);
+      expect(yaml).toContain(`chu: "${KET_LUAN[v].chu}"`);
+    }
   });
 
   it("chữ khớp canon thuat-ngu.yaml (phu_de, ngan)", () => {
@@ -364,6 +414,26 @@ describe("màu D-026", () => {
       expect(tuongPhan(MAU[ten].toi, NEN.toi)).toBeGreaterThanOrEqual(3);
     }
     expect(tuongPhan(MAU.tat.sang, NEN.sang)).toBeLessThan(3);
+  });
+
+  it("viền chấm TẮT, sọc và trục đạt 3:1 trên nền và mặt thẻ, cả sáng lẫn tối (soát đợt 1 mục 15)", () => {
+    for (const [mau, ten] of [
+      [VIEN_TAT, "viền TẮT"],
+      [TRUC, "trục"],
+    ] as const) {
+      expect(tuongPhan(mau.sang, NEN.sang), `${ten} sáng / nền`).toBeGreaterThanOrEqual(3);
+      expect(tuongPhan(mau.sang, MAT_THE.sang), `${ten} sáng / thẻ`).toBeGreaterThanOrEqual(3);
+      expect(tuongPhan(mau.toi, NEN.toi), `${ten} tối / nền`).toBeGreaterThanOrEqual(3);
+      expect(tuongPhan(mau.toi, MAT_THE.toi), `${ten} tối / thẻ`).toBeGreaterThanOrEqual(3);
+    }
+    // Màu tô TẮT giữ D-026; CSS khai báo đúng các giá trị đã kiểm.
+    expect(MAU.tat.sang).toBe("#8a8f98");
+    const css = readFileSync(path.resolve(process.cwd(), "src/components/bieu-do/bieu-do.css"), "utf8");
+    expect(css).toContain(`--bd-tat-vien: var(--n-tat-chu, ${VIEN_TAT.sang});`);
+    expect(css).toContain(`--bd-tat-vien: ${VIEN_TAT.toi};`);
+    expect(css.match(new RegExp(`--bd-truc: ${TRUC.sang};`, "g"))).toHaveLength(2);
+    expect(css).not.toMatch(/--bd-truc: #a99b89/);
+    expect(BIEN_VIEN_TAT).toBe("var(--bd-tat-vien)");
   });
 
   it("mã vẽ dùng biến CSS", () => {

@@ -74,9 +74,10 @@ export function KhungBieuDo({ tieuDe, phuDe, nhan, moTa, bang, chuGiai, ghiChu, 
         </div>
         <div className="bd-dau-phai">
           {nhan ? <span className="bd-nhan">{nhan}</span> : null}
+          {/* Một nhãn cố định; trạng thái nằm ở aria-pressed (đổi nhãn kèm aria-pressed làm trình đọc màn hình đọc lẫn). */}
           {bang ? (
             <button type="button" className="bd-nut" aria-pressed={xemBang} aria-controls={maBang} onClick={() => setXemBang((v) => !v)}>
-              {xemBang ? "Xem biểu đồ" : "Xem dạng bảng"}
+              Xem dạng bảng
             </button>
           ) : null}
         </div>
@@ -183,13 +184,16 @@ export function ONhac({ trai, dau, dong, rongKhung }: { trai: number; dau: strin
   );
 }
 
-/** Mẫu sọc chéo 45° của khối TẮT (mã phụ cho màu xám, D-026). */
+/**
+ * Mẫu sọc chéo 45° của khối TẮT (mã phụ cho màu xám, D-026). Dấu TẮT (chấm): sọc đậm `--bd-tat-soc` (≥ 3:1).
+ * Dải nền khối (`nen`): sọc nhạt `--bd-tat-soc-nen` để không lấn đường số liệu; chữ T ở đầu dải mang thông tin.
+ */
 export function MauSocTat({ id, nen = false }: { id: string; nen?: boolean }) {
   return (
     <pattern id={id} width="6" height="6" patternUnits="userSpaceOnUse">
       {nen ? <rect width="6" height="6" fill="var(--bd-tat-nen)" /> : null}
       {/* sọc chéo 45° vẽ thẳng, không xoay phần tử nào */}
-      <path d="M-1,1L1,-1M0,6L6,0M5,7L7,5" stroke="var(--bd-tat-soc)" strokeWidth="1.6" />
+      <path d="M-1,1L1,-1M0,6L6,0M5,7L7,5" stroke={nen ? "var(--bd-tat-soc-nen)" : "var(--bd-tat-soc)"} strokeWidth={nen ? 1.6 : 1.2} />
     </pattern>
   );
 }

@@ -3,16 +3,8 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { DUONG_DONG_THOI_GIAN, docDongThoiGian, laAnhPoster, type DoanDongThoiGian } from "./dong-thoi-gian";
 
-const khongDangKy = () => () => {};
-
-/** true sau khi gắn vào trình duyệt; máy chủ và lần hydrate đầu luôn false. */
-export function useDaGan(): boolean {
-  return useSyncExternalStore(
-    khongDangKy,
-    () => true,
-    () => false,
-  );
-}
+/** Dùng chung bản của nền (mục 10 soát đợt 1); giữ lối nhập cũ "@/components/dien-thoai" để không vỡ trang đang dùng. */
+export { useDaGan } from "@/components/nen/lop-phu";
 
 function dangKyDiaChi(cb: () => void): () => void {
   window.addEventListener("popstate", cb);

@@ -4,11 +4,13 @@
  *
  * Bốn bước:
  * 1. tung đồng xu trước giờ live, niêm phong lịch;
- * 2. khối BẬT: máy ghim món đầu nhóm gợi ý (vài món sát điểm thì bốc thăm giữa chúng; có thể khác thẻ gợi ý);
+ * 2. khối BẬT: ghim món đầu nhóm gợi ý (vài món sát điểm thì bốc thăm giữa chúng; có thể khác thẻ gợi ý). Tiêu đề
+ *    trung tính vì ai ghim tuỳ nền tảng (canon `cau_ghim`, dòng chân); chữ "máy tự ghim" chỉ dùng cho demo và phòng xem;
  * 3. khối TẮT: LiveLift để yên, món cũ có thể vẫn hiện (D-012);
- * 4. đếm lượt nhấp theo khối; hết phiên mới so BẬT với TẮT, ra ĐỔI / GIỮ / ĐO THÊM.
+ * 4. đếm lượt nhấp theo khối; hết phiên mới so BẬT với TẮT, ra ĐỔI / GIỮ / ĐO THÊM (chữ và câu lấy từ canon
+ *    `ket_luan` qua KET_LUAN, cùng bộ câu với thước khoảng tin cậy, bàn thí nghiệm và tổng kết).
  */
-import { CAU_GHIM, PHU_DE_KHOI, TU } from "@/lib/tu-ngu";
+import { CAU_GHIM, KET_LUAN, PHU_DE_KHOI, TU, type MaKetLuan as MaKetLuanCanon } from "@/lib/tu-ngu";
 
 export type MaBuoc = "tung-xu" | "khoi-bat" | "khoi-tat" | "so-sanh";
 
@@ -43,8 +45,8 @@ export const BUOC_CO_CHE: readonly BuocCoChe[] = Object.freeze([
   {
     so: 2,
     ma: "khoi-bat",
-    tieuDe: "Khối BẬT: máy ghim một món",
-    cau: "Máy ghim món đứng đầu nhóm gợi ý. Khi vài món sát điểm nhau, máy bốc thăm giữa chúng, nên món được ghim có thể khác thẻ gợi ý.",
+    tieuDe: "Khối BẬT: ghim món đầu nhóm gợi ý",
+    cau: "Ghim món đứng đầu nhóm gợi ý. Khi vài món sát điểm nhau, LiveLift bốc thăm giữa chúng, nên món được ghim có thể khác thẻ gợi ý.",
     phuDe: `BẬT: ${PHU_DE_KHOI.bat}.`,
   },
   {
@@ -63,22 +65,38 @@ export const BUOC_CO_CHE: readonly BuocCoChe[] = Object.freeze([
   },
 ]);
 
+/** Mã kết luận kiểu cũ của CoChe (chữ thường); mã canon là `id` (DOI, GIU, DO_THEM). */
 export type MaKetLuan = "doi" | "giu" | "do_them";
 
 export interface KetLuanCoChe {
   ma: MaKetLuan;
+  /** mã canon trong thuat-ngu.yaml (khoá ket_luan) */
+  id: MaKetLuanCanon;
   /** chữ in hoa canon */
   chu: string;
-  /** câu thường đi kèm (bảng từ mục 3: mỗi chữ kèm một câu thường) */
+  /** câu thường canon đi kèm (cùng câu với thước khoảng tin cậy, bàn thí nghiệm, tổng kết) */
   cau: string;
+  /** phần đầu câu canon, trước dấu hai chấm: điều kiện (dùng khi chật chỗ: bản SVG ngang, bản gọn) */
+  dieuKien: string;
+  /** phần sau dấu hai chấm của câu canon: nên làm gì */
+  loiKhuyen: string;
 }
 
-/** Ba kết luận của tổng kết, mỗi chữ kèm một câu thường. Thứ tự đọc: ĐỔI, GIỮ, ĐO THÊM. */
-export const KET_LUAN_CO_CHE: readonly KetLuanCoChe[] = Object.freeze([
-  { ma: "doi", chu: "ĐỔI", cau: "khối BẬT hơn hẳn: đổi sang cách ghim của LiveLift" },
-  { ma: "giu", chu: "GIỮ", cau: "khối BẬT kém hẳn: giữ cách làm cũ" },
-  { ma: "do_them", chu: "ĐO THÊM", cau: "chưa rõ hơn hay kém: đo thêm phiên rồi gộp" },
-]);
+function tachCau(cau: string): { dieuKien: string; loiKhuyen: string } {
+  const i = cau.indexOf(":");
+  if (i < 0) return { dieuKien: cau, loiKhuyen: "" };
+  return { dieuKien: cau.slice(0, i).trim(), loiKhuyen: cau.slice(i + 1).trim() };
+}
+
+const MA_CU: Readonly<Record<MaKetLuanCanon, MaKetLuan>> = { DOI: "doi", GIU: "giu", DO_THEM: "do_them" };
+
+/**
+ * Ba kết luận của tổng kết, dẫn xuất từ canon (KET_LUAN của @/lib/tu-ngu), không viết lại câu nào ở đây.
+ * Thứ tự đọc: ĐỔI, GIỮ, ĐO THÊM.
+ */
+export const KET_LUAN_CO_CHE: readonly KetLuanCoChe[] = Object.freeze(
+  KET_LUAN.map((k) => Object.freeze({ ma: MA_CU[k.id], id: k.id, chu: k.chu, cau: k.cau, ...tachCau(k.cau) })),
+);
 
 /** Ghim ở đâu (canon `cau_ghim`): LiveLift bốc thăm; nơi nào máy ghim, nơi nào ghim tay. */
 export const GHI_CHU_GHIM = CAU_GHIM;

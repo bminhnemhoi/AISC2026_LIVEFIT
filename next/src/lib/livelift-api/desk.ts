@@ -1,4 +1,5 @@
 import type { BaoCao, Block, KetQua, OrderSummary, Session, Tick } from "./types";
+import { KET_LUAN_THEO_MA } from "@/lib/tu-ngu";
 
 /**
  * Pure mappings from API payloads to what the experiment desk shows. No fetching, no React: every number on the
@@ -194,37 +195,30 @@ export interface Verdict {
  * "measure more"; here the comparison is the randomized OFF arm, and the rule is the 95% interval alone.
  */
 export function verdict(state: EstimateState): Verdict {
+  // Một bộ câu cho ĐỔI / GIỮ / ĐO THÊM (thuat-ngu.yaml, khoá ket_luan): bàn, thước, CoChe và tổng kết nói giống nhau.
   switch (state.kind) {
     case "estimate":
       if (state.ciLow > 0) {
-        return {
-          kind: "doi",
-          label: "ĐỔI SANG cách ghim của LiveLift",
-          detail: "Khoảng tin cậy nằm hẳn trên 0: chiến lược ghim của LiveLift tạo thêm lượt nhấp so với cách làm thường lệ của đội.",
-        };
+        return { kind: "doi", label: KET_LUAN_THEO_MA.DOI.nhan_thuoc, detail: KET_LUAN_THEO_MA.DOI.cau };
       }
       if (state.ciHigh < 0) {
         return {
           kind: "giu",
-          label: "GIỮ cách làm cũ",
-          detail: "Khoảng tin cậy nằm hẳn dưới 0: ghim theo LiveLift làm giảm lượt nhấp. Tác dụng ngược cũng là một phép đo thật.",
+          label: KET_LUAN_THEO_MA.GIU.nhan_thuoc,
+          detail: `${KET_LUAN_THEO_MA.GIU.cau} Tác dụng ngược cũng là một phép đo thật.`,
         };
       }
-      return {
-        kind: "do_them",
-        label: "ĐO THÊM",
-        detail: "Khoảng tin cậy còn chứa 0: chưa đủ bằng chứng theo hướng nào. Chạy thêm phiên từ 90 phút, khối 5 phút, rồi gộp.",
-      };
+      return { kind: "do_them", label: KET_LUAN_THEO_MA.DO_THEM.nhan_thuoc, detail: KET_LUAN_THEO_MA.DO_THEM.cau };
     case "not_enough":
       return {
         kind: "do_them",
-        label: "ĐO THÊM",
-        detail: `Mới có ${state.nBlocks} khối đo được, chưa đủ để kết luận. Phiên thí nghiệm cần từ 90 phút với khối 5 phút.`,
+        label: KET_LUAN_THEO_MA.DO_THEM.nhan_thuoc,
+        detail: `Mới có ${state.nBlocks} khối đo được, chưa đủ để kết luận. Phiên thí nghiệm cần từ 90 phút với khối 5 phút, nên chạy thêm phiên rồi gộp lại.`,
       };
     case "locked":
       return { kind: "cho", label: "CHỜ HẾT PHIÊN", detail: "Kết quả khoá đến khi phiên kết thúc, để không ai nhìn trộm giữa chừng." };
     case "observational":
-      return { kind: "cho", label: "KHÔNG CÓ QUYẾT ĐỊNH NHÂN QUẢ", detail: "Phiên quan sát: không có bốc thăm nên không kết luận được tác động." };
+      return { kind: "cho", label: "KHÔNG CÓ KẾT LUẬN NHÂN QUẢ", detail: "Phiên quan sát: không có bốc thăm nên không kết luận được tác động của việc ghim." };
   }
 }
 

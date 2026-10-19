@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { timLoiChu } from "@/lib/tu-ngu";
+import { KET_LUAN_THEO_MA, timLoiChu } from "@/lib/tu-ngu";
 import { BUOC_CO_CHE, CoChe, CoCheSvg, KET_LUAN_CO_CHE, boCucCoChe, ngatDong, toanBoChuCoChe } from "@/components/co-che";
 import { xuatCoCheSvg } from "@/components/co-che/xuat";
 import { NGHIENG_TOI_DA } from "@/components/minh-hoa";
@@ -40,6 +40,15 @@ describe("nội dung CoChe", () => {
   it("ba kết luận ĐỔI / GIỮ / ĐO THÊM, mỗi chữ kèm một câu thường", () => {
     expect(KET_LUAN_CO_CHE.map((k) => k.chu)).toEqual(["ĐỔI", "GIỮ", "ĐO THÊM"]);
     for (const k of KET_LUAN_CO_CHE) expect(k.cau.length).toBeGreaterThan(10);
+    // một bộ câu: CoChe dẫn xuất từ canon ket_luan, không tự viết câu riêng (mục 11 soát đợt 1)
+    for (const k of KET_LUAN_CO_CHE) {
+      expect(k.chu).toBe(KET_LUAN_THEO_MA[k.id].chu);
+      expect(k.cau).toBe(KET_LUAN_THEO_MA[k.id].cau);
+      expect(`${k.dieuKien}: ${k.loiKhuyen}`).toBe(k.cau);
+    }
+    // tiêu đề bước 2 trung tính: không nói máy ghim (TikTok và Facebook ghim tay); dòng chân vẫn là cau_ghim
+    expect(BUOC_CO_CHE[1].tieuDe).toBe("Khối BẬT: ghim món đầu nhóm gợi ý");
+    expect(BUOC_CO_CHE[1].tieuDe).not.toMatch(/máy/i);
   });
 
   it("toàn bộ chữ không có chữ cấm canon, không 'khúc', không 'khoá lịch', không dấu gạch dài", () => {
@@ -136,6 +145,16 @@ describe("CoChe tuỳ chọn", () => {
     expect(container.textContent).not.toContain("MINH HOẠ");
     expect(container.textContent).not.toContain("ghim tay theo thẻ lịch");
     expect(screen.getByRole("region", { name: "Ghim được đo thế nào: 4 bước" })).toBeInTheDocument();
+  });
+
+  it("nhan theo mã canon; chữ ngoài canon bị bỏ (cả bản SVG)", () => {
+    const { container, rerender } = render(<CoChe bienThe="ngan" nhan="MO_PHONG" />);
+    expect(container.querySelector("[data-nhan-nguon]")?.getAttribute("data-nhan-nguon")).toBe("MO_PHONG");
+    rerender(<CoChe bienThe="ngan" nhan="SIMULATED" />);
+    expect(container.querySelector("[data-nhan-nguon]")).toBeNull();
+    expect(container.textContent).not.toContain("SIMULATED");
+    expect(xuatCoCheSvg("ngang", "SIMULATED")).not.toContain("SIMULATED");
+    expect(xuatCoCheSvg("ngang", "MINH HOẠ")).toContain(">MINH HOẠ<");
   });
 
   it("trang có câu dẫn, ngan thì không (trừ khi truyền)", () => {

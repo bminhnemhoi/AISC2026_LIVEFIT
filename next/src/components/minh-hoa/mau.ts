@@ -5,7 +5,7 @@
  * video mà không cần tệp CSS nào. Các hình là "nhãn dán cắt khuôn" (die-cut): viền cắt, lề trắng, thân giấy hoặc kraft,
  * nét mực nâu; nên trên nền tối chúng vẫn đọc như một miếng dán thật.
  */
-export const MAU = {
+export const MAU_HINH = {
   /** mực đậm (chữ, nét chính của hình thương hiệu) */
   muc: "#2a2522",
   /** mực nâu: nét của nhãn dán */
@@ -50,7 +50,12 @@ export const MAU = {
   vang: "#7f5300",
 } as const;
 
-export type TenMau = keyof typeof MAU;
+export type TenMauHinh = keyof typeof MAU_HINH;
+
+/** @deprecated Dùng MAU_HINH (trùng tên với MAU của @/lib/bieu-do, mục 10 soát đợt 1). Giữ tới khi ghép nhánh. */
+export const MAU = MAU_HINH;
+/** @deprecated Dùng TenMauHinh. */
+export type TenMau = TenMauHinh;
 
 /** Phông chữ trong hình: Be Vietnam Pro (có bộ chữ tiếng Việt, tự lưu trữ ở calm.css), rồi phông hệ thống. */
 export const PHONG = '"Be Vietnam Pro", "Segoe UI", Arial, sans-serif';

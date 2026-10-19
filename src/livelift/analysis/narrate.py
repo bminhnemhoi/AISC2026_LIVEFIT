@@ -1,24 +1,31 @@
-"""Tóm tắt 3 câu — máy soạn câu TẤT ĐỊNH cho màn kết quả (AI-LAYER lớp 0, S2).
+"""Tóm tắt 3 câu: máy soạn câu TẤT ĐỊNH cho màn kết quả (AI-LAYER lớp 0, S2).
 
 Ba câu tiếng Việt cho mỗi bản kết quả: (1) KẾT LUẬN đúng trạng thái,
 (2) BẰNG CHỨNG chính, (3) VIỆC NÊN LÀM tiếp. Toàn bộ là template có kiểm
-soát — KHÔNG gọi LLM, không mô hình sinh: mọi con số trong câu đều chép từ
+soát, KHÔNG gọi LLM, không mô hình sinh: mọi con số trong câu đều chép từ
 tham số đầu vào (chính là các trường của ``ExperimentSummary`` /
 ``KetQuaThiNghiem`` / ``BaoCaoTongQuan``), phép tính duy nhất được phép là
 định dạng (làm tròn, %, phút) và hiệu số so với NGƯỠNG THIẾT KẾ đã tiền đăng
-ký (cần thêm mấy phiên/khối). Mỗi câu mang ``refs`` — đường dẫn JSON của
-từng con số — để UI hover ra nguồn (triết lý không-bịa-số ngay trên văn xuôi).
+ký (cần thêm mấy phiên/khối). Mỗi câu mang ``refs`` (đường dẫn JSON của
+từng con số) để UI hover ra nguồn (triết lý không-bịa-số ngay trên văn xuôi).
 
-Điều kiện bắt buộc từ phản biện khoa học (ưu tiên #6): CẢ BA trạng thái —
-DƯƠNG / NULL / CHƯA ĐỦ ĐIỀU KIỆN — được soạn công phu ngang nhau; câu NULL
+Điều kiện bắt buộc từ phản biện khoa học (ưu tiên #6): CẢ BA trạng thái
+DƯƠNG / NULL / CHƯA ĐỦ ĐIỀU KIỆN được soạn công phu ngang nhau; câu NULL
 phải nói rõ "chưa đủ bằng chứng là một kết quả hợp lệ", không được viết như
-một lời xin lỗi. Khóa §7 (``RESULTS_FREEZE_UNTIL``) đứng TRÊN mọi template:
-khi ``khoa=True`` không câu nào được chứa ước lượng/KTC/p — chỉ số vận hành.
+một lời xin lỗi. Khoá §7 (``RESULTS_FREEZE_UNTIL``) đứng TRÊN mọi template:
+khi ``khoa=True`` không câu nào được chứa ước lượng, khoảng tin cậy hay p:
+chỉ số vận hành.
 
 Huy hiệu bằng chứng (spec AI-LAYER N2): ``thi_nghiem`` CHỈ dành cho câu mà
-con số đến từ analyze_outer trên thiết kế ước lượng được — gọi với
+con số đến từ analyze_outer trên thiết kế ước lượng được; gọi với
 ``estimable=False`` thì không một câu nào được mang huy hiệu đó (có test
 chốt chặn trong ``tests/test_narrate.py``).
+
+Ngôn từ (kế hoạch 3.1, mục 3): không dấu gạch dài, không viết tắt (viết đủ
+"khoảng tin cậy 95%"), dùng "kiểm định ngẫu nhiên hoá" thay tên cũ,
+câu ngắn, từ đơn giản. Câu kết luận ĐỔI / GIỮ / ĐO THÊM chép NGUYÊN VĂN khoá
+``ket_luan`` của ``docs/canon/thuat-ngu.yaml`` (``KET_LUAN_CANON``; test so khớp
+với yaml để hai nơi không lệch).
 """
 
 from __future__ import annotations
@@ -31,6 +38,7 @@ __all__ = [
     "BADGE_QUAN_SAT",
     "BADGE_THIEU_DU_LIEU",
     "BADGE_THI_NGHIEM",
+    "KET_LUAN_CANON",
     "Cau",
     "tom_tat_gop",
     "tom_tat_phien",
@@ -38,16 +46,33 @@ __all__ = [
 ]
 
 BADGE_THI_NGHIEM = "thi_nghiem"
-"""Con số trong câu đến từ estimator tiền đăng ký (analyze_outer) — có KTC."""
+"""Con số trong câu đến từ estimator tiền đăng ký (analyze_outer), có khoảng tin cậy."""
 
 BADGE_QUAN_SAT = "quan_sat"
-"""Số đếm/mô tả vận hành — không suy diễn nhân quả."""
+"""Số đếm/mô tả vận hành, không suy diễn nhân quả."""
 
 BADGE_THIEU_DU_LIEU = "thieu_du_lieu"
-"""Tuyên bố thiếu kèm con số cần thêm — không hạ ngưỡng, không nội suy."""
+"""Tuyên bố thiếu kèm con số cần thêm: không hạ ngưỡng, không nội suy."""
 
-#: Đơn vị của biến kết quả chính (tiền đăng ký §4.1) — một chỗ, mọi câu dùng chung.
+#: Đơn vị của biến kết quả chính (tiền đăng ký §4.1): một chỗ, mọi câu dùng chung.
 DON_VI = "lượt nhấp trên mỗi 1.000 giây·người xem"
+
+#: Câu thường của ba kết luận, chép nguyên văn ``ket_luan[].cau`` trong
+#: ``docs/canon/thuat-ngu.yaml`` (test_narrate so khớp với yaml).
+KET_LUAN_CANON: dict[str, str] = {
+    "DOI": (
+        "Cả khoảng tin cậy nằm trên 0: ghim theo lịch của LiveLift tạo thêm lượt nhấp "
+        "so với cách làm thường lệ, nên đổi sang."
+    ),
+    "GIU": (
+        "Cả khoảng tin cậy nằm dưới 0: cách ghim của LiveLift kém hơn cách làm thường lệ, "
+        "nên giữ cách cũ."
+    ),
+    "DO_THEM": (
+        "Khoảng tin cậy còn chứa 0: chưa đủ bằng chứng theo hướng nào, nên chạy thêm "
+        "phiên rồi gộp lại."
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -62,8 +87,9 @@ class Cau:
 def trang_thai_ket_luan(estimable: bool, ci_low: float | None, ci_high: float | None) -> str:
     """Phân loại kết quả vào đúng một trạng thái kết luận.
 
-    ``duong``/``am`` — KTC 95% loại 0 (về phía dương/âm); ``null`` — ước lượng
-    được nhưng KTC còn chứa 0; ``thieu`` — thiết kế không ước lượng được.
+    ``duong``/``am``: khoảng tin cậy 95% loại 0 (về phía dương/âm); ``null``:
+    ước lượng được nhưng khoảng tin cậy còn chứa 0; ``thieu``: thiết kế không
+    ước lượng được.
     Cùng một luật với máy sinh demo vàng (routes/demo._trang_thai_ket_qua).
     """
     if not estimable:
@@ -79,7 +105,7 @@ def _so(x: float, spec: str) -> str:
     """Số thập phân kiểu Việt Nam: dấu PHẨY thập phân (cùng quy ước với giao diện).
 
     "+1.224" đọc theo tiếng Việt là một nghìn hai trăm hai mươi tư, trong khi máy
-    muốn nói một phẩy hai hai bốn — câu tóm tắt từng nói ngược với thẻ số ngay
+    muốn nói một phẩy hai hai bốn; câu tóm tắt từng nói ngược với thẻ số ngay
     phía trên nó (soát 15/10/2026). Mọi số thập phân trong câu đi qua hàm này.
     """
     return format(x, spec).replace(".", ",")
@@ -91,26 +117,27 @@ def _nghin(n: int) -> str:
 
 
 def _p_text(p_value: float | None, n_draws: int | None) -> str:
-    """p-value với SÀN trung thực: kiểm định hoán vị không nói được p nhỏ hơn
-    1/(số lần vẽ + 1) — in sàn thay vì một con số chính-xác-giả (cùng luật với
+    """p-value với SÀN trung thực: kiểm định ngẫu nhiên hoá không nói được p nhỏ
+    hơn 1/(số lần bốc thăm lại + 1); in sàn thay vì một con số chính-xác-giả (cùng luật với
     ``formatP`` phía web)."""
     if p_value is None:
         return "p chưa công bố"
     floor = 1.0 / (n_draws + 1) if n_draws else None
     if floor is not None and p_value <= floor * 1.001:
         return f"p < {_so(floor, '.3f')}"
-    # 3 chữ số như thẻ số ngay phía trên (fmtNum(p, 3)) — câu và thẻ không được lệch nhau.
+    # 3 chữ số như thẻ số ngay phía trên (fmtNum(p, 3)): câu và thẻ không được lệch nhau.
     return f"p = {_so(p_value, '.3f')}"
 
 
 def _ktc(ci_low: float | None, ci_high: float | None) -> str:
-    lo = "—" if ci_low is None else _so(ci_low, "+.3f")
-    hi = "—" if ci_high is None else _so(ci_high, "+.3f")
-    return f"KTC 95% [{lo}; {hi}]"
+    """Khoảng tin cậy viết bằng lời: không viết tắt, không ngoặc vuông."""
+    lo = "chưa có" if ci_low is None else _so(ci_low, "+.3f")
+    hi = "chưa có" if ci_high is None else _so(ci_high, "+.3f")
+    return f"khoảng tin cậy 95% từ {lo} đến {hi}"
 
 
 def _cham(text: str) -> str:
-    """Bảo đảm câu kết thúc bằng dấu chấm — lý do máy chủ có câu có, câu không."""
+    """Bảo đảm câu kết thúc bằng dấu chấm: lý do máy chủ có câu có, câu không."""
     t = text.strip()
     return t if t.endswith((".", "!", "?", "…")) else t + "."
 
@@ -122,14 +149,14 @@ def _cau_ket_luan(
     ci_high: float | None,
     ref_goc: str,
 ) -> Cau:
-    """Câu 1 cho trạng thái ước lượng được (duong/am/null) — dùng chung cho
-    bản gộp và bản từng phiên."""
+    """Câu 1 cho trạng thái ước lượng được (duong/am/null), dùng chung cho
+    bản gộp và bản từng phiên: số đo trước, rồi câu canon ĐỔI / GIỮ / ĐO THÊM."""
     refs = (f"{ref_goc}estimate", f"{ref_goc}ci_low", f"{ref_goc}ci_high")
     if st == "duong":
         return Cau(
             text=(
-                f"Hệ thống tạo thêm {_so(estimate, '+.3f')} {DON_VI} so với khi tắt "
-                f"({_ktc(ci_low, ci_high)} — không chứa 0)."
+                f"Ghim theo lịch tạo thêm {_so(estimate, '+.3f')} {DON_VI} so với khi tắt "
+                f"({_ktc(ci_low, ci_high)}, không chứa 0). {KET_LUAN_CANON['DOI']}"
             ),
             badge=BADGE_THI_NGHIEM,
             refs=refs,
@@ -137,18 +164,17 @@ def _cau_ket_luan(
     if st == "am":
         return Cau(
             text=(
-                f"Hệ thống làm GIẢM {_so(abs(estimate or 0.0), '.3f')} {DON_VI} "
-                f"({_ktc(ci_low, ci_high)} — không chứa 0); tác dụng ngược cũng là "
-                "một phép đo thật, cần xem lại chiến lược ghim trước khi chạy tiếp."
+                f"Ghim theo lịch làm GIẢM {_so(abs(estimate or 0.0), '.3f')} {DON_VI} "
+                f"({_ktc(ci_low, ci_high)}, không chứa 0). {KET_LUAN_CANON['GIU']} "
+                "Kết quả ngược này cũng là một phép đo thật."
             ),
             badge=BADGE_THI_NGHIEM,
             refs=refs,
         )
     return Cau(
         text=(
-            "Chưa đủ bằng chứng để kết luận hệ thống làm tăng hay giảm lượt nhấp "
-            f"(ước lượng {_so(estimate, '+.3f')}, {_ktc(ci_low, ci_high)} còn chứa 0) — "
-            "và đó là một kết quả hợp lệ, không phải thất bại."
+            f"Ước lượng {_so(estimate, '+.3f')} {DON_VI} ({_ktc(ci_low, ci_high)}). "
+            f"{KET_LUAN_CANON['DO_THEM']} Đây vẫn là một kết quả hợp lệ, không phải thất bại."
         ),
         badge=BADGE_THI_NGHIEM,
         refs=refs,
@@ -165,7 +191,7 @@ def _cau_bang_chung(
     n_sessions: int | None = None,
 ) -> Cau:
     pham_vi = f" từ {n_sessions} phiên" if n_sessions is not None else ""
-    ve_lai = f"kiểm định hoán vị {_nghin(n_draws)} lần vẽ lại cho " if n_draws else ""
+    ve_lai = f"kiểm định ngẫu nhiên hoá {_nghin(n_draws)} lần bốc thăm lại cho " if n_draws else ""
     return Cau(
         text=(
             f"Bằng chứng: {n_blocks} khối đo được ({n_on} BẬT / {n_off} TẮT)"
@@ -183,7 +209,7 @@ def _cau_bang_chung(
 
 
 # ---------------------------------------------------------------------------
-# Bản GỘP — /experiment/summary
+# Bản GỘP: /experiment/summary
 # ---------------------------------------------------------------------------
 
 
@@ -212,7 +238,7 @@ def tom_tat_gop(
     """Ba câu cho bản gộp mọi phiên. Luôn trả về ĐÚNG 3 câu.
 
     ``khoa=True`` (tiền đăng ký §7): các tham số suy diễn bị bỏ qua kể cả khi
-    được truyền — không câu nào chứa ước lượng/KTC/p trong cửa sổ khóa.
+    được truyền; không câu nào chứa ước lượng, khoảng tin cậy hay p trong cửa sổ khoá.
     """
     nhap = f", {valid_clicks} lượt nhấp hợp lệ" if valid_clicks is not None else ""
 
@@ -221,14 +247,14 @@ def tom_tat_gop(
             Cau(
                 text=_cham(
                     "Chưa công bố được kết luận: "
-                    + (ly_do_khoa or "ước lượng hiệu ứng đang bị khóa theo tiền đăng ký §7")
+                    + (ly_do_khoa or "ước lượng hiệu ứng đang bị khoá theo tiền đăng ký §7")
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
                 refs=("message",),
             ),
             Cau(
                 text=(
-                    f"Số liệu vận hành tích lũy: {n_sessions} phiên, {n_blocks} khối "
+                    f"Số liệu vận hành đã gom: {n_sessions} phiên, {n_blocks} khối "
                     f"đo được ({n_on} BẬT / {n_off} TẮT){nhap}."
                 ),
                 badge=BADGE_QUAN_SAT,
@@ -236,9 +262,9 @@ def tom_tat_gop(
             ),
             Cau(
                 text=(
-                    "Việc nên làm: tiếp tục chạy phiên theo lịch đã bốc thăm; tới ngày "
-                    f"mở khóa, ước lượng chạy một lần trên toàn bộ {n_blocks} khối tích "
-                    "lũy mà chưa ai nhìn trộm giữa chừng."
+                    "Việc nên làm: tiếp tục chạy phiên theo lịch đã bốc thăm. Tới ngày "
+                    f"mở khoá, máy tính kết quả một lần trên cả {n_blocks} khối đã gom, "
+                    "không ai nhìn trộm giữa chừng."
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
                 refs=("n_blocks",),
@@ -253,14 +279,14 @@ def tom_tat_gop(
             thieu_gi.append(f"thêm {nguong_khoi - n_blocks} khối đo được")
         if thieu_gi:
             viec = (
-                "Việc nên làm: chạy thêm phiên có lịch bốc thăm trước giờ phát — cần "
+                "Việc nên làm: chạy thêm phiên có lịch bốc thăm trước giờ phát. Cần "
                 + " và ".join(thieu_gi)
-                + f" để đạt ngưỡng ước lượng ({nguong_phien} phiên, {nguong_khoi} khối)."
+                + f" để đủ ngưỡng ước lượng ({nguong_phien} phiên, {nguong_khoi} khối)."
             )
         else:
             viec = (
                 "Việc nên làm: chạy thêm phiên có lịch bốc thăm trước giờ phát để mỗi "
-                "nhánh BẬT/TẮT có thêm khối đo được — thiết kế hiện tại chưa kiểm định nổi."
+                "nhánh BẬT/TẮT có thêm khối đo được. Cách chia hiện tại chưa kiểm định được."
             )
         return [
             Cau(
@@ -297,35 +323,38 @@ def tom_tat_gop(
     if st in ("duong", "am"):
         if measured_compliance is not None:
             duoi = (
-                f"; tuân thủ đo được {measured_compliance * 100:.0f}% — giữ kỷ luật thao "
-                "tác khối BẬT để ước lượng không bị pha loãng thêm"
+                f"; tuân thủ đo được {measured_compliance * 100:.0f}%, giữ đúng thao "
+                "tác ở khối BẬT để kết quả không bị pha loãng"
             )
             refs3: tuple[str, ...] = ("measured_compliance",)
         elif measured_cv is not None:
-            duoi = f"; CV đo được {_so(measured_cv, '.2f')} — thêm khối sẽ thu hẹp khoảng tin cậy"
+            duoi = (
+                f"; hệ số biến thiên đo được {_so(measured_cv, '.2f')}, thêm khối sẽ thu hẹp "
+                "khoảng tin cậy"
+            )
             refs3 = ("measured_cv",)
         else:
             duoi = ""
             refs3 = ("n_blocks",)
         cau3 = Cau(
             text=(
-                "Việc nên làm: giữ nguyên thiết kế và cách vận hành ở phiên tới, tích "
-                f"lũy thêm khối để thu hẹp khoảng tin cậy{duoi}."
+                "Việc nên làm: giữ nguyên cách đo và cách chạy ở phiên tới, gom "
+                f"thêm khối để thu hẹp khoảng tin cậy{duoi}."
             ),
             badge=BADGE_QUAN_SAT,
             refs=refs3,
         )
-    else:  # null — câu "cần thêm bao nhiêu" giải từ bảng lực với CV ĐO ĐƯỢC
+    else:  # null: câu "cần thêm bao nhiêu" giải từ bảng lực với CV ĐO ĐƯỢC
         row = next(iter(power_table), None)
         if row is not None and int(row.get("n_sessions", 0)) > n_sessions:
             them = int(row["n_sessions"]) - n_sessions
             cau3 = Cau(
                 text=(
-                    f"Việc nên làm: tích lũy thêm ~{them} phiên (đủ {row['n_sessions']} "
-                    f"phiên, mỗi phiên ~{row['blocks_per_session']} khối đo) để phát hiện "
-                    f"được hiệu ứng cỡ {row['mde_relative'] * 100:.0f}% với CV đo được "
-                    f"{_so(row['cv'], '.2f')}; nếu chuỗi vẫn null, hiệu ứng thật (nếu có) nhỏ hơn "
-                    "ngưỡng đó."
+                    f"Việc nên làm: gom thêm khoảng {them} phiên (đủ {row['n_sessions']} "
+                    f"phiên, mỗi phiên khoảng {row['blocks_per_session']} khối đo) để thấy "
+                    f"được hiệu quả cỡ {row['mde_relative'] * 100:.0f}% với hệ số biến thiên "
+                    f"đo được {_so(row['cv'], '.2f')}. Nếu vẫn chưa rõ, hiệu quả thật (nếu có) "
+                    "nhỏ hơn mức đó."
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
                 refs=(
@@ -339,9 +368,9 @@ def tom_tat_gop(
         else:
             cau3 = Cau(
                 text=(
-                    "Việc nên làm: tiếp tục tích lũy khối cùng thiết kế; nếu chuỗi vẫn "
-                    f"null, hiệu ứng thật (nếu có) nhỏ hơn ngưỡng phát hiện của "
-                    f"{n_blocks} khối hiện tại."
+                    "Việc nên làm: gom thêm khối với cùng cách đo. Nếu vẫn chưa rõ, "
+                    "hiệu quả thật (nếu có) nhỏ hơn mức mà "
+                    f"{n_blocks} khối hiện tại thấy được."
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
                 refs=("n_blocks",),
@@ -350,7 +379,7 @@ def tom_tat_gop(
 
 
 # ---------------------------------------------------------------------------
-# Bản TỪNG PHIÊN — /sessions/{id}/bao-cao
+# Bản TỪNG PHIÊN: /sessions/{id}/bao-cao
 # ---------------------------------------------------------------------------
 
 #: Tiền tố đường dẫn JSON của khối nhân quả trong BaoCaoOut.
@@ -381,12 +410,12 @@ def tom_tat_phien(
     """Ba câu cho báo cáo MỘT phiên. Luôn trả về ĐÚNG 3 câu.
 
     ``loai_phien="quan_sat"``: không có lịch gán ⇒ không câu nào nhân quả và
-    không câu nào mang huy hiệu ``thi_nghiem`` — nói thẳng đó là thiết kế,
+    không câu nào mang huy hiệu ``thi_nghiem``; nói thẳng đó là thiết kế,
     không phải thiếu sót của buổi live.
 
     ``viec_nen_lam`` (kiểm toán 25/09/2026): khi máy chủ biết CHÍNH XÁC vì sao
-    chưa ước lượng được (chỉ số chính THIẾU link đo, KTC không xác định), câu
-    "việc nên làm" mặc định — "kéo dài thời lượng" — là lời khuyên sai; máy chủ
+    chưa ước lượng được (chỉ số chính THIẾU link đo, khoảng tin cậy không xác định), câu
+    "việc nên làm" mặc định ("kéo dài thời lượng") là lời khuyên sai; máy chủ
     truyền câu đúng vào đây. Chỉ dùng ở nhánh chưa ước lượng được và nhánh khoá
     (phiên đã huỷ: "tiếp tục chạy phiên theo lịch" là lời khuyên sai).
     """
@@ -407,9 +436,9 @@ def tom_tat_phien(
         return [
             Cau(
                 text=(
-                    "Phiên quan sát — không có lịch bốc thăm BẬT/TẮT nên không tồn tại "
-                    "số nhân quả nào cho phiên này; hệ thống nói thẳng điều đó thay vì "
-                    "trả một con số không có nguồn."
+                    "Phiên quan sát: không có lịch bốc thăm BẬT/TẮT nên phiên này không "
+                    "có số nhân quả nào. Máy nói thẳng điều đó thay vì đưa ra một con số "
+                    "không có nguồn."
                 ),
                 badge=BADGE_QUAN_SAT,
                 refs=("loai_phien",),
@@ -417,9 +446,9 @@ def tom_tat_phien(
             Cau(text=f"Ghi nhận mô tả: {mo_ta}.", badge=BADGE_QUAN_SAT, refs=tuple(refs_mo_ta)),
             Cau(
                 text=(
-                    "Việc nên làm: muốn đo tác động thật, chạy phiên có bốc thăm BẬT/TẮT "
-                    f"trước giờ phát — cần ít nhất {nguong_khoi} khối đo được để có ước "
-                    "lượng đầu tiên."
+                    "Việc nên làm: muốn đo hiệu quả thật, chạy phiên có bốc thăm BẬT/TẮT "
+                    f"trước giờ phát. Cần ít nhất {nguong_khoi} khối đo được thì mới có "
+                    "ước lượng."
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
                 refs=("loai_phien",),
@@ -431,7 +460,7 @@ def tom_tat_phien(
             Cau(
                 text=_cham(
                     "Chưa công bố được kết luận: "
-                    + (ly_do_khoa or "ước lượng hiệu ứng đang bị khóa theo tiền đăng ký §7")
+                    + (ly_do_khoa or "ước lượng hiệu ứng đang bị khoá theo tiền đăng ký §7")
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
                 refs=(f"{_KQ}ly_do_khoa",),
@@ -449,9 +478,9 @@ def tom_tat_phien(
                     _cham("Việc nên làm: " + viec_nen_lam)
                     if viec_nen_lam
                     else (
-                        "Việc nên làm: tiếp tục chạy phiên theo lịch; khi khóa được mở (phiên "
-                        f"kết thúc, và qua ngày mở khóa §7 nếu có), {n_blocks} khối của phiên "
-                        "này vào ước lượng mà chưa ai nhìn trộm giữa chừng."
+                        "Việc nên làm: tiếp tục chạy phiên theo lịch. Khi mở khoá (phiên "
+                        f"kết thúc, và qua ngày mở khoá §7 nếu có), {n_blocks} khối của phiên "
+                        "này vào ước lượng, không ai nhìn trộm giữa chừng."
                     )
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
@@ -479,9 +508,9 @@ def tom_tat_phien(
                     _cham("Việc nên làm: " + viec_nen_lam)
                     if viec_nen_lam
                     else (
-                        "Việc nên làm: phiên tới kéo dài thời lượng để có ít nhất "
-                        f"{nguong_khoi} khối đo được (mỗi khối là một lượt so sánh BẬT/TẮT); "
-                        "phần mô tả của phiên này vẫn dùng được nguyên vẹn."
+                        "Việc nên làm: phiên tới chạy lâu hơn để có ít nhất "
+                        f"{nguong_khoi} khối đo được (mỗi khối là một lượt so BẬT/TẮT). "
+                        "Phần mô tả của phiên này vẫn dùng được."
                     )
                 ),
                 badge=BADGE_THIEU_DU_LIEU,
@@ -495,9 +524,9 @@ def tom_tat_phien(
     if st in ("duong", "am"):
         cau3 = Cau(
             text=(
-                "Việc nên làm: lặp lại đúng thiết kế này ở phiên tới — một phiên chưa "
-                f"phải chuỗi; {n_blocks} khối hiện có mới đến từ một buổi, kết luận cuối "
-                "cùng phải gộp nhiều phiên cùng thiết kế."
+                "Việc nên làm: lặp lại đúng cách đo này ở phiên tới. Một phiên chưa "
+                f"phải chuỗi: {n_blocks} khối này mới từ một buổi, kết luận cuối "
+                "cùng phải gộp nhiều phiên cùng cách đo."
             ),
             badge=BADGE_QUAN_SAT,
             refs=(f"{_KQ}n_blocks",),
@@ -505,9 +534,9 @@ def tom_tat_phien(
     else:
         cau3 = Cau(
             text=(
-                f"Việc nên làm: một phiên {n_blocks} khối chỉ phát hiện nổi hiệu ứng "
-                "rất lớn — tích lũy thêm phiên cùng thiết kế rồi đọc bản gộp; nếu chuỗi "
-                "vẫn null, hiệu ứng thật (nếu có) nhỏ hơn ngưỡng phát hiện."
+                f"Việc nên làm: một phiên {n_blocks} khối chỉ thấy được hiệu quả "
+                "rất lớn. Gom thêm phiên cùng cách đo rồi đọc kết quả gộp. Nếu vẫn "
+                "chưa rõ, hiệu quả thật (nếu có) nhỏ hơn mức đo được."
             ),
             badge=BADGE_THIEU_DU_LIEU,
             refs=(f"{_KQ}n_blocks",),

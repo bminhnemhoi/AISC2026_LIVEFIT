@@ -1,5 +1,5 @@
 import React from "react";
-import { MAU, PHONG } from "./mau";
+import { MAU_HINH, PHONG } from "./mau";
 import { Goc, socTron, type HinhProps } from "./nen-ve";
 
 /** Mặt đồng xu: BẬT (xanh), TẮT (xám kèm sọc, D-026) hoặc chưa tung (kraft, dấu hỏi). */
@@ -19,27 +19,27 @@ export function MatXu({ mat, nho = false, ...p }: HinhProps & { mat: MatXuKieu; 
   return (
     <Goc viewBox="0 0 64 64" {...p}>
       {/* lề trắng của nhãn dán */}
-      <circle cx="32" cy="32" r="31" fill={MAU.le} stroke={MAU.vienCat} strokeWidth={1.5} />
+      <circle cx="32" cy="32" r="31" fill={MAU_HINH.le} stroke={MAU_HINH.vienCat} strokeWidth={1.5} />
       {mat === "bat" && (
         <g>
-          <circle cx="32" cy="32" r="27" fill={MAU.bat} stroke={MAU.mucNau} strokeWidth={2} />
-          <circle cx="32" cy="32" r="21.5" fill="none" stroke={MAU.batNhat} strokeWidth={1.4} strokeDasharray="2.5 2.5" opacity={0.85} />
+          <circle cx="32" cy="32" r="27" fill={MAU_HINH.bat} stroke={MAU_HINH.mucNau} strokeWidth={2} />
+          <circle cx="32" cy="32" r="21.5" fill="none" stroke={MAU_HINH.batNhat} strokeWidth={1.4} strokeDasharray="2.5 2.5" opacity={0.85} />
           <text x="32" y={32 + coChu * 0.36} textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={coChu} fill="#ffffff">{chu}</text>
         </g>
       )}
       {mat === "tat" && (
         <g>
-          <circle cx="32" cy="32" r="27" fill={MAU.tatNhat} stroke={MAU.mucNau} strokeWidth={2} />
-          <path d={socTron(32, 32, 26, 5.5)} stroke={MAU.tat} strokeWidth={1.6} />
-          <circle cx="32" cy="32" r={nho ? 15 : 17} fill={MAU.le} stroke={MAU.tat} strokeWidth={1.4} />
-          <text x="32" y={32 + (nho ? 20 : 13) * 0.36} textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={nho ? 20 : 13} fill={MAU.muc}>{chu}</text>
+          <circle cx="32" cy="32" r="27" fill={MAU_HINH.tatNhat} stroke={MAU_HINH.mucNau} strokeWidth={2} />
+          <path d={socTron(32, 32, 26, 5.5)} stroke={MAU_HINH.tat} strokeWidth={1.6} />
+          <circle cx="32" cy="32" r={nho ? 15 : 17} fill={MAU_HINH.le} stroke={MAU_HINH.tat} strokeWidth={1.4} />
+          <text x="32" y={32 + (nho ? 20 : 13) * 0.36} textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={nho ? 20 : 13} fill={MAU_HINH.muc}>{chu}</text>
         </g>
       )}
       {mat === "chua" && (
         <g>
-          <circle cx="32" cy="32" r="27" fill={MAU.kraftA} stroke={MAU.mucNau} strokeWidth={2} />
-          <circle cx="32" cy="32" r="21.5" fill="none" stroke={MAU.kraftB} strokeWidth={1.4} />
-          <text x="32" y={32 + coChu * 0.36} textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={coChu} fill={MAU.mucNau}>{chu}</text>
+          <circle cx="32" cy="32" r="27" fill={MAU_HINH.kraftA} stroke={MAU_HINH.mucNau} strokeWidth={2} />
+          <circle cx="32" cy="32" r="21.5" fill="none" stroke={MAU_HINH.kraftB} strokeWidth={1.4} />
+          <text x="32" y={32 + coChu * 0.36} textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={coChu} fill={MAU_HINH.mucNau}>{chu}</text>
         </g>
       )}
     </Goc>

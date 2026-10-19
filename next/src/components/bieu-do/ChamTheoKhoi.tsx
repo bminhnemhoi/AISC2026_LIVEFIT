@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { bangCham, tenNhanh } from "@/lib/bieu-do/bang";
 import { trungBinhNhanh, type KhoiDo } from "@/lib/bieu-do/chuoi";
 import { PHU_DE_BAT, PHU_DE_TAT, TY_LE_NHAP, TY_LE_NHAP_DAY_DU } from "@/lib/bieu-do/ket-luan";
-import { BIEN } from "@/lib/bieu-do/mau";
+import { BIEN, BIEN_VIEN_TAT } from "@/lib/bieu-do/mau";
 import { moTaCham } from "@/lib/bieu-do/mo-ta";
 import { moc, soGon } from "@/lib/bieu-do/so";
 import { thangTuyenTinh, vachTu0 } from "@/lib/bieu-do/thang";
@@ -130,7 +130,7 @@ export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp t�
           </text>
 
           {yBat != null ? <line x1={DEM.trai} x2={DEM.trai + veW} y1={yBat} y2={yBat} stroke={BIEN.bat} strokeWidth={2} data-testid="bd-tb-bat" /> : null}
-          {yTat != null ? <line x1={DEM.trai} x2={DEM.trai + veW} y1={yTat} y2={yTat} stroke={BIEN.tat} strokeWidth={2} strokeDasharray="6 4" data-testid="bd-tb-tat" /> : null}
+          {yTat != null ? <line x1={DEM.trai} x2={DEM.trai + veW} y1={yTat} y2={yTat} stroke={BIEN_VIEN_TAT} strokeWidth={2} strokeDasharray="6 4" data-testid="bd-tb-tat" /> : null}
           {!hep && yNhanBat != null ? (
             <text x={DEM.trai + veW + 8} y={yNhanBat + 4} className="bd-chu-dam">
               {`BẬT trung bình ${soGon(tb.bat as number, 2)}`}
@@ -148,7 +148,7 @@ export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp t�
             ) : (
               <g key={kk.index} data-nhanh="OFF">
                 <circle cx={xI(i)} cy={y(kk.tyLe)} r={7} fill="var(--bd-nen)" />
-                <circle cx={xI(i)} cy={y(kk.tyLe)} r={5.5} fill={`url(#${maSoc})`} stroke={BIEN.tat} strokeWidth={2} />
+                <circle cx={xI(i)} cy={y(kk.tyLe)} r={5.5} fill={`url(#${maSoc})`} stroke={BIEN_VIEN_TAT} strokeWidth={2} />
               </g>
             ),
           )}

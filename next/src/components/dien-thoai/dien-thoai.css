@@ -3,7 +3,7 @@
    Nút 44 px; hai nút của thẻ ghim cùng nhóm nên cao bằng nhau (48 px, nút chính). */
 
 .dt {
-  container-type: inline-size;
+  container: dt / inline-size;
   position: relative;
   width: 100%;
   max-width: 360px;
@@ -81,12 +81,14 @@
 }
 .dt-tren {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 8px;
   width: 100%;
 }
 .dt-live,
 .dt-xem {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -125,22 +127,30 @@
   margin-left: auto;
 }
 
-/* ---------- nhãn công bố người dẫn AI: luôn hiện, chữ 12 px, cao ≥ 22 px ---------- */
-.dt-ai {
-  display: inline-flex;
-  align-items: center;
+/* chip nguồn (NhanNguon tĩnh của nền) đặt trên video: thêm viền mảnh để tách khỏi hình */
+.dt .dt-nhan .nen-chip {
+  box-shadow: 0 0 0 1px rgba(20, 16, 14, 0.35);
+}
+
+/* ---------- nhãn công bố người dẫn AI (NhanCongBo kiểu "noi" của nền): chữ ≥ 12 px, cao ≥ 22 px ---------- */
+.dt .dt-ai {
   min-height: 22px;
   max-width: 100%;
-  margin: 0;
-  padding: 4px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 6px;
-  background: rgba(20, 16, 14, 0.86);
-  color: #ffffff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0.04em;
+  text-wrap: balance;
+}
+
+/* ---------- chỗ người gọi đặt nút riêng (ví dụ "Rút lui") ---------- */
+.dt-them-tren,
+.dt-them-duoi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.dt-them-duoi {
+  justify-content: center;
 }
 
 /* ---------- tim bay lên ---------- */
@@ -334,12 +344,13 @@
 .dt-ghim-nut {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
 }
 .dt-nut {
   min-height: 48px;
-  padding: 0 8px;
+  padding: 0 12px;
+  white-space: nowrap;
   border: 1px solid #2a2522;
   border-radius: 12px;
   background: #ffffff;
@@ -380,7 +391,7 @@
 }
 
 /* khung hẹp (landing, cột bên): chữ nhỏ lại một bậc, nút giữ 44/48 px */
-@container (max-width: 300px) {
+@container dt (max-width: 300px) {
   .dt-noi-ve,
   .dt-bl-dong {
     font-size: 12px;
@@ -397,6 +408,102 @@
   .dt-ghim-ten {
     font-size: 14px;
   }
+}
+
+/* khung rất hẹp (dưới 280 px, cột điện thoại hàng 2 của bàn thí nghiệm): chip nguồn xuống dòng riêng, nhãn công bố
+   ngắt cân hai dòng, hai nút thẻ ghim xếp dọc để "Mua (tiền ảo)" luôn một dòng */
+@container dt (max-width: 259px) {
+  .dt-nhan {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+  .dt .dt-ai {
+    padding: 4px 8px;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+  .dt-ghim {
+    padding: 8px;
+  }
+  .dt-ghim-mon {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .dt-ghim-anh {
+    width: 40px;
+    height: 40px;
+  }
+  .dt-ghim-nut {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dt-cong-mot {
+    left: 50%;
+  }
+}
+
+/* khung tí hon (dưới 240 px, cột điện thoại của bàn thí nghiệm khi màn 1280): chỉ giữ thứ khách thấy chính.
+   Ẩn bình luận, dòng người dẫn đang nói, tim bay và nút phụ "Xem ngay" (nút chính vẫn 48 px, một dòng);
+   nút tròn xếp ngang; chip nhỏ lại một bậc (chữ vẫn 12 px). */
+@container dt (max-width: 219px) {
+  .dt-dau {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    gap: 4px;
+  }
+  .dt-duoi {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+  }
+  .dt-tren {
+    gap: 4px;
+  }
+  .dt-live,
+  .dt-xem,
+  .dt .dt-nhan .nen-chip {
+    min-height: 24px;
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+  .dt-bl,
+  .dt-noi-ve,
+  .dt-tim {
+    display: none;
+  }
+  .dt-ray {
+    grid-auto-flow: column;
+  }
+  .dt-ghim-nut .dt-nut:not(.dt-nut-chinh) {
+    display: none;
+  }
+  .dt-ghim-ten {
+    font-size: 13px;
+  }
+}
+
+/* toàn màn (phòng xem trên điện thoại thật): bỏ viền máy, phủ đầy khung cha, chừa vùng tai thỏ và thanh vuốt */
+.dt.is-toan-man {
+  max-width: none;
+  height: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: #1f1a17;
+  box-shadow: none;
+}
+.dt.is-toan-man .dt-man {
+  border-radius: 0;
+}
+.dt.is-toan-man .dt-dau {
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+}
+.dt.is-toan-man .dt-duoi {
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
 @keyframes dt-nhap {

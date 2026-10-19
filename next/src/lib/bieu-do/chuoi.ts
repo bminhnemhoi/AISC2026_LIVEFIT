@@ -1,5 +1,6 @@
 import { INTENT_DISPLAY } from "@/lib/livelift-api/desk";
 import type { Block, Comment, Tick } from "@/lib/livelift-api/types";
+import type { QuyenToNen } from "./khoa";
 
 /**
  * Biến đổi dữ liệu API thành chuỗi để vẽ. Thuần, không React, không gọi mạng.
@@ -217,8 +218,11 @@ export interface CuaSo {
 }
 
 /**
- * Gộp điểm đo theo cửa sổ `buocS` giây (mặc định 5 phút), cho đường nhỏ của ô số. Mô tả, không dính tới bốc thăm:
- * cửa sổ cắt theo đồng hồ, không theo khối.
+ * Gộp điểm đo theo cửa sổ `buocS` giây (mặc định 5 phút), cho đường nhỏ Người xem và bảng 5 phút.
+ *
+ * CẢNH BÁO khoá §7: cửa sổ cắt theo đồng hồ từ đầu phiên, mà trong phiên 90 phút các khối 1 tới 14 nằm đúng ở
+ * [300k, 300k+300) giây, nên cửa sổ 300 giây TRÙNG KHÍT từng khối. `.tyLeNhap` của hàm này vì vậy là tỷ lệ nhấp của
+ * từng khối: KHÔNG dùng cho đường nhỏ Tỷ lệ nhấp. Dùng `duongNhoTyLeNhap` (trả null khi còn khoá và không được mở sớm).
  */
 export function theoCuaSo(ticks: Tick[], batDauTs: string | null | undefined, buocS = 300): CuaSo[] {
   if (!batDauTs || buocS <= 0) return [];
@@ -238,6 +242,47 @@ export function theoCuaSo(ticks: Tick[], batDauTs: string | null | undefined, bu
       const phoi = g.tong * O_DO_S;
       return { tu: k * buocS, nguoiXem: g.tong / g.n, nhap: g.nhap, tyLeNhap: phoi >= PHOI_TOI_THIEU ? (g.nhap / phoi) * 1000 : null };
     });
+}
+
+export interface TuyChonDuongNho {
+  /** True trừ khi máy chủ nói rõ kết quả đã mở (`DuLieuPhien.khoa`). */
+  khoa: boolean;
+  /** Quyền mở sớm của nguồn (`DuLieuPhien.toNen`). Thiếu thì coi như không được mở sớm. */
+  toNen?: Pick<QuyenToNen, "cho"> | null;
+  /** Cửa sổ trượt (giây), mặc định 120: ngắn hơn một khối và không cắt theo ranh giới khối. */
+  cuaSoS?: number;
+  /** Lấy một điểm mỗi `buocS` giây (mặc định 60) cho đường nhỏ khỏi dày. */
+  buocS?: number;
+}
+
+/**
+ * Chuỗi Tỷ lệ nhấp cho đường nhỏ của ô số, đã qua khoá §7.
+ *
+ * - Trả `null` (không có đường nào) khi `khoa` là true và nguồn không được mở sớm, tức phiên THẬT, CHẠY THỬ hay THỬ
+ *   NỘI BỘ đang live: ô số khi đó chỉ được có đường nhỏ Người xem.
+ * - Ngược lại trả tỷ lệ nhấp trượt trên `cuaSoS` giây gần nhất, mỗi `buocS` giây một điểm. Cửa sổ trượt không trùng
+ *   ranh giới khối (khác `theoCuaSo(…, 300)`), nên đường nhỏ không thành chuỗi tỷ lệ từng khối.
+ * - Không có giờ bắt đầu: mảng rỗng.
+ */
+export function duongNhoTyLeNhap(
+  ticks: Tick[],
+  phien: { start_ts?: string | null } | null | undefined,
+  { khoa, toNen = null, cuaSoS = 120, buocS = 60 }: TuyChonDuongNho,
+): Array<number | null> | null {
+  if (khoa && toNen?.cho !== true) return null;
+  const diem = chuoiThoiGian(ticks, phien?.start_ts, cuaSoS);
+  if (!diem.length) return [];
+  const buoc = Math.max(O_DO_S, buocS);
+  const out: Array<number | null> = [];
+  let moc = -Infinity;
+  for (let i = 0; i < diem.length; i++) {
+    const cuoi = i === diem.length - 1;
+    if (diem[i].t >= moc + buoc - 1e-6 || cuoi) {
+      out.push(diem[i].tyLeNhap);
+      moc = diem[i].t;
+    }
+  }
+  return out;
 }
 
 /** Đỉnh người xem cùng lúc trong các điểm đo. */

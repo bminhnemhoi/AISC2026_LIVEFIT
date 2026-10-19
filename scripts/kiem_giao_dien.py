@@ -23,10 +23,18 @@ Mức:
   ĐỎ   tràn ngang · phần tử bị nghiêng mà chứa nút (hoặc chính nó là nút) · nút chính [data-nut-chinh] thấp
        hơn 48 px · chữ cấm hiển thị (cả document.title, aria-label, title, alt, placeholder) · vùng
        [data-vung-chinh] vượt màn đầu ở khung rộng ≥ 1024 px · tuyến trả lỗi (HTTP ≥ 400, không mở được, lỗi JS
-       chưa bắt, hộp lỗi hoặc huy hiệu lỗi của Next, trang lỗi)
+       chưa bắt, hộp lỗi hoặc huy hiệu lỗi của Next, trang lỗi) · nhãn công bố (D-015): khung
+       [data-nguoi-dan-ai] đang hiện thiếu nhãn con [data-nhan-cong-bo="NGUOI_DAN_AI"] đang hiện, chữ khác canon,
+       chữ dưới 12 px hay bị che; <video>/<iframe>/<img> có src chứa "nguoi-dan-ai" nằm ngoài [data-nguoi-dan-ai]
   VÀNG phần tử tương tác thấp hơn 44 px (liên kết nằm trong câu được miễn; --nghiem nâng thành ĐỎ) · hình
        trang trí nghiêng quá 2° hoặc không có aria-hidden · chưa gắn [data-vung-chinh] · vùng chính vượt màn đầu
-       ở khung điện thoại · dòng chữ tiếng Anh · tương phản chữ dưới 4,5:1 (chữ lớn 3:1) · console.error
+       ở khung điện thoại · dòng chữ tiếng Anh · tương phản chữ dưới 4,5:1 (chữ lớn 3:1) · console.error · chữ
+       cấm chỉ cấm theo ngữ cảnh (A/B) và số cũ (4,5%, 18 khối) có thể trùng số dữ liệu
+  DEV  lỗi console chỉ có ở next dev (CSP chặn thẻ <style> của lớp phủ next-devtools, eval của React Refresh,
+       HMR): in một dòng mỗi tuyến@khung, không tính
+
+Chữ cấm: CHU_CAM_HIEN (trong tệp) cộng mọi `thuat_ngu[].cam`, `tu_cam[].mau`, `chinh_ta.cam` của
+docs/canon/thuat-ngu.yaml, so khớp theo ranh giới từ; miễn trừ ghi ở MIEN_TRU_CHU (mỗi dòng một lý do).
 
 Đầu ra: in tuyến@khung [loại] mô tả; ảnh toàn trang và ảnh khung đầu vào
 AISC26_Vong2/_tam/anh-ui/<nhãn>/ (bỏ bằng --khong-anh) kèm ket-qua.json. Mã thoát: 0 không có ĐỎ, 1 có ĐỎ,
@@ -89,11 +97,138 @@ CHU_CAM_HIEN: tuple[tuple[str, str, int], ...] = (
     ("—", "—", 0),
     ("khúc", r"(?<!\w)khúc(?!\w)", re.IGNORECASE),
     ("khoá lịch", r"(?<!\w)kh(?:oá|óa)\s+lịch(?!\w)", re.IGNORECASE),
+    # kế hoạch bản 3.1 mục 3 (soát đợt 1 mục 5): có cả khi không đọc được canon
+    ("KTC", r"(?<!\w)KTC(?!\w)", 0),
+    ("Thí nghiệm có bốc thăm", r"(?<!\w)thí\s+nghiệm\s+có\s+bốc\s+thăm(?!\w)", re.IGNORECASE),
+    ("Ghim theo gợi ý", r"(?<!\w)ghim\s+theo\s+gợi\s+ý(?!\w)", re.IGNORECASE),
+    ("CHƯA ĐỦ (kết luận)", r"(?<!\w)CHƯA\s+ĐỦ(?!\w)(?!\s+KHỐI(?!\w))", 0),
 )
-"""Chữ không được lên màn (kế hoạch bản 3.1 mục 3; canon thuat-ngu.yaml). Thêm mẫu bằng --them-chu-cam."""
+"""Chữ không được lên màn (kế hoạch bản 3.1 mục 3). Cộng thêm CHU_CAM_CANON đọc từ thuat-ngu.yaml và
+--them-chu-cam. 'KTC': trên giao diện viết đủ 'khoảng tin cậy' (canon thuat_ngu[khoảng tin cậy].ghi_chu).
+'CHƯA ĐỦ' viết hoa đứng một mình là nhãn kết luận cũ (nay là ĐO THÊM); 'CHƯA ĐỦ KHỐI' là tên phiên mẫu,
+chữ thường 'chưa đủ bằng chứng' là câu canon của ĐO THÊM: cả hai không bắt."""
 
-CUM_LANH_KHUC = re.compile(r"ca\s+khúc|khúc\s+(?:mắc|khuỷu|xạ|ruột|côn\s+cầu)", re.IGNORECASE)
-"""'khúc' mang nghĩa khác (không phải tên khối)."""
+CANON_THUAT_NGU = GOC / "docs" / "canon" / "thuat-ngu.yaml"
+CHU_NHAN_AI_MAC_DINH = "NGƯỜI DẪN AI · GIỌNG TỔNG HỢP"
+"""Chữ nhãn công bố NGUOI_DAN_AI khi không đọc được canon (canon nhan_cong_bo là nguồn)."""
+CO_CHU_NHAN_AI_TOI_THIEU = 12.0
+
+
+@dataclass(frozen=True)
+class LuatChu:
+    """Một mẫu chữ cấm trên màn."""
+
+    nhan: str
+    mau: str
+    co: int = re.IGNORECASE
+    muc: str = DO
+    chi_trong_ngoac: bool = False
+    """Canon cho phép cụm đứng trong ngoặc (burn-in, hiệu ứng lưu)."""
+    co_so: bool = False
+    """Mẫu số cũ (4,5%, 0,271, 18 khối): trên màn có thể trùng số dữ liệu chạy, nên chỉ VÀNG."""
+
+
+MIEN_TRU_CHU: tuple[tuple[str, str, str], ...] = (
+    # (chữ khớp viết thường, cụm lành bao quanh, lý do)
+    (
+        "lát",
+        r"lát\s+nữa|(?:một|chốc|giây)\s+lát|lát\s+(?:sau|cắt)",
+        "nghĩa thời gian hoặc miếng cắt, không phải tên khối",
+    ),
+    (
+        "khúc",
+        r"ca\s+khúc|khúc\s+(?:mắc|khuỷu|xạ|ruột|côn\s+cầu)",
+        "nghĩa khác (bài hát, vướng mắc...), không phải tên khối",
+    ),
+    ("hóa", r"thanh\s+hóa", "địa danh giữ cách viết chính thức"),
+)
+"""Miễn trừ của chữ cấm (mỗi dòng một lý do). Ngoài bảng này còn ba luật miễn:
+  * cụm nằm trong URL (LIVEFIT trong đường dẫn kho mã GitHub);
+  * cụm canon ghi 'chỉ được đứng trong ngoặc' (burn-in, hiệu ứng lưu) nằm trong ngoặc đơn;
+  * 'CHƯA ĐỦ KHỐI' (tên phiên mẫu) và chữ thường 'chưa đủ ...' (mẫu CHƯA ĐỦ phân biệt hoa thường).
+Hạ xuống VÀNG (không miễn): cụm canon ghi 'chỉ dùng khi' (A/B), và mẫu số cũ của tu_cam (4,5%, 0,271,
+18 khối) vì số dữ liệu chạy có thể trùng; kiem_dong_bo.py bắt các số này trong chữ tĩnh ở mức LỖI."""
+
+URL_RE = re.compile(r"(?:https?://|www\.|github\.com/)\S+", re.IGNORECASE)
+
+
+def mau_cum(cum: str) -> str:
+    """Biểu thức cho một cụm nguyên văn: đúng ranh giới từ (chữ có dấu tiếng Việt là chữ của từ), khoảng trắng co
+    giãn (giống kiem_dong_bo.mau_cum)."""
+    cum = unicodedata.normalize("NFC", cum)
+    than = r"\s+".join(re.escape(t) for t in cum.split())
+    dau = r"(?<!\w)" if re.match(r"\w", cum) else ""
+    cuoi = r"(?!\w)" if re.search(r"\w$", cum) else ""
+    return dau + than + cuoi
+
+
+def _bao_ranh_gioi(mau: str) -> str:
+    """Mẫu thô của tu_cam ('4,5%', '18 khối', 'đột phá|toàn diện'): thêm ranh giới từ ở đầu (và ở cuối
+    khi mẫu kết thúc bằng chữ/số) để '14,5%' hay '118 khối' không khớp."""
+    if mau.strip() == "—":
+        return mau
+    dau = r"(?<!\w)" if re.match(r"[\w(]", mau) else ""
+    cuoi = r"(?!\w)" if re.search(r"[\w)]$", mau) else ""
+    return f"{dau}(?:{mau}){cuoi}"
+
+
+def nap_chu_cam_canon(p: Path | None = None) -> tuple[tuple[LuatChu, ...], str, str | None]:
+    """Đọc thuat-ngu.yaml: (luật chữ cấm, chữ nhãn NGUOI_DAN_AI, cảnh báo nếu không đọc được).
+
+    Luật: mọi `thuat_ngu[].cam`, `tu_cam[].mau`, `chinh_ta.cam`. Không đọc được canon thì trả () và chữ
+    nhãn mặc định, kèm cảnh báo (CHU_CAM_HIEN vẫn chạy)."""
+    p = p or CANON_THUAT_NGU
+    try:
+        import yaml  # noqa: PLC0415 - chỉ cần khi có canon
+
+        data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    except (ImportError, OSError) as e:
+        return (), CHU_NHAN_AI_MAC_DINH, f"không đọc được canon {p}: {e}"
+    except Exception as e:  # noqa: BLE001 - yaml.YAMLError và dữ liệu sai kiểu
+        return (), CHU_NHAN_AI_MAC_DINH, f"canon {p} hỏng: {e}"
+    luat: list[LuatChu] = []
+    for t in data.get("thuat_ngu") or []:
+        ghi_chu = str(t.get("ghi_chu") or "")
+        for c in t.get("cam") or []:
+            luat.append(
+                LuatChu(
+                    nhan=f"canon: {c}",
+                    mau=mau_cum(str(c)),
+                    muc=VANG if "chỉ dùng khi" in ghi_chu and str(c) in ghi_chu else DO,
+                    chi_trong_ngoac="chỉ được đứng trong ngoặc" in ghi_chu and str(c) in ghi_chu,
+                )
+            )
+    for t in data.get("tu_cam") or []:
+        mau = unicodedata.normalize("NFC", str(t.get("mau") or ""))
+        if not mau.strip():
+            continue
+        luat.append(
+            LuatChu(
+                nhan=f"canon tu_cam: {mau}",
+                mau=_bao_ranh_gioi(mau),
+                co_so=bool(re.search(r"\d", re.sub(r"\{[\d,]*\}", "", mau))),
+            )
+        )
+    ct = data.get("chinh_ta") or {}
+    for sai, dung in zip(ct.get("cam") or [], ct.get("dung") or [], strict=False):
+        luat.append(LuatChu(nhan=f"chính tả: {sai} → {dung}", mau=mau_cum(str(sai))))
+    hop_le = []
+    for lu in luat:
+        try:
+            re.compile(lu.mau, lu.co)
+        except re.error:
+            continue
+        hop_le.append(lu)
+    chu_ai = CHU_NHAN_AI_MAC_DINH
+    for n in data.get("nhan_cong_bo") or []:
+        if n.get("id") == "NGUOI_DAN_AI" and n.get("hien_thi"):
+            chu_ai = unicodedata.normalize("NFC", str(n["hien_thi"]))
+    return tuple(hop_le), chu_ai, None
+
+
+CHU_CAM_CANON, CHU_NHAN_AI, CANH_BAO_CANON = nap_chu_cam_canon()
+"""Nạp một lần lúc nhập mô-đun; cảnh báo (nếu có) được in ở đầu lượt chạy."""
+
 
 TRANG_LOI_RE = re.compile(
     r"Operational Workspace Degraded|Application error|Unhandled Runtime Error|This page could not be found"
@@ -218,18 +353,63 @@ def _goc_ma_tran(a: float, b: float, c: float, d: float) -> float:
     return max(_goc_chuan(xoay), abs(xo_lech))
 
 
+def tat_ca_luat_chu(them: tuple[tuple[str, str, int], ...] = ()) -> tuple[LuatChu, ...]:
+    """CHU_CAM_HIEN, rồi luật canon, rồi --them-chu-cam (thứ tự quyết định nhãn khi hai luật trùng chỗ)."""
+    return (
+        tuple(LuatChu(n, m, c) for n, m, c in CHU_CAM_HIEN)
+        + CHU_CAM_CANON
+        + tuple(LuatChu(n, m, c) for n, m, c in them)
+    )
+
+
+def tim_chu_cam_muc(
+    chu: str, them: tuple[tuple[str, str, int], ...] = (), luat: tuple[LuatChu, ...] | None = None
+) -> list[tuple[str, str, str, str]]:
+    """(mức, nhãn luật, chữ khớp, ngữ cảnh ngắn) cho mỗi chỗ chữ cấm. Hai luật khớp chồng lên nhau ('khúc' và
+    'khúc 5 phút', '—' của mã và của canon) chỉ báo một lần, theo luật đứng trước."""
+    chu = unicodedata.normalize("NFC", chu or "")
+    ra: list[tuple[str, str, str, str]] = []
+    da: set[tuple[int, int]] = set()
+    for lu in luat if luat is not None else tat_ca_luat_chu(them):
+        try:
+            mau = re.compile(unicodedata.normalize("NFC", lu.mau), lu.co)
+        except re.error:
+            continue
+        for m in mau.finditer(chu):
+            s, e = m.start(), m.end()
+            if e <= s or any(s < e2 and s2 < e for s2, e2 in da) or _mien(lu, chu, s, e, m.group()):
+                continue
+            da.add((s, e))
+            muc = lu.muc
+            if lu.co_so:
+                muc = VANG
+            ra.append((muc, lu.nhan, m.group(), _ngu_canh(chu, s, e)))
+    return ra
+
+
 def tim_chu_cam(
     chu: str, them: tuple[tuple[str, str, int], ...] = ()
 ) -> list[tuple[str, str, str]]:
-    """(nhãn luật, chữ khớp, ngữ cảnh ngắn) cho mỗi chỗ chữ cấm trong chữ hiển thị."""
-    chu = unicodedata.normalize("NFC", chu or "")
-    ra: list[tuple[str, str, str]] = []
-    for nhan, mau, co in CHU_CAM_HIEN + them:
-        for m in re.finditer(unicodedata.normalize("NFC", mau), chu, co):
-            if nhan == "khúc" and _trong(CUM_LANH_KHUC, chu, m.start(), m.end()):
-                continue
-            ra.append((nhan, m.group(), _ngu_canh(chu, m.start(), m.end())))
-    return ra
+    """(nhãn luật, chữ khớp, ngữ cảnh ngắn) cho mỗi chỗ chữ cấm trong chữ hiển thị (mọi mức)."""
+    return [(n, k, ng) for _, n, k, ng in tim_chu_cam_muc(chu, them)]
+
+
+def _mien(lu: LuatChu, chu: str, s: int, e: int, khop: str) -> bool:
+    """Chỗ khớp thuộc MIEN_TRU_CHU, nằm trong URL, hoặc trong ngoặc khi canon cho phép."""
+    k = khop.lower()
+    for tu, lanh, _ly_do in MIEN_TRU_CHU:
+        if k == tu and _trong(re.compile(lanh, re.IGNORECASE), chu, s, e):
+            return True
+    if any(m.start() <= s and e <= m.end() for m in URL_RE.finditer(chu)):
+        return True
+    return lu.chi_trong_ngoac and _trong_ngoac(chu, s, e)
+
+
+def _trong_ngoac(chu: str, s: int, e: int) -> bool:
+    dau = chu.rfind("\n", 0, s) + 1
+    cuoi = chu.find("\n", e)
+    truoc, sau = chu[dau:s], chu[e : cuoi if cuoi >= 0 else len(chu)]
+    return truoc.count("(") > truoc.count(")") and ")" in sau
 
 
 def _trong(re_lanh: re.Pattern[str], chu: str, s: int, e: int) -> bool:
@@ -464,12 +644,13 @@ def phan_tich(
         (f"{t['thuoc_tinh']} của {t['mo_ta']}", t["chu"]) for t in do.get("thuoc_tinh") or []
     ]
     da: set[tuple[str, str]] = set()
+    luat = tat_ca_luat_chu(them_chu_cam)
     for noi, chu in nguon_chu:
-        for nhan, khop, ngu in tim_chu_cam(chu, them_chu_cam):
+        for muc, nhan, khop, ngu in tim_chu_cam_muc(chu, luat=luat):
             if (nhan, ngu) in da:
                 continue
             da.add((nhan, ngu))
-            bao(DO, "chu-cam", f"«{khop}» ({nhan}) trong {noi}: …{ngu}…")
+            bao(muc, "chu-cam", f"«{khop}» ({nhan}) trong {noi}: …{ngu}…")
     for dong in dict.fromkeys(tim_tieng_anh(do.get("chu") or "")):
         bao(VANG, "tieng-anh", dong)
 
@@ -499,6 +680,19 @@ def phan_tich(
     for mo_ta, n in kem.most_common(15):
         bao(VANG, "tuong-phan", mo_ta + (f" (×{n})" if n > 1 else ""))
 
+    # nhãn công bố NGƯỜI DẪN AI (D-015): mọi khung người dẫn AI đang hiện phải mang nhãn hiện, đúng chữ, đủ cỡ
+    for k in do.get("nguoi_dan_ai") or []:
+        for loi in kiem_nhan_ai(k):
+            bao(DO, "nhan-ai", f"{k.get('mo_ta', '[data-nguoi-dan-ai]')}: {loi}")
+    for v in do.get("media_ai") or []:
+        if not v.get("trong_khung"):
+            bao(
+                DO,
+                "nhan-ai",
+                f"{v.get('mo_ta')} phát video người dẫn AI ({v.get('src', '')[:60]}) "
+                "nhưng không nằm trong [data-nguoi-dan-ai] (không có nhãn công bố)",
+            )
+
     # lỗi trang
     if do.get("next_loi"):
         bao(DO, "loi-next", str(do["next_loi"]))
@@ -506,6 +700,116 @@ def phan_tich(
     if m:
         bao(DO, "trang-loi", f"trang hiện «{m.group()}»")
     return ra
+
+
+def kiem_nhan_ai(k: dict[str, Any], chu_dung: str | None = None) -> list[str]:
+    """Lỗi của một khung [data-nguoi-dan-ai] đang hiện (số đo của DO_JS); rỗng là đạt.
+
+    Đạt khi: có ít nhất một nhãn con [data-nhan-cong-bo="NGUOI_DAN_AI"] đang hiện, chữ của nhãn chứa đúng chữ
+    canon, chữ nhỏ nhất trong nhãn ≥ 12 px, và tâm nhãn không bị phần tử khác che."""
+    chu_dung = unicodedata.normalize("NFC", chu_dung or CHU_NHAN_AI)
+    ds = k.get("nhan") or []
+    if not ds:
+        return ['không có nhãn con [data-nhan-cong-bo="NGUOI_DAN_AI"]']
+    hien = [n for n in ds if n.get("hien")]
+    if not hien:
+        return [f"nhãn NGƯỜI DẪN AI bị ẩn ({ds[0].get('ly_do_an') or 'không hiện'})"]
+    loi_tot_nhat: list[str] | None = None
+    for n in hien:
+        loi: list[str] = []
+        chu = re.sub(r"\s+", " ", unicodedata.normalize("NFC", n.get("chu") or "")).strip()
+        if chu_dung not in chu:
+            loi.append(f"chữ nhãn «{chu[:60]}» khác «{chu_dung}»")
+        co = n.get("co")
+        if co is None or float(co) < CO_CHU_NHAN_AI_TOI_THIEU:
+            loi.append(f"chữ nhãn {float(co or 0):.1f} px < {CO_CHU_NHAN_AI_TOI_THIEU:.0f} px")
+        if n.get("che"):
+            loi.append(f"nhãn bị che bởi {n['che']}")
+        if not loi:
+            return []
+        if loi_tot_nhat is None or len(loi) < len(loi_tot_nhat):
+            loi_tot_nhat = loi
+    return loi_tot_nhat or []
+
+
+DEV_CONG_CU_RE = re.compile(
+    r"next[-_]devtools|node_modules_next_dist|/node_modules/next/|react[-_]refresh|webpack[-_]hmr|"
+    r"turbopack[-_]hmr|hmr[-_]client|__nextjs",
+    re.IGNORECASE,
+)
+"""URL mã của công cụ chỉ chạy ở next dev (lớp phủ lỗi, nút N, React Refresh, HMR)."""
+CSP_RE = re.compile(
+    r"violates the following Content Security Policy|Refused to (?:apply|evaluate|execute|load)|unsafe-eval",
+    re.IGNORECASE,
+)
+HMR_RE = re.compile(
+    r"\[HMR\]|\[Fast Refresh\]|webpack-hmr|turbopack-hmr|_next/webpack-hmr", re.IGNORECASE
+)
+CHI_DEV = "DEV"
+"""Mức của lỗi console chỉ có ở next dev: in riêng, không tính ĐỎ hay VÀNG."""
+
+
+def la_loi_chi_o_dev(chu: str, url: str | None, dev: bool) -> bool:
+    """Lỗi console chỉ có ở next dev (soát đợt 1 mục 6). Chỉ khi trang chạy next dev (`dev`), và:
+    lỗi CSP (style nội tuyến, eval) phát ra từ mã của chính Next/React dev (lớp phủ next-devtools chèn thẻ
+    <style>, React Refresh dùng eval), hoặc lỗi kết nối HMR. Lỗi CSP từ mã của ứng dụng vẫn tính."""
+    if not dev:
+        return False
+    chu = chu or ""
+    if HMR_RE.search(chu):
+        return True
+    return bool(CSP_RE.search(chu) and DEV_CONG_CU_RE.search(url or ""))
+
+
+def phan_loai_console(
+    loi_js: list[str],
+    console: list[tuple[str, str]],
+    tuyen: str,
+    khung: tuple[int, int],
+    dev: bool,
+) -> list[Phat]:
+    """Lỗi JS chưa bắt (ĐỎ) và console.error (VÀNG); phần chỉ có ở next dev gom thành một dòng mức DEV.
+
+    `console`: (chữ, url nguồn). Lỗi JS chưa bắt khớp HMR/CSP-eval ở dev cũng gom vào DEV."""
+    kh = ten_khung(khung)
+    ra: list[Phat] = []
+    dev_dem: Counter[str] = Counter()
+    for e in dict.fromkeys(loi_js):
+        if dev and (HMR_RE.search(e) or re.search(r"unsafe-eval|EvalError", e)):
+            dev_dem["lỗi JS eval/HMR của next dev"] += 1
+            continue
+        ra.append(Phat(DO, "loi-js", tuyen, kh, e))
+    nhom: Counter[str] = Counter()
+    for chu, url in console:
+        dong = (chu or "").splitlines()[0] if chu else ""
+        if la_loi_chi_o_dev(dong, url, dev):
+            dev_dem[_rut_gon_dev(dong)] += 1
+            continue
+        khoa = dong[:90]
+        if "Failed to load resource" in dong and url:
+            khoa = f"{dong[:90]} [{_duong(url)}]"
+        nhom[khoa] += 1
+    for c, n in nhom.most_common(5):
+        ra.append(Phat(VANG, "console", tuyen, kh, c + (f" (×{n})" if n > 1 else "")))
+    if dev_dem:
+        mo_ta = " · ".join(f"{k} ×{n}" for k, n in dev_dem.most_common(3))
+        ra.append(Phat(CHI_DEV, "console-dev", tuyen, kh, f"chỉ ở dev (không tính): {mo_ta}"))
+    return ra
+
+
+def _rut_gon_dev(dong: str) -> str:
+    if "inline style" in dong:
+        return "CSP chặn thẻ <style> của lớp phủ Next dev"
+    if "eval" in dong.lower():
+        return "CSP chặn eval của React Refresh/Next dev"
+    if HMR_RE.search(dong):
+        return "kết nối HMR của Next dev"
+    return dong[:60]
+
+
+def _duong(url: str) -> str:
+    m = re.match(r"^[a-z]+://[^/]+(/[^?#]*)", url or "", re.IGNORECASE)
+    return (m.group(1) if m else url or "")[:80]
 
 
 def ma_thoat(phat: list[Phat]) -> int:
@@ -527,7 +831,12 @@ def bang_dem(phat: list[Phat]) -> list[str]:
             )
         )
     n_do = sum(1 for p in phat if p.muc == DO)
-    ra.append(f"kiem_giao_dien: {n_do} đỏ · {len(phat) - n_do} vàng")
+    n_vang = sum(1 for p in phat if p.muc == VANG)
+    n_dev = sum(1 for p in phat if p.muc == CHI_DEV)
+    ra.append(
+        f"kiem_giao_dien: {n_do} đỏ · {n_vang} vàng"
+        + (f" · {n_dev} tuyến@khung có lỗi chỉ ở dev (không tính)" if n_dev else "")
+    )
     return ra
 
 
@@ -663,6 +972,70 @@ DO_JS = r"""
     if (chuMau.length >= 800) break;
   }
 
+  // nhãn công bố NGƯỜI DẪN AI (D-015): khung [data-nguoi-dan-ai] đang hiện → nhãn con hiện, chữ, cỡ, có bị che
+  const anVi = (el) => {
+    if (!el.isConnected) return 'không gắn vào trang';
+    const r = el.getBoundingClientRect();
+    if (r.width <= 2 || r.height <= 2) return 'kích thước 0';
+    let op = 1;
+    for (let q = el; q && q.nodeType === 1; q = q.parentElement) {
+      const cs = getComputedStyle(q);
+      if (cs.display === 'none') return 'display: none';
+      op *= parseFloat(cs.opacity);
+      if (cs.clipPath && cs.clipPath !== 'none' && /inset\(\s*50%|circle\(\s*0/.test(cs.clipPath)) return 'clip-path che hết';
+    }
+    const cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || cs.visibility === 'collapse') return 'visibility: hidden';
+    if (op < 0.35) return 'gần trong suốt (opacity ' + op.toFixed(2) + ')';
+    if (cs.clip && cs.clip.indexOf('rect(0') === 0) return 'clip che hết';
+    return null;
+  };
+  const coChuNhoNhat = (el) => {
+    let nho = null;
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      if (!n.textContent.trim() || !n.parentElement) continue;
+      const v = parseFloat(getComputedStyle(n.parentElement).fontSize);
+      if (nho === null || v < nho) nho = v;
+    }
+    return nho;
+  };
+  const sx0 = window.scrollX, sy0 = window.scrollY;
+  const nguoiDanAI = [];
+  for (const k of document.querySelectorAll('[data-nguoi-dan-ai]')) {
+    if (!hien(k) || anVi(k)) continue;
+    const ds = [];
+    for (const n of k.querySelectorAll('[data-nhan-cong-bo="NGUOI_DAN_AI"]')) {
+      const lyDo = anVi(n);
+      const muc = { hien: !lyDo, ly_do_an: lyDo, chu: (n.innerText || n.textContent || ''), co: coChuNhoNhat(n), che: null };
+      if (!lyDo) {
+        let r = n.getBoundingClientRect();
+        if (r.top < 0 || r.bottom > window.innerHeight || r.left < 0 || r.right > window.innerWidth) {
+          n.scrollIntoView({ block: 'center', inline: 'center' });
+          r = n.getBoundingClientRect();
+        }
+        const pe = n.style.getPropertyValue('pointer-events'), peUuTien = n.style.getPropertyPriority('pointer-events');
+        n.style.setProperty('pointer-events', 'auto', 'important');
+        const tren = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        if (pe) n.style.setProperty('pointer-events', pe, peUuTien); else n.style.removeProperty('pointer-events');
+        if (tren && tren !== n && !n.contains(tren)) muc.che = moTa(tren);
+      }
+      ds.push(muc);
+    }
+    nguoiDanAI.push({ mo_ta: moTa(k), nhan: ds });
+  }
+  window.scrollTo(sx0, sy0);
+  const mediaAI = [];
+  for (const el of document.querySelectorAll('video, iframe, video source, img')) {
+    const nguon = [el.getAttribute('src') || '', el.currentSrc || '', el.getAttribute('poster') || ''].join(' ');
+    if (!/nguoi-dan-ai/i.test(nguon)) continue;
+    const media = el.tagName === 'SOURCE' ? el.closest('video') || el : el;
+    mediaAI.push({ mo_ta: moTa(media), src: (el.getAttribute('src') || el.currentSrc || '').slice(0, 120),
+                   trong_khung: !!media.closest('[data-nguoi-dan-ai]') });
+  }
+  const dev = !!document.querySelector('nextjs-portal') ||
+              [...document.scripts].some((x) => /next[-_]devtools|react[-_]refresh/i.test(x.src || ''));
+
   // lỗi của Next (lớp phủ khi chạy dev)
   let nextLoi = null;
   for (const el of document.querySelectorAll('nextjs-portal')) {
@@ -674,7 +1047,7 @@ DO_JS = r"""
 
   return { tran: tran, tuong_tac: tuongTac, nghieng: nghieng, vung_chinh: vung, thuoc_tinh: thuocTinh,
            chu_mau: chuMau, chu: document.body.innerText, tieu_de: document.title, next_loi: nextLoi,
-           cao_man: vh, rong_man: cw };
+           cao_man: vh, rong_man: cw, nguoi_dan_ai: nguoiDanAI, media_ai: mediaAI, dev: dev };
 }
 """
 
@@ -692,6 +1065,15 @@ def _ma_http(url: str, timeout: float = 8.0) -> int:
             return r.status
     except urllib.error.HTTPError as e:
         return e.code
+
+
+def _url_nguon(m: Any) -> str:
+    """URL mã phát ra dòng console (Playwright ConsoleMessage.location)."""
+    try:
+        loc = m.location
+        return str((loc or {}).get("url") or "")
+    except Exception:  # noqa: BLE001 - bản Playwright cũ
+        return ""
 
 
 def thu_muc_anh_mac_dinh() -> Path:
@@ -746,10 +1128,14 @@ def kiem_mot(
     )
     trang = ctx.new_page()
     loi_js: list[str] = []
-    console: list[str] = []
-    trang.on("pageerror", lambda e: loi_js.append(str(e).splitlines()[0][:200]))
+    console: list[tuple[str, str]] = []
+    trang.on("pageerror", lambda e: loi_js.append((str(e).splitlines() or [""])[0][:200]))
     trang.on(
-        "console", lambda m: m.type == "error" and console.append(m.text.splitlines()[0][:160])
+        "console",
+        lambda m: (
+            m.type == "error"
+            and console.append(((m.text.splitlines() or [""])[0][:200], _url_nguon(m)))
+        ),
     )
     phat: list[Phat] = []
     try:
@@ -769,11 +1155,7 @@ def kiem_mot(
         trang.wait_for_timeout(cho_ms)
         do = trang.evaluate(DO_JS)
         phat += phan_tich(do, tuyen, khung, nghiem=nghiem, them_chu_cam=them_chu_cam)
-        for e in dict.fromkeys(loi_js):
-            phat.append(Phat(DO, "loi-js", tuyen, kh, e))
-        nhom_console = Counter(c[:70] for c in console)
-        for c, n in nhom_console.most_common(5):
-            phat.append(Phat(VANG, "console", tuyen, kh, c + (f" (×{n})" if n > 1 else "")))
+        phat += phan_loai_console(loi_js, console, tuyen, khung, dev=bool(do.get("dev")))
         if ra is not None:
             ra.mkdir(parents=True, exist_ok=True)
             goc_ten = f"{ten_tep(tuyen)}__{kh}"
@@ -851,6 +1233,8 @@ def main(argv: list[str] | None = None) -> int:
     except (urllib.error.URLError, TimeoutError) as e:
         print(f"kiem_giao_dien: LỖI CẤU HÌNH: không tới được {a.base}: {e}", file=sys.stderr)
         return 2
+    if CANH_BAO_CANON:
+        canh_bao.append(CANH_BAO_CANON + " (chỉ kiểm CHU_CAM_HIEN)")
     for c in canh_bao:
         print(f"CẢNH BÁO cấu hình: {c}")
 

@@ -291,18 +291,3 @@ export const IconBatTieng = (p: P) => (
     <path d="M13 7.5a3.5 3.5 0 0 1 0 5M15.25 5.25a6.6 6.6 0 0 1 0 9.5" />
   </Svg>
 );
-
-/**
- * Sáu mục điều hướng của giao diện 2.0 (mục 4 kế hoạch 3.1). Chữ là thuật ngữ canon; đường dẫn theo bảng màn hình.
- * Khung chung (U1) quyết định mục nào hiện; ở đây chỉ gắn chữ với biểu tượng cho nhất quán.
- */
-export const MUC_DIEU_HUONG = [
-  { id: "gioi-thieu", nhan: "Giới thiệu", href: "/gioi-thieu", Icon: IconGioiThieu },
-  { id: "tong-quan", nhan: "Tổng quan", href: "/tong-quan", Icon: IconTongQuan },
-  { id: "phien", nhan: "Phiên live", href: "/phien", Icon: IconPhienLive },
-  { id: "phat-lai", nhan: "Phát lại", href: "/phat-lai", Icon: IconPhatLai },
-  { id: "minh-hoa", nhan: "Live Desk minh hoạ", href: "/minh-hoa", Icon: IconMinhHoa },
-  { id: "quan-tri", nhan: "Quản trị", href: "/quan-tri", Icon: IconQuanTri },
-] as const satisfies readonly { id: string; nhan: string; href: string; Icon: (p: P) => React.ReactElement }[];
-
-export type MucDieuHuong = (typeof MUC_DIEU_HUONG)[number];

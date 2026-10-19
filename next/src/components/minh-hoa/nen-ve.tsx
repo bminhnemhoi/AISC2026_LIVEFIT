@@ -1,5 +1,5 @@
 import React from "react";
-import { MAU } from "./mau";
+import { MAU_HINH } from "./mau";
 
 /**
  * Viên gạch dựng mọi hình vẽ tay của U3: khung SVG gốc, nhãn dán cắt khuôn, nét mực nâu và sọc chéo cho khối TẮT.
@@ -23,7 +23,7 @@ export function Goc({ viewBox, title, className, children, ...rest }: HinhProps 
 }
 
 /** Nét mực nâu cho chi tiết bên trong nhãn dán. */
-export const NET = { stroke: MAU.mucNau, strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" } as const;
+export const NET = { stroke: MAU_HINH.mucNau, strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" } as const;
 /** Nét mảnh hơn. */
 export const NET_MANH = { ...NET, strokeWidth: 1.5 } as const;
 
@@ -44,12 +44,12 @@ export function chuNhat(x: number, y: number, w: number, h: number, r = 0): stri
  * Cùng kiểu với StartArt, chỉ bỏ gradient để hình xuất tĩnh được.
  */
 export function NhanDan({ d, than = "giay", children }: { d: string; than?: "giay" | "kraft" | string; children?: React.ReactNode }) {
-  const fill = than === "giay" ? MAU.giay : than === "kraft" ? MAU.kraftA : than;
+  const fill = than === "giay" ? MAU_HINH.giay : than === "kraft" ? MAU_HINH.kraftA : than;
   return (
     <g>
-      <path d={d} fill="none" stroke={MAU.vienCat} strokeWidth={15} strokeLinejoin="round" />
-      <path d={d} fill={MAU.le} stroke={MAU.le} strokeWidth={12} strokeLinejoin="round" />
-      <path d={d} fill={fill} stroke={MAU.mucNau} strokeWidth={2.4} strokeLinejoin="round" />
+      <path d={d} fill="none" stroke={MAU_HINH.vienCat} strokeWidth={15} strokeLinejoin="round" />
+      <path d={d} fill={MAU_HINH.le} stroke={MAU_HINH.le} strokeWidth={12} strokeLinejoin="round" />
+      <path d={d} fill={fill} stroke={MAU_HINH.mucNau} strokeWidth={2.4} strokeLinejoin="round" />
       {children}
     </g>
   );

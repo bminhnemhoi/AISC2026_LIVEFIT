@@ -1,200 +1,342 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { DaiKhoi, NganBinhLuan, TheBayGio, TheDoiDau } from "@/components/ban";
+import {
+  cheDoGhim,
+  conLaiPhien,
+  daiKhoiBan,
+  maNhanNguon,
+  quyenSoSanh,
+  tenNguonNgan,
+  trangThaiBayGio,
+} from "@/components/ban/logic";
+import { DuongNho, DuongThoiGian } from "@/components/bieu-do";
+import { thuocTuBaoCao } from "@/components/bieu-do/ThuocKhoangTinCay";
+import { CoChe } from "@/components/co-che";
+import { DienThoaiLive, DUONG_VIDEO_NGUOI_DAN, useDongThoiGian } from "@/components/dien-thoai";
+import { AppShell, Hop, NganKeo, NutBam, OSo } from "@/components/nen";
+import { chanUocLuongKhiKhoa, daMoKhoa, duongNhoTyLeNhap, quyenToNenKhoi, theoCuaSo } from "@/lib/bieu-do";
 import { api, useExperimentDesk } from "@/lib/livelift-api/client";
-import { blockStrip, estimateState, fmtNum, funnel, intentLabel, mmss, roomPulse, sourceLabel } from "@/lib/livelift-api/desk";
-import { EstimateCard, SourceBadge, VerdictBanner } from "./parts";
-import "../livedesk/calm.css";
-import "./phien.css";
+import { estimateState, fmtNum, funnel, mmss, roomPulse, sourceLabel, verdict } from "@/lib/livelift-api/desk";
+import { chuanHoaChu } from "@/lib/livelift-api/gop";
+import { TU, type MaKetLuan } from "@/lib/tu-ngu";
+import "@/components/ban/ban.css";
 
-const ARM_TEXT = { ON: "BẬT", OFF: "TẮT" } as const;
+const MA_KL: Record<"doi" | "giu" | "do_them", MaKetLuan> = { doi: "DOI", giu: "GIU", do_them: "DO_THEM" };
 
-/** Operator desk in Experiment mode, read from the real API — the same screen for simulated, staged and real sessions. */
+/** Có tệp video người dẫn AI chưa (V1 chưa xuất thì dùng hình vẽ tay, không gắn nhãn NGƯỜI DẪN AI). */
+function useCoVideoNguoiDan(): string | undefined {
+  const [src, setSrc] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let huy = false;
+    fetch(DUONG_VIDEO_NGUOI_DAN, { method: "HEAD", cache: "no-store" })
+      .then((r) => {
+        const loai = r.headers.get("content-type") ?? "";
+        if (!huy && r.ok && loai.startsWith("video/")) setSrc(DUONG_VIDEO_NGUOI_DAN);
+      })
+      .catch(() => undefined);
+    return () => {
+      huy = true;
+    };
+  }, []);
+  return src;
+}
+
+/**
+ * Bàn thí nghiệm /phien/[id], đọc từ API thật: cùng một màn cho phiên mô phỏng, dàn dựng và thật.
+ * Thanh trên · hàng 1 dải khối · hàng 2 (vùng chính) ô số, "Bây giờ", đường thời gian, điện thoại · hàng 3 hai câu
+ * trả lời cho cùng một câu hỏi · ngăn phải bình luận. Khoá §7: không so BẬT với TẮT cho tới khi máy chủ mở khoá
+ * (MÔ PHỎNG và DÀN DỰNG được mở sớm, có dòng giải thích).
+ */
 export function ExperimentDesk({ sessionId }: { sessionId: string }) {
   const { data, refresh } = useExperimentDesk(sessionId);
-  const [busy, setBusy] = useState(false);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [dangGhim, setDangGhim] = useState(false);
+  const [thongBao, setThongBao] = useState<string | null>(null);
+  const [moCoChe, setMoCoChe] = useState(false);
+  const [moPhong, setMoPhong] = useState(false);
+  const [moKetThuc, setMoKetThuc] = useState(false);
+  const srcVideo = useCoVideoNguoiDan();
+  const dongThoiGian = useDongThoiGian(srcVideo ? undefined : null);
   const { session, state, blocks, ticks, comments, orders, report } = data;
 
-  if (!session || !state) {
+  const suyRa = useMemo(() => {
+    if (!session) return null;
+    const nhan = sourceLabel(session, report?.binh_luan_tong_hop ?? 0);
+    const dangLive = session.status === "live";
+    const moKhoa = daMoKhoa(report);
+    const baoCao = report ? chanUocLuongKhiKhoa(report) : null;
+    const quyen = quyenSoSanh(nhan, dangLive, !moKhoa, quyenToNenKhoi(nhan, dangLive));
+    const uoc = estimateState(baoCao);
+    const v = verdict(uoc);
+    return {
+      nhan,
+      ma: maNhanNguon(nhan),
+      dangLive,
+      quyen,
+      thuoc: thuocTuBaoCao(baoCao),
+      ketLuan: v.kind === "cho" || uoc.kind !== "estimate" ? null : MA_KL[v.kind],
+      cheDo: cheDoGhim(session, report?.loai_phien),
+      duongNguoiXem: theoCuaSo(ticks, session.start_ts, 300).map((w) => w.nguoiXem),
+      // Khoá §7: null khi còn khoá và nguồn không được mở sớm (THẬT, THỬ NỘI BỘ, CHẠY THỬ đang live).
+      duongTyLeNhap: duongNhoTyLeNhap(ticks, session, { khoa: !moKhoa, toNen: { cho: quyen.toNen } }),
+    };
+  }, [session, report, ticks]);
+
+  if (!session || !state || !suyRa) {
     return (
-      <div className="ld ph">
-        <div className="ph-wrap">
-          {data.error ? <div className="ph-err" role="alert">{data.error}</div> : <p className="ph-muted">Đang tải phiên…</p>}
+      <AppShell thuGon tieuDe="Bàn thí nghiệm" hienTai="phien">
+        <div className="ban">
+          {data.error ? (
+            <p className="ban-loi" role="alert">
+              {data.error}
+            </p>
+          ) : (
+            <p className="ban-phu">Đang tải phiên…</p>
+          )}
         </div>
-      </div>
+      </AppShell>
     );
   }
 
-  const label = sourceLabel(session, report?.binh_luan_tong_hop ?? 0);
-  const strip = blockStrip(blocks, state.elapsed_s);
+  const { nhan, ma, dangLive, quyen } = suyRa;
+  const bayGio = trangThaiBayGio(session, state, blocks);
+  const dai = daiKhoiBan(blocks, state.elapsed_s);
   const f = funnel(ticks, orders);
-  const est = estimateState(report);
-  const pulse = roomPulse(ticks);
-  const cb = state.current_block;
-  const arm = cb && !cb.is_washout && cb.assignment ? cb.assignment : null;
-  const viewersNow = ticks.length ? ticks[ticks.length - 1].viewers : 0;
+  const nguoiXemNay = ticks.length ? ticks[ticks.length - 1].viewers : null;
   const topCard = state.cards[0];
-  const canPin = session.status === "live" && arm === "ON" && session.platform !== "lab";
+  const monGhim = state.pinned_product ? { ten: state.pinned_product.name, gia: state.pinned_product.price } : null;
+  const conLai = conLaiPhien(session, state.elapsed_s);
+  const phongDanDung = session.platform === "lab";
+  // Nhịp phòng cắt cửa sổ 5 phút, trùng ranh giới khối: tỷ lệ nhấp theo cửa sổ chỉ hiện khi được so (khoá §7).
+  const pulse = roomPulse(ticks);
 
-  const pin = async (productId?: string): Promise<void> => {
-    setBusy(true);
-    setActionMsg(null);
+  const ghim = async (): Promise<void> => {
+    setDangGhim(true);
+    setThongBao(null);
     try {
-      await api.pin(sessionId, productId);
-      setActionMsg("Đã ghim qua hệ thống, có ghi nhật ký phơi nhiễm.");
+      await api.pin(sessionId, topCard?.product_id);
+      setThongBao("Đã ghim qua hệ thống, có ghi nhật ký ghim.");
       refresh();
     } catch (e) {
-      setActionMsg(e instanceof Error ? e.message : "Không ghim được.");
+      setThongBao(e instanceof Error ? e.message : "Không ghim được.");
     } finally {
-      setBusy(false);
+      setDangGhim(false);
     }
   };
 
-  return (
-    <div className="ld ph" data-testid="experiment-desk">
-      <div className="ph-wrap">
-        <header className="ph-top">
-          <div>
-            <h1 className="ph-title">{session.title || "Phiên LiveLift"}</h1>
-            <p className="ph-sub">
-              Chế độ Thí nghiệm · {session.status === "live" ? "đang phát" : session.status === "ended" ? "đã kết thúc" : "chưa phát"} · đã chạy {mmss(state.elapsed_s)}
-            </p>
-          </div>
-          <SourceBadge label={label} />
-        </header>
+  const ketThuc = async (): Promise<void> => {
+    try {
+      await api.end(sessionId);
+      setThongBao("Đã kết thúc phiên. Kết quả sẽ mở khi báo cáo tính xong.");
+      refresh();
+    } catch (e) {
+      setThongBao(e instanceof Error ? e.message : "Không kết thúc được phiên.");
+    }
+  };
 
-        {data.error && <div className="ph-err" role="alert">{data.error}</div>}
-
-        <div className="ph-grid">
-          <main>
-            <section className="ph-card" aria-labelledby="h-strip">
-              <h2 id="h-strip">Lịch bốc thăm (chỉ người bán thấy)</h2>
-              <div className="ph-strip" role="img" aria-label={`Lịch ${strip.length} khối, khối BẬT màu xanh, khối TẮT màu xám`}>
-                {strip.map(b => (
-                  <span key={b.index} data-arm={b.arm} data-state={b.state} style={{ width: `${b.widthPct}%` }} title={`Khối ${b.index + 1}: ${b.arm === "WASH" ? "trôi" : ARM_TEXT[b.arm]}`} />
-                ))}
-              </div>
-              <div className="ph-legend">
-                <span><i style={{ background: "var(--on)" }} />BẬT: hệ thống ghim theo gợi ý</span>
-                <span><i style={{ background: "var(--off-soft)", border: "1px solid var(--line-strong)" }} />TẮT: không can thiệp</span>
-                <span><i style={{ outline: "2px solid var(--ink)", outlineOffset: "-2px" }} />khối hiện tại</span>
-              </div>
-            </section>
-
-            <section className="ph-card ph-paper" aria-labelledby="h-now">
-              <h2 id="h-now">Bây giờ</h2>
-              {cb ? (
-                <>
-                  <div className="ph-clock">
-                    <span className="ph-clock-num" aria-label="thời gian còn lại của khối">{mmss(cb.seconds_remaining)}</span>
-                    {arm ? <span className="ph-arm" data-arm={arm}>Khối {cb.index + 1} · {ARM_TEXT[arm]}</span> : <span className="ph-arm">Khoảng trôi</span>}
-                  </div>
-                  <p className="ph-small" style={{ margin: 0 }}>còn lại trong khối</p>
-                </>
-              ) : (
-                <p className="ph-muted">Ngoài khung khối thí nghiệm.</p>
-              )}
-              <p style={{ marginTop: 12 }}>
-                Đang ghim: <strong>{state.pinned_product ? `${state.pinned_product.name}` : "chưa có"}</strong>
-              </p>
-              {arm === "OFF" && state.pinned_product && (
-                <p className="ph-small" data-testid="off-block-carryover" style={{ margin: 0 }}>
-                  Còn từ khối trước. Khối TẮT không can thiệp: hệ thống không tự gỡ ghim, đội làm theo cách thường lệ.
-                </p>
-              )}
-              {canPin && (
-                <div className="xem-actions" style={{ marginTop: 8 }}>
-                  <button type="button" className="ph-btn ph-btn-primary" disabled={busy} onClick={() => void pin(topCard?.product_id)}>
-                    Ghim theo gợi ý
-                  </button>
-                </div>
-              )}
-              {session.platform === "lab" && <p className="ph-small">Phòng dàn dựng: autopilot ghim trong khối BẬT, không ghim tay.</p>}
-              {actionMsg && <p className="ph-small" role="status">{actionMsg}</p>}
-            </section>
-
-            <section className="ph-card" aria-labelledby="h-funnel">
-              <h2 id="h-funnel">Phễu đo được</h2>
-              <div className="ph-kpis">
-                <div><div className="ph-kpi-num">{fmtNum(viewersNow, 0)}</div><div className="ph-kpi-label">người xem lúc này</div></div>
-                <div><div className="ph-kpi-num">{fmtNum(f.viewerMinutes, 0)}</div><div className="ph-kpi-label">phút·người xem</div></div>
-                <div><div className="ph-kpi-num">{f.clicks}</div><div className="ph-kpi-label">lượt nhấp hợp lệ</div></div>
-                <div><div className="ph-kpi-num">{f.orders}</div><div className="ph-kpi-label">đơn{session.platform === "lab" ? " (tiền ảo)" : ""}</div></div>
-              </div>
-              <p className="ph-small" style={{ marginTop: 12 }}>
-                Lượt nhấp / 1.000 giây·người xem: <strong>{f.clickRate == null ? "chưa đủ dữ liệu" : fmtNum(f.clickRate, 3)}</strong>
-                {" · "}Đơn / lượt nhấp: <strong>{f.ctor == null ? "chưa có" : `${fmtNum(f.ctor * 100, 1)}%`}</strong>
-              </p>
-            </section>
-
-            <section className="ph-two" aria-label="So sánh hai loại gợi ý">
-              <div className="ph-card">
-                <h2>Ước lượng hiệu ứng ghim (bốc thăm)</h2>
-                <VerdictBanner state={est} />
-                <EstimateCard state={est} />
-              </div>
-              <div className="ph-card">
-                <h2>Gợi ý kiểu nền tảng (tương quan)</h2>
-                {topCard ? (
-                  <>
-                    <p style={{ margin: 0 }}><strong>{topCard.headline}</strong></p>
-                    <p className="ph-muted">{topCard.rationale}</p>
-                  </>
-                ) : (
-                  <p className="ph-muted">{state.cards_note ?? "Chưa có gợi ý."}</p>
-                )}
-                <p className="ph-small">Cùng loại với gợi ý ghim của nền tảng: dựa trên tương quan, chưa kiểm chứng nhân quả.</p>
-              </div>
-            </section>
-          </main>
-
-          <aside>
-            <section className="ph-card" aria-labelledby="h-pulse" data-testid="room-pulse">
-              <h2 id="h-pulse">Nhịp phòng (mô tả, 5 phút gần nhất)</h2>
-              {pulse.last && pulse.viewersBand && pulse.clickBand ? (
-                <table className="ph-table">
-                  <tbody>
-                    <tr>
-                      <th>Người xem</th>
-                      <td>{fmtNum(pulse.last.viewers, 0)}</td>
-                      <td className="ph-small">dải {fmtNum(pulse.viewersBand[0], 0)}–{fmtNum(pulse.viewersBand[1], 0)}</td>
-                    </tr>
-                    <tr>
-                      <th>Lượt nhấp / 1.000 giây</th>
-                      <td>{fmtNum(pulse.last.clickRate, 2)}</td>
-                      <td className="ph-small">dải {fmtNum(pulse.clickBand[0], 2)}–{fmtNum(pulse.clickBand[1], 2)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              ) : null}
-              <p className={pulse.alert ? "ph-err" : "ph-small"} style={{ marginBottom: 0 }}>{pulse.note}</p>
-            </section>
-            <section className="ph-card" aria-labelledby="h-feed">
-              <h2 id="h-feed">Bình luận (đã che thông tin cá nhân)</h2>
-              {comments.length === 0 ? (
-                <p className="ph-muted">Chưa có bình luận.</p>
-              ) : (
-                <ul className="ph-feed">
-                  {[...comments].reverse().slice(0, 40).map(c => (
-                    <li key={c.comment_id}>
-                      {c.intent && <span className="ph-intent">{intentLabel(c.intent)}</span>}
-                      {c.text}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-            <section className="ph-card">
-              <h2>Liên kết</h2>
-              <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}/tong-ket`}>Tổng kết phiên</Link></p>
-              <p style={{ margin: 0 }}><Link href={`/phien/${sessionId}/nguoi-dan`}>Màn người dẫn (làm mù một phần)</Link></p>
-              <p className="ph-small" data-testid="desk-updated">{data.updatedAt ? `Cập nhật ${new Date(data.updatedAt).toLocaleTimeString("vi-VN")}` : "Chưa cập nhật"}</p>
-            </section>
-          </aside>
-        </div>
-      </div>
+  const hanhDong = (
+    <div className="ban-hanh-dong">
+      <NutBam bien="vien" onClick={() => setMoPhong(true)}>
+        Mở phòng xem + QR
+      </NutBam>
+      {dangLive ? (
+        <NutBam bien="phu" onClick={() => setMoKetThuc(true)}>
+          Kết thúc phiên
+        </NutBam>
+      ) : null}
     </div>
+  );
+
+  return (
+    <AppShell
+      thuGon
+      dem="khong"
+      hienTai="phien"
+      tieuDe={session.title || "Phiên LiveLift"}
+      phuDe={`Bàn thí nghiệm · ${suyRa.cheDo} · đã chạy ${mmss(state.elapsed_s)}`}
+      nhanNguon={ma}
+      live={dangLive}
+      hanhDong={hanhDong}
+    >
+      <div className="ban" data-testid="experiment-desk">
+        {data.error ? (
+          <p className="ban-loi" role="alert">
+            {data.error}
+          </p>
+        ) : null}
+
+        <div className="ban-chinh">
+          <section className="ban-the ban-hang1" aria-label="Lịch khối">
+            <DaiKhoi o={dai} />
+            <button
+              type="button"
+              className="ban-hoi"
+              onClick={() => setMoCoChe(true)}
+              aria-label="Ghim được đo thế nào?"
+              title="Ghim được đo thế nào?"
+            >
+              ?
+            </button>
+          </section>
+
+          <section className="ban-hang2" data-vung-chinh="" aria-label="Phiên lúc này">
+            <div className="ban-so">
+              <OSo
+                nhan="Người xem"
+                giaTri={nguoiXemNay == null ? null : fmtNum(nguoiXemNay, 0)}
+                phuDe="lúc này"
+                duongNho={
+                  suyRa.duongNguoiXem.length > 1 ? (
+                    <DuongNho giaTri={suyRa.duongNguoiXem} ten="Người xem theo 5 phút" mau="nguoiXem" rong={120} cao={16} />
+                  ) : undefined
+                }
+              />
+              <OSo nhan="Lượt nhấp hợp lệ" giaTri={fmtNum(f.clicks, 0)} phuDe="cả phiên" />
+              <OSo
+                tu={TU.tyLeNhap}
+                giaTri={f.clickRate == null ? null : fmtNum(f.clickRate, 2)}
+                duongNho={
+                  suyRa.duongTyLeNhap && suyRa.duongTyLeNhap.length > 1 ? (
+                    <DuongNho giaTri={suyRa.duongTyLeNhap} ten="Tỷ lệ nhấp trượt 2 phút" mau="luotNhap" rong={120} cao={16} />
+                  ) : undefined
+                }
+              />
+              <OSo
+                nhan="Thời gian còn lại"
+                giaTri={dangLive ? mmss(conLai) : session.status === "ended" ? "Đã xong" : null}
+                phuDe={`phiên ${session.planned_duration_min} phút`}
+              />
+            </div>
+
+            <div className="ban-bay-gio-o">
+              <TheBayGio
+                bayGio={bayGio}
+                sessionId={sessionId}
+                monGhim={monGhim}
+                dangGhim={dangGhim}
+                onGhim={() => void ghim()}
+                thongBao={thongBao}
+              />
+            </div>
+
+            <div className="ban-the ban-bieu-do">
+              <DuongThoiGian
+                ticks={ticks}
+                batDauTs={session.start_ts}
+                khoi={blocks}
+                toNenKhoi={quyen.toNen}
+                nguon={nhan}
+                dangLive={dangLive}
+                ghiChu={quyen.dong ?? undefined}
+                thoiLuongS={session.planned_duration_min * 60}
+                cao={136}
+                muc={2}
+                tieuDe="Người xem và Tỷ lệ nhấp"
+              />
+            </div>
+
+            <div className="ban-dien-thoai">
+              <DienThoaiLive
+                src={srcVideo}
+                laNguoiDanAI={!!srcVideo}
+                dongThoiGian={dongThoiGian}
+                ghim={bayGio.ghimDienThoai}
+                binhLuan={comments.slice(-2).map((c) => ({ id: c.comment_id, noiDung: c.text }))}
+                soNguoiXem={nguoiXemNay ?? undefined}
+                nhanNguon={nhan.text}
+                tim={false}
+                khoaNut
+                nhanAria="Màn khách thấy lúc này"
+              />
+            </div>
+          </section>
+
+          <TheDoiDau
+            goiY={topCard ? { tieuDe: chuanHoaChu(topCard.headline), lyDo: chuanHoaChu(topCard.rationale) } : null}
+            ghiChuGoiY={state.cards_note ? chuanHoaChu(state.cards_note) : null}
+            hienKetQua={quyen.hienKetQua}
+            thuoc={suyRa.thuoc}
+            ketLuan={suyRa.ketLuan}
+            nhanNguon={ma}
+            conLaiS={dangLive && !quyen.hienKetQua ? conLai : null}
+            dongMoSom={quyen.hienKetQua && dangLive ? `Phiên đang live: mở khoá sớm vì ${tenNguonNgan(nhan)}.` : null}
+          />
+        </div>
+
+        <aside className="ban-phai" aria-label="Bình luận và liên kết">
+          <NganBinhLuan binhLuan={comments} />
+          <section className="ban-the ban-nhip" aria-labelledby="ban-h-nhip" data-testid="room-pulse">
+            <h2 id="ban-h-nhip" className="ban-the__tieu-de">
+              Nhịp phòng
+            </h2>
+            <p className="ban-phu">Mô tả 5 phút gần nhất so với chính phiên này, không phải kết luận.</p>
+            {pulse.last && pulse.viewersBand ? (
+              <dl className="ban-nhip__ds">
+                <div>
+                  <dt>Người xem</dt>
+                  <dd>
+                    {fmtNum(pulse.last.viewers, 0)}{" "}
+                    <span className="ban-phu">
+                      thường {fmtNum(pulse.viewersBand[0], 0)} đến {fmtNum(pulse.viewersBand[1], 0)}
+                    </span>
+                  </dd>
+                </div>
+                {quyen.toNen || quyen.hienKetQua ? (
+                  pulse.clickBand ? (
+                    <div>
+                      <dt>Tỷ lệ nhấp</dt>
+                      <dd>
+                        {fmtNum(pulse.last.clickRate, 2)}{" "}
+                        <span className="ban-phu">
+                          thường {fmtNum(pulse.clickBand[0], 2)} đến {fmtNum(pulse.clickBand[1], 2)}
+                        </span>
+                      </dd>
+                    </div>
+                  ) : null
+                ) : null}
+              </dl>
+            ) : null}
+            <p className={pulse.alert ? "ban-canh-bao" : "ban-phu"}>{pulse.note}</p>
+          </section>
+          <nav className="ban-the ban-lien-ket" aria-label="Liên kết của phiên">
+            <Link href={`/phien/${sessionId}/tong-ket`}>Tổng kết phiên</Link>
+            <Link href={`/phien/${sessionId}/nguoi-dan`}>Màn người dẫn (người dẫn không thấy lịch)</Link>
+            <p className="ban-phu" data-testid="desk-updated">
+              {data.updatedAt ? `Cập nhật ${new Date(data.updatedAt).toLocaleTimeString("vi-VN")}` : "Chưa cập nhật"}
+            </p>
+          </nav>
+        </aside>
+      </div>
+
+      <NganKeo mo={moCoChe} onDong={() => setMoCoChe(false)} tieuDe="Ghim được đo thế nào">
+        <CoChe bienThe="ngan" the="h3" tieuDe={null} />
+      </NganKeo>
+
+      <NganKeo mo={moPhong} onDong={() => setMoPhong(false)} tieuDe="Phòng xem" moTa="Khách vào bằng điện thoại, mua bằng tiền ảo.">
+        {phongDanDung ? (
+          <div className="ban-phong">
+            <p>
+              Phòng xem của phiên này mở ở địa chỉ <strong>/xem/&lt;mã phòng&gt;</strong>. Mã phòng và mã QR hiện ở bước cuối của
+              màn tạo phiên.
+            </p>
+            <p className="ban-phu">Phòng không lưu thông tin cá nhân. Khách rút lui lúc nào cũng được.</p>
+          </div>
+        ) : (
+          <p>Phòng xem chỉ có ở phiên phòng dàn dựng. Phiên này không mở phòng xem: khách xem trên nền tảng hoặc dữ liệu do máy sinh.</p>
+        )}
+      </NganKeo>
+
+      <Hop
+        mo={moKetThuc}
+        onDong={() => setMoKetThuc(false)}
+        tieuDe="Kết thúc phiên?"
+        moTa="Lịch khối dừng lại, máy thôi ghim. Hết phiên mới mở kết quả so BẬT với TẮT."
+        nutXacNhan="Kết thúc phiên"
+        nguyHiem
+        onXacNhan={ketThuc}
+      />
+    </AppShell>
   );
 }

@@ -17,8 +17,12 @@ Chạy:
     ...  --tuyen /gioi-thieu --toan-trang --ten landing-ca-trang
 
 Cảnh có {ma_phong} cần --ma-phong (hoặc biến LIVELIFT_MA_PHONG_CHUP) của một phòng riêng để chụp. Cảnh có bước
-bấm (đồng ý, rút lui) ghi sự kiện vào phòng đó, nên tệp từ chối chạy chúng trên phòng thử nội bộ mặc định trừ
-khi có --cho-phep-phong-thu-noi-bo.
+bấm (đồng ý, rút lui) ghi sự kiện vào phòng đó, nên trước khi chạy, tệp hỏi API phòng thuộc phiên nào
+(GET /xem-api/<mã>/trang-thai lấy tiêu đề phòng, GET /sessions tìm phiên 'lab' cùng tiêu đề) và:
+  * chặn hẳn nếu phiên được tính vào kết quả (không dry_run, không phải dữ liệu mẫu), kể cả có cờ;
+  * chặn nếu không xác định được phiên (mã sai, phòng tắt, không có phiên trùng tiêu đề);
+  * chặn phòng THỬ NỘI BỘ (tiêu đề hay nhãn "Thử nội bộ") trừ khi có --cho-phep-phong-thu-noi-bo, vì số của
+    buổi thử nội bộ lên slide.
 
 Mã thoát: 0 mọi cảnh chụp được; 1 có cảnh hỏng (thiếu phần tử, bước chờ hết giờ, tuyến lỗi); 2 cấu hình sai.
 """
@@ -33,6 +37,8 @@ import struct
 import subprocess
 import sys
 import time
+import unicodedata
+import urllib.error
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -228,12 +234,114 @@ def bo_chon_phan_tu(ten: str) -> str:
     return f'[data-chup="{ten}"]'
 
 
-def chan_phong_thu_noi_bo(c: Canh, ma_phong: str | None, cho_phep: bool) -> str | None:
-    """Lý do bỏ cảnh nếu nó bấm trong phòng thử nội bộ (ghi sự kiện vào số thử nội bộ); None nếu được chạy."""
-    if "{ma_phong}" in c.tuyen and c.co_bam and ma_phong == kg.MA_PHONG_MAC_DINH and not cho_phep:
+@dataclass(frozen=True)
+class ThongTinPhong:
+    """Phòng xem thuộc phiên nào (đọc qua API công khai và /sessions), để quyết định có được bấm không."""
+
+    ma: str
+    xac_dinh: bool
+    """Tìm được ít nhất một phiên 'lab' khớp phòng."""
+    an_toan: bool = False
+    """Mọi phiên khớp đều không tính vào kết quả: dry_run (chạy thử) hoặc is_demo (dữ liệu mẫu)."""
+    thu_noi_bo: bool = False
+    phien: tuple[str, ...] = ()
+    ly_do: str = ""
+
+
+def _chuan(s: Any) -> str:
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFC", str(s or ""))).strip().casefold()
+
+
+TRANG_THAI_PHONG = {
+    "dang_mo": {"live"},
+    "da_dong": {"ended"},
+    "chua_mo": {"draft", "scheduled", "created"},
+}
+TIEU_DE_PHONG_MAC_DINH = "Phòng live dàn dựng"
+"""Tiêu đề máy chủ đặt cho phòng khi phiên không có tiêu đề (routes/xem.py)."""
+
+
+def xac_dinh_phong(
+    ma: str, trang_thai: dict[str, Any] | None, ds_phien: list[dict[str, Any]]
+) -> ThongTinPhong:
+    """Hàm thuần: phòng `ma` thuộc phiên nào. API công khai không lộ id phiên, nên khớp theo tiêu đề phòng
+    (mặc định là tiêu đề phiên) trong các phiên nền tảng 'lab', ưu tiên phiên cùng trạng thái với phòng. Nhiều
+    phiên cùng khớp thì xét thận trọng: chỉ an toàn khi MỌI phiên khớp đều dry_run hoặc is_demo."""
+    phong = trang_thai.get("room") if isinstance(trang_thai, dict) else None
+    if not isinstance(phong, dict):
+        return ThongTinPhong(
+            ma, False, ly_do=f"API không trả phòng {ma} (mã sai hoặc phòng đã tắt)"
+        )
+    tieu_de = _chuan(phong.get("title"))
+    lab = [s for s in ds_phien if isinstance(s, dict) and s.get("platform") == "lab"]
+    khop = [s for s in lab if _chuan(s.get("title") or TIEU_DE_PHONG_MAC_DINH) == tieu_de]
+    hop_trang_thai = TRANG_THAI_PHONG.get(str(phong.get("status")), set())
+    cung_trang_thai = [s for s in khop if s.get("status") in hop_trang_thai]
+    khop = cung_trang_thai or khop
+    if not khop:
+        return ThongTinPhong(
+            ma, False, ly_do=f"không có phiên 'lab' nào có tiêu đề «{phong.get('title')}»"
+        )
+    an_toan = all(bool(s.get("dry_run")) or bool(s.get("is_demo")) for s in khop)
+    thu_noi_bo = (
+        ma == kg.MA_PHONG_MAC_DINH
+        or "thử nội bộ" in tieu_de
+        or "thử nội bộ" in _chuan(phong.get("source_label"))
+        or any("thử nội bộ" in _chuan(s.get("title")) for s in khop)
+    )
+
+    def loai(s: dict[str, Any]) -> str:
+        if s.get("dry_run"):
+            return "dry_run"
+        return "is_demo" if s.get("is_demo") else "TÍNH vào kết quả"
+
+    mo_ta = ", ".join(f"{str(s.get('session_id'))[:8]} {loai(s)}" for s in khop)
+    return ThongTinPhong(
+        ma,
+        True,
+        an_toan=an_toan,
+        thu_noi_bo=thu_noi_bo,
+        phien=tuple(str(s.get("session_id")) for s in khop),
+        ly_do=f"«{phong.get('title')}» → {mo_ta}",
+    )
+
+
+def doc_phong(api: str, ma: str) -> ThongTinPhong:
+    """Hỏi API (chỉ GET, không ghi gì): trạng thái phòng công khai và danh sách phiên."""
+    goc = api.rstrip("/")
+    try:
+        trang_thai = kg._get_json(f"{goc}/xem-api/{ma}/trang-thai")
+    except urllib.error.HTTPError as e:
+        return ThongTinPhong(ma, False, ly_do=f"/xem-api/{ma}/trang-thai trả {e.code}")
+    except (urllib.error.URLError, TimeoutError, ValueError) as e:
+        return ThongTinPhong(ma, False, ly_do=f"không đọc được trạng thái phòng: {e}")
+    try:
+        ds = kg._get_json(f"{goc}/sessions")
+    except (urllib.error.URLError, TimeoutError, ValueError) as e:
+        return ThongTinPhong(ma, False, ly_do=f"không đọc được /sessions: {e}")
+    return xac_dinh_phong(ma, trang_thai, ds if isinstance(ds, list) else [])
+
+
+def chan_phong_thu_noi_bo(c: Canh, phong: ThongTinPhong | None, cho_phep: bool) -> str | None:
+    """Lý do bỏ cảnh có bước bấm trên phòng xem; None nếu được chạy (cảnh không bấm thì luôn được chạy).
+
+    Bấm đồng ý hay rút lui ghi sự kiện người xem vào phiên của phòng. Chặn: phiên không xác định được; phiên
+    được tính vào kết quả (không dry_run, không is_demo), kể cả khi có cờ; phòng THỬ NỘI BỘ khi không có
+    `cho_phep` (--cho-phep-phong-thu-noi-bo)."""
+    if "{ma_phong}" not in c.tuyen or not c.co_bam:
+        return None
+    if phong is None or not phong.xac_dinh:
+        ly_do = phong.ly_do if phong else "chưa hỏi API"
+        return f"không xác định được phòng thuộc phiên nào ({ly_do}): không bấm"
+    if not phong.an_toan:
         return (
-            f"cảnh có bước bấm trên phòng thử nội bộ {ma_phong}: dùng --ma-phong của phòng riêng "
-            "(hoặc --cho-phep-phong-thu-noi-bo)"
+            f"phòng {phong.ma} thuộc phiên được tính vào kết quả ({phong.ly_do}): bấm sẽ ghi người xem "
+            "giả vào số thật; dùng phòng của một phiên dry_run"
+        )
+    if phong.thu_noi_bo and not cho_phep:
+        return (
+            f"phòng {phong.ma} là phòng THỬ NỘI BỘ ({phong.ly_do}): bấm sẽ ghi người xem giả vào số thử "
+            "nội bộ; dùng --ma-phong của phòng riêng (phiên dry_run) hoặc --cho-phep-phong-thu-noi-bo"
         )
     return None
 
@@ -406,7 +514,11 @@ def main(argv: list[str] | None = None) -> int:
         default=os.environ.get("LIVELIFT_MA_PHONG_CHUP"),
         help="mã phòng xem RIÊNG để chụp (không dùng phòng thử nội bộ)",
     )
-    ap.add_argument("--cho-phep-phong-thu-noi-bo", action="store_true")
+    ap.add_argument(
+        "--cho-phep-phong-thu-noi-bo",
+        action="store_true",
+        help="cho bấm trên phòng THỬ NỘI BỘ (phiên vẫn phải dry_run; phiên được tính thì luôn chặn)",
+    )
     ap.add_argument(
         "--ra",
         type=chuan_duong_dan,
@@ -476,6 +588,18 @@ def main(argv: list[str] | None = None) -> int:
         for cb in canh_bao:
             print(f"CẢNH BÁO cấu hình: {cb}")
 
+    phong: ThongTinPhong | None = None
+    if a.ma_phong and any(c.co_bam and "{ma_phong}" in c.tuyen for c in ds):
+        phong = doc_phong(a.api, a.ma_phong)
+        if phong.xac_dinh:
+            ket = "được bấm" if phong.an_toan else "KHÔNG được bấm (phiên được tính)"
+            print(
+                f"phòng {a.ma_phong}: {phong.ly_do}; {ket}"
+                + (" · THỬ NỘI BỘ" if phong.thu_noi_bo else "")
+            )
+        else:
+            print(f"phòng {a.ma_phong}: không xác định ({phong.ly_do})")
+
     ra.mkdir(parents=True, exist_ok=True)
     ban_ghi: list[dict[str, Any]] = []
     from playwright.sync_api import sync_playwright  # noqa: PLC0415
@@ -485,7 +609,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             for c in ds:
                 tuyen, thieu = kg.mo_rong_tuyen(c.tuyen, gia)
-                ly_do = chan_phong_thu_noi_bo(c, a.ma_phong, a.cho_phep_phong_thu_noi_bo)
+                ly_do = chan_phong_thu_noi_bo(c, phong, a.cho_phep_phong_thu_noi_bo)
                 if tuyen is None or ly_do:
                     ly_do = ly_do or f"thiếu {', '.join(thieu)}" + (
                         " (truyền --ma-phong)" if "ma_phong" in thieu else ""

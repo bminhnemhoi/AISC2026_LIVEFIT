@@ -15,6 +15,7 @@ import {
   laAnhPoster,
   monDangNoi,
   nguonVideo,
+  maNhanNguonTu,
   type DoanDongThoiGian,
 } from "@/components/dien-thoai";
 import { NGHIENG_TOI_DA } from "@/components/minh-hoa";
@@ -59,10 +60,12 @@ function caiMatchMedia(giam: boolean): () => void {
   };
 }
 
-describe("huy hiệu NGƯỜI DẪN AI luôn hiện khi laNguoiDanAI", () => {
-  it("video mp4 đang phát: có huy hiệu HTML và data-nguoi-dan-ai; video tắt tiếng, tự phát", () => {
+describe("huy hiệu NGƯỜI DẪN AI chỉ hiện khi khung đang hiện nội dung do AI tạo", () => {
+  it("video mp4 đang phát: có huy hiệu NhanCongBo và data-nguoi-dan-ai; video tắt tiếng, tự phát", () => {
     render(<DienThoaiLive src={DUONG_VIDEO_NGUOI_DAN} laNguoiDanAI />);
-    expect(screen.getByText(HUY_HIEU).tagName).toBe("P");
+    const huy = screen.getByText(HUY_HIEU).closest("[data-nhan-cong-bo]");
+    expect(huy?.getAttribute("data-nhan-cong-bo")).toBe("NGUOI_DAN_AI");
+    expect(huy?.getAttribute("data-kieu")).toBe("noi");
     expect(khung()).toHaveAttribute("data-nguoi-dan-ai");
     const v = khung().querySelector("video") as HTMLVideoElement;
     expect(v).not.toBeNull();
@@ -91,30 +94,56 @@ describe("huy hiệu NGƯỜI DẪN AI luôn hiện khi laNguoiDanAI", () => {
     expect(screen.getByRole("button", { name: "Tắt tiếng" })).toBeInTheDocument();
   });
 
-  it("video lỗi (chưa có tệp): chuyển sang hình dự phòng, huy hiệu vẫn hiện", () => {
+  it("video lỗi (chưa có tệp) và không có ảnh dự phòng: người dẫn vẽ tay + MINH HOẠ, không huy hiệu AI", () => {
     render(<DienThoaiLive src={DUONG_VIDEO_NGUOI_DAN} laNguoiDanAI />);
     fireEvent.error(khung().querySelector("video") as HTMLVideoElement);
     expect(khung().querySelector("video")).toBeNull();
     expect(khung().querySelector(".dt-ve-tay")).not.toBeNull();
     expect(screen.getByText("MINH HOẠ")).toBeInTheDocument();
-    expect(screen.getByText(HUY_HIEU)).toBeInTheDocument();
-    expect(khung()).toHaveAttribute("data-nguoi-dan-ai");
+    expect(screen.queryByText(HUY_HIEU)).toBeNull();
+    expect(khung()).not.toHaveAttribute("data-nguoi-dan-ai");
+    expect(khung().querySelector("[data-nhan-cong-bo]")).toBeNull();
     expect(khung().getAttribute("data-che-do")).toBe("du-phong");
   });
 
-  it("video lỗi và có ảnh tĩnh dự phòng: hiện ảnh, huy hiệu vẫn hiện", () => {
+  it("video lỗi và có ảnh tĩnh dự phòng (ảnh chụp từ video AI): hiện ảnh, huy hiệu vẫn hiện, không chip MINH HOẠ", () => {
     render(<DienThoaiLive src={DUONG_VIDEO_NGUOI_DAN} anhDuPhong="/xem/nguoi-dan-ai.jpg" laNguoiDanAI />);
     fireEvent.error(khung().querySelector("video") as HTMLVideoElement);
     expect(khung().querySelector("img")?.getAttribute("src")).toBe("/xem/nguoi-dan-ai.jpg");
     expect(screen.getByText(HUY_HIEU)).toBeInTheDocument();
+    expect(khung()).toHaveAttribute("data-nguoi-dan-ai");
+    expect(screen.queryByText("MINH HOẠ")).toBeNull();
   });
 
-  it("không có src: hình người dẫn vẽ tay + MINH HOẠ, huy hiệu vẫn hiện", () => {
+  it("không có src, chỉ có ảnh người dẫn AI: hiện ảnh và huy hiệu", () => {
+    render(<DienThoaiLive anhDuPhong="/xem/nguoi-dan-ai.jpg" laNguoiDanAI />);
+    expect(khung().querySelector("img")?.getAttribute("src")).toBe("/xem/nguoi-dan-ai.jpg");
+    expect(screen.getByText(HUY_HIEU)).toBeInTheDocument();
+    expect(khung()).toHaveAttribute("data-nguoi-dan-ai");
+  });
+
+  it("không có src lẫn ảnh: người dẫn vẽ tay + MINH HOẠ, KHÔNG huy hiệu AI (chưa có nội dung AI nào)", () => {
     render(<DienThoaiLive laNguoiDanAI />);
-    expect(khung().querySelector("video, iframe")).toBeNull();
+    expect(khung().querySelector("video, iframe, img")).toBeNull();
     expect(khung().querySelector(".dt-ve-tay")).not.toBeNull();
     expect(screen.getByText("MINH HOẠ")).toBeInTheDocument();
-    expect(screen.getByText(HUY_HIEU)).toBeInTheDocument();
+    expect(screen.queryByText(HUY_HIEU)).toBeNull();
+    expect(khung()).not.toHaveAttribute("data-nguoi-dan-ai");
+  });
+
+  it("mọi khung mang data-nguoi-dan-ai đều chứa nhãn NGUOI_DAN_AI và ngược lại", () => {
+    const { rerender } = render(<DienThoaiLive src={DUONG_VIDEO_NGUOI_DAN} laNguoiDanAI />);
+    const kiem = () => {
+      const co = khung().hasAttribute("data-nguoi-dan-ai");
+      expect(!!khung().querySelector('[data-nhan-cong-bo="NGUOI_DAN_AI"]')).toBe(co);
+    };
+    kiem();
+    rerender(<DienThoaiLive src="https://youtu.be/abcdEFGH123" laNguoiDanAI />);
+    kiem();
+    rerender(<DienThoaiLive laNguoiDanAI />);
+    kiem();
+    rerender(<DienThoaiLive anhDuPhong="/xem/nguoi-dan-ai.jpg" laNguoiDanAI cheDoPoster />);
+    kiem();
   });
 
   it("YouTube: khung nhúng youtube-nocookie tắt tiếng, có huy hiệu", () => {
@@ -244,6 +273,31 @@ describe("thẻ ghim, giỏ hàng, bình luận, số người xem", () => {
     expect(screen.getByText("DÀN DỰNG")).toBeInTheDocument();
   });
 
+  it("nhanNguon theo mã canon (NhanNguon của nền); chữ cũ trùng canon vẫn nhận; chữ ngoài canon bị bỏ", () => {
+    const { rerender } = render(<DienThoaiLive nhanNguon="MO_PHONG" />);
+    expect(khung().querySelector("[data-nhan-nguon]")?.getAttribute("data-nhan-nguon")).toBe("MO_PHONG");
+    expect(screen.getByText("MÔ PHỎNG")).toBeInTheDocument();
+    rerender(<DienThoaiLive nhanNguon={["DAN_DUNG", "THU_NOI_BO"]} />);
+    expect(screen.getByText("DÀN DỰNG · THỬ NỘI BỘ")).toBeInTheDocument();
+    rerender(<DienThoaiLive nhanNguon="DÀN DỰNG · THỬ NỘI BỘ" />);
+    expect(khung().querySelector("[data-nhan-nguon]")?.getAttribute("data-nhan-nguon")).toBe("DAN_DUNG,THU_NOI_BO");
+    rerender(<DienThoaiLive nhanNguon="SIMULATED" ghim={{ ten: "Túi tote canvas" }} src={DUONG_VIDEO_NGUOI_DAN} />);
+    expect(khung().querySelector("[data-nhan-nguon]")).toBeNull();
+    expect(chuCua(khung())).not.toMatch(/SIMULATED/);
+    // người dẫn vẽ tay mà nhãn đã là MINH HOẠ: không lặp chip
+    rerender(<DienThoaiLive nhanNguon="MINH_HOA" />);
+    expect(screen.getAllByText("MINH HOẠ")).toHaveLength(1);
+  });
+
+  it("maNhanNguonTu chuẩn hoá về mã canon", () => {
+    expect(maNhanNguonTu("DAN_DUNG")).toEqual(["DAN_DUNG"]);
+    expect(maNhanNguonTu("mô phỏng")).toEqual(["MO_PHONG"]);
+    expect(maNhanNguonTu("DÀN DỰNG · THỬ NỘI BỘ")).toEqual(["DAN_DUNG", "THU_NOI_BO"]);
+    expect(maNhanNguonTu(["THAT", "THAT"])).toEqual(["THAT"]);
+    expect(maNhanNguonTu("SIMULATED")).toEqual([]);
+    expect(maNhanNguonTu(undefined)).toEqual([]);
+  });
+
   it("chữ trong khung: không tiếng Anh, không chữ cấm canon", () => {
     render(
       <DienThoaiLive
@@ -334,15 +388,53 @@ describe("hàm thuần", () => {
   });
 });
 
+describe("toàn màn, hợp đồng chụp, chỗ thêm nút", () => {
+  it("toanMan: lớp is-toan-man và data-toan-man; mặc định không có; lớp phủ giữ nguyên", () => {
+    const { rerender } = render(<DienThoaiLive />);
+    expect(khung().classList.contains("is-toan-man")).toBe(false);
+    expect(khung()).not.toHaveAttribute("data-toan-man");
+    rerender(<DienThoaiLive toanMan ghim={{ ten: "Túi tote canvas" }} binhLuan={BINH_LUAN} soNguoiXem={12} />);
+    expect(khung().classList.contains("is-toan-man")).toBe(true);
+    expect(khung()).toHaveAttribute("data-toan-man");
+    expect(screen.getByText("LIVE")).toBeInTheDocument();
+    expect(screen.getByTestId("dien-thoai-ghim")).toBeInTheDocument();
+    expect(khung().querySelectorAll(".dt-bl-dong").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /Giỏ hàng/ })).toBeInTheDocument();
+  });
+
+  it("thẻ ghim có data-chup=the-ghim (tắt được), nút Mua có data-nut-chinh", () => {
+    const { rerender } = render(<DienThoaiLive ghim={{ ten: "Túi tote canvas", gia: 89000 }} data-chup="dien-thoai" />);
+    expect(screen.getByTestId("dien-thoai-ghim").getAttribute("data-chup")).toBe("the-ghim");
+    expect(khung().getAttribute("data-chup")).toBe("dien-thoai");
+    expect(screen.getByRole("button", { name: "Mua (tiền ảo)" })).toHaveAttribute("data-nut-chinh");
+    expect(screen.getByRole("button", { name: "Xem ngay" })).not.toHaveAttribute("data-nut-chinh");
+    rerender(<DienThoaiLive ghim={{ ten: "Túi tote canvas", gia: 89000 }} chupTheGhim={false} />);
+    expect(screen.getByTestId("dien-thoai-ghim")).not.toHaveAttribute("data-chup");
+  });
+
+  it("thanhPhanTren, thanhPhanDuoi và children nằm trong lớp phủ của khung", () => {
+    render(
+      <DienThoaiLive thanhPhanTren={<button type="button">Rút lui</button>} thanhPhanDuoi={<span>dưới</span>}>
+        <span>con</span>
+      </DienThoaiLive>,
+    );
+    expect(khung().querySelector(".dt-them-tren")?.textContent).toBe("Rút lui");
+    expect(khung().querySelector(".dt-them-duoi")?.textContent).toBe("dướicon");
+  });
+});
+
 describe("tệp nguồn dien-thoai", () => {
-  it("css: nút tròn 44 px, nút thẻ ghim 48 px, huy hiệu chữ 12 px, có giảm chuyển động, không xoay", () => {
+  it("css: nút tròn 44 px, nút thẻ ghim 48 px một dòng, chữ ≥ 12 px, khung hẹp, toàn màn, giảm chuyển động, không xoay", () => {
     const css = fs.readFileSync(path.resolve(__dirname, "../dien-thoai.css"), "utf8");
     const khoi = (sel: string) => css.slice(css.indexOf(`${sel} {`), css.indexOf("}", css.indexOf(`${sel} {`)));
     expect(khoi(".dt-nut-tron")).toMatch(/width:\s*44px/);
     expect(khoi(".dt-nut-tron")).toMatch(/height:\s*44px/);
     expect(khoi(".dt-nut")).toMatch(/min-height:\s*48px/);
-    expect(khoi(".dt-ai")).toMatch(/font-size:\s*12px/);
-    expect(khoi(".dt-ai")).toMatch(/min-height:\s*22px/);
+    expect(khoi(".dt-nut")).toMatch(/white-space:\s*nowrap/);
+    expect(khoi(".dt .dt-ai")).toMatch(/min-height:\s*22px/);
+    for (const m of css.matchAll(/font-size:\s*(\d+)px/g)) expect(Number(m[1])).toBeGreaterThanOrEqual(12);
+    expect(css).toMatch(/@container dt \(max-width: 259px\)/);
+    expect(khoi(".dt.is-toan-man")).toMatch(/height:\s*100%/);
     expect(css).toMatch(/prefers-reduced-motion:\s*reduce/);
     expect(css).not.toMatch(/rotate/);
   });

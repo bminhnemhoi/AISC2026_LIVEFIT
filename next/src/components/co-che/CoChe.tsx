@@ -2,6 +2,8 @@
 
 import React, { useEffect, useId, useRef, useState } from "react";
 import { CanCan, DienThoaiKhoi, DongXu, LichNiemPhong, useGiamChuyenDong, type MatKhoi } from "@/components/minh-hoa";
+import { NhanNguon, type MaNhan } from "@/components/nen";
+import { maNhanNguonTu } from "@/components/dien-thoai/nhan";
 import { BUOC_CO_CHE, CAU_DAN_CO_CHE, GHI_CHU_GHIM, KET_LUAN_CO_CHE, TIEU_DE_CO_CHE, type BuocCoChe, type MaBuoc } from "./noi-dung";
 import "./co-che.css";
 
@@ -24,8 +26,8 @@ export interface CoCheProps {
   the?: "h2" | "h3";
   /** câu dẫn dưới tiêu đề; null để ẩn (mặc định chỉ hiện ở `trang`) */
   cauDan?: string | null;
-  /** chip nguồn của hình, mặc định MINH HOẠ; null để ẩn */
-  nhan?: string | null;
+  /** chip nguồn của hình theo mã canon, mặc định MINH_HOA; null để ẩn. Chữ cũ trùng canon vẫn nhận, chữ ngoài canon bị bỏ. */
+  nhan?: MaNhan | string | null;
   /** hiện dòng "ghim ở đâu" (canon cau_ghim); mặc định true */
   ghiChuGhim?: boolean;
   /** wizard: bước đang hiện (0..3) khi muốn điều khiển từ ngoài */
@@ -79,27 +81,36 @@ export function HinhBuoc({ ma, dong = false, className }: { ma: MaBuoc; dong?: b
   );
 }
 
-/** Ba kết luận, mỗi chữ kèm một câu thường. */
-export function DanhSachKetLuan({ gon = false }: { gon?: boolean }) {
+/**
+ * Ba kết luận, mỗi chữ kèm câu canon. `chiDieuKien`: chỉ giữ phần điều kiện của câu (trước dấu hai chấm), cho chỗ
+ * chật như bốn thẻ nằm ngang của landing; câu đủ nằm trong ngăn kéo, wizard và bản SVG dọc.
+ */
+export function DanhSachKetLuan({ gon = false, chiDieuKien = false }: { gon?: boolean; chiDieuKien?: boolean }) {
   return (
     <ul className={`cc-ket-luan${gon ? " is-gon" : ""}`} aria-label="Ba kết luận có thể có">
       {KET_LUAN_CO_CHE.map((k) => (
-        <li key={k.ma} className={`cc-kl cc-kl-${k.ma}`}>
+        <li key={k.ma} className={`cc-kl cc-kl-${k.ma}`} data-ket-luan={k.id}>
           <span className="cc-kl-chu">{k.chu}</span>
-          <span className="cc-kl-cau">{k.cau}</span>
+          {chiDieuKien || !k.loiKhuyen ? (
+            <span className="cc-kl-cau">{chiDieuKien ? k.dieuKien : k.cau}</span>
+          ) : (
+            <span className="cc-kl-cau">
+              <b className="cc-kl-dk">{k.dieuKien}:</b> {k.loiKhuyen}
+            </span>
+          )}
         </li>
       ))}
     </ul>
   );
 }
 
-function NoiDungBuoc({ b, TheTieuDe, gon = false }: { b: BuocCoChe; TheTieuDe: "h3" | "h4"; gon?: boolean }) {
+function NoiDungBuoc({ b, TheTieuDe, gon = false, chiDieuKien = false }: { b: BuocCoChe; TheTieuDe: "h3" | "h4"; gon?: boolean; chiDieuKien?: boolean }) {
   return (
     <div className="cc-chu">
       <TheTieuDe className="cc-tieu-de-buoc">{b.tieuDe}</TheTieuDe>
       <p className="cc-cau">{b.cau}</p>
       <p className="cc-phu-de">{b.phuDe}</p>
-      {b.ma === "so-sanh" && <DanhSachKetLuan gon={gon} />}
+      {b.ma === "so-sanh" && <DanhSachKetLuan gon={gon} chiDieuKien={chiDieuKien} />}
     </div>
   );
 }
@@ -113,12 +124,13 @@ function SoBuoc({ so, tong }: { so: number; tong: number }) {
   );
 }
 
-function ChanCoChe({ ghiChuGhim, nhan }: { ghiChuGhim: boolean; nhan: string | null }) {
-  if (!ghiChuGhim && !nhan) return null;
+function ChanCoChe({ ghiChuGhim, nhan }: { ghiChuGhim: boolean; nhan: MaNhan | string | null }) {
+  const ma = maNhanNguonTu(nhan);
+  if (!ghiChuGhim && ma.length === 0) return null;
   return (
     <div className="cc-chan">
       {ghiChuGhim && <p className="cc-ghi-chu">{GHI_CHU_GHIM}</p>}
-      {nhan && <span className="mh-chip cc-nhan">{nhan}</span>}
+      {ma.length > 0 && <NhanNguon ma={ma} tinh className="cc-nhan" />}
     </div>
   );
 }
@@ -128,7 +140,7 @@ export function CoChe({
   tieuDe = TIEU_DE_CO_CHE,
   the: The = "h2",
   cauDan,
-  nhan = "MINH HOẠ",
+  nhan = "MINH_HOA",
   ghiChuGhim = true,
   buoc,
   onDoiBuoc,
@@ -169,7 +181,7 @@ export function CoChe({
               <SoBuoc so={b.so} tong={BUOC_CO_CHE.length} />
               <HinhBuoc ma={b.ma} dong={dong} />
             </div>
-            <NoiDungBuoc b={b} TheTieuDe={TheBuoc} gon={bienThe === "ngan"} />
+            <NoiDungBuoc b={b} TheTieuDe={TheBuoc} gon={bienThe === "ngan"} chiDieuKien={bienThe === "trang"} />
           </li>
         ))}
       </ol>

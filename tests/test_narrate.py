@@ -8,7 +8,10 @@ chép từ đầu vào. Các bất biến bị khóa ở đây:
   (phản biện khoa học ưu tiên #6);
 * huy hiệu ``thi_nghiem`` KHÔNG BAO GIỜ xuất hiện khi thiết kế không ước
   lượng được (chốt chống vượt rào của spec AI-LAYER);
-* khóa §7: khi ``khoa=True`` không câu nào chứa ước lượng/KTC/p;
+* khoá §7: khi ``khoa=True`` không câu nào chứa ước lượng, khoảng tin cậy hay p;
+* ngôn từ công khai (kế hoạch 3.1 mục 3): không dấu gạch dài, không viết tắt
+  khoảng tin cậy, "kiểm định ngẫu nhiên hoá", câu kết luận ĐỔI / GIỮ / ĐO THÊM
+  chép đúng khoá ``ket_luan`` của ``docs/canon/thuat-ngu.yaml``;
 * không bịa số: mọi token số trong câu truy được về đầu vào hoặc ngưỡng
   thiết kế đã khai báo (kiểm bằng bộ trích số đối kháng);
 * API: ``/experiment/summary`` và ``/sessions/{id}/bao-cao`` mang
@@ -19,8 +22,10 @@ chép từ đầu vào. Các bất biến bị khóa ở đây:
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import pytest
+import yaml
 from fastapi.testclient import TestClient
 
 from livelift.analysis import narrate
@@ -28,6 +33,7 @@ from livelift.analysis.narrate import (
     BADGE_QUAN_SAT,
     BADGE_THI_NGHIEM,
     BADGE_THIEU_DU_LIEU,
+    KET_LUAN_CANON,
     tom_tat_gop,
     tom_tat_phien,
     trang_thai_ket_luan,
@@ -153,11 +159,11 @@ def test_gop_null_la_ket_qua_hop_le_va_giai_k_tu_bang_luc():
         power_table=power,
     )
     assert len(cau) == 3
-    assert "Chưa đủ bằng chứng" in cau[0].text
+    assert KET_LUAN_CANON["DO_THEM"] in cau[0].text, "câu ĐO THÊM phải đúng câu canon"
     assert "kết quả hợp lệ" in cau[0].text, "NULL phải được nói như kết quả, không như lỗi"
     assert "còn chứa 0" in cau[0].text
-    # k = 18 - 2 = 16, giải từ bảng lực với CV đo được — không hardcode
-    assert "thêm ~16 phiên" in cau[2].text
+    # k = 18 - 2 = 16, giải từ bảng lực với CV đo được, không hardcode
+    assert "thêm khoảng 16 phiên" in cau[2].text
     assert "21%" in cau[2].text
     assert "0,62" in cau[2].text
     assert cau[2].badge == BADGE_THIEU_DU_LIEU
@@ -179,6 +185,7 @@ def test_gop_am_noi_thang_tac_dung_nguoc():
     )
     assert "GIẢM" in cau[0].text
     assert "phép đo thật" in cau[0].text
+    assert KET_LUAN_CANON["GIU"] in cau[0].text, "câu GIỮ phải đúng câu canon"
 
 
 def test_gop_thieu_tuyen_bo_thieu_bang_so():
@@ -225,7 +232,7 @@ def test_gop_khoa_7_khong_lo_uoc_luong_ke_ca_khi_duoc_truyen():
     assert len(cau) == 3
     assert ly_do in cau[0].text, "lý do khóa phải được chép nguyên văn"
     ca_ba = " ".join(c.text for c in cau)
-    for cam in ("1.234", "1,234", "0.9", "0,9", "1.5", "1,5", "KTC", "p =", "p <"):
+    for cam in ("1.234", "1,234", "0.9", "0,9", "1.5", "1,5", "KTC", "khoảng tin cậy", "p =", "p <"):
         assert cam not in ca_ba, f"khóa §7 mà vẫn lộ {cam!r}"
     assert all(c.badge != BADGE_THI_NGHIEM for c in cau)
 
@@ -290,10 +297,86 @@ def test_phien_duong_va_null_du_ba_cau_co_so():
     assert "16 khối" in duong[1].text
     assert "một phiên chưa phải chuỗi" in duong[2].text.lower()
 
+    assert KET_LUAN_CANON["DOI"] in duong[0].text, "câu ĐỔI phải đúng câu canon"
+
     null = tom_tat_phien(**chung, estimate=0.206, ci_low=-0.031, ci_high=0.396)
-    assert "Chưa đủ bằng chứng" in null[0].text
+    assert KET_LUAN_CANON["DO_THEM"] in null[0].text
     assert "kết quả hợp lệ" in null[0].text
     assert null[2].badge == BADGE_THIEU_DU_LIEU
+
+
+# ---------------------------------------------------------------------------
+# Ngôn từ công khai: canon ket_luan + chữ cấm trên mọi nhánh
+# ---------------------------------------------------------------------------
+
+_YAML_CANON = Path(__file__).resolve().parents[1] / "docs" / "canon" / "thuat-ngu.yaml"
+
+#: Chữ không được xuất hiện trong câu tóm tắt (hiện thẳng trên màn tổng kết).
+_CHU_CAM = (
+    "—",  # dấu gạch dài
+    "KTC",
+    "hoán vị",
+    "khóa",
+    "Khóa",
+    "null",
+    "~",
+    "đầu tiên",
+    "Hệ thống",
+    "lần vẽ lại",
+    "CV ",
+)
+
+
+def test_ket_luan_canon_khop_yaml():
+    """Ba câu kết luận chép nguyên văn ``ket_luan[].cau`` của thuat-ngu.yaml."""
+    canon = yaml.safe_load(_YAML_CANON.read_text(encoding="utf-8"))
+    tu_yaml = {k["id"]: k["cau"] for k in canon["ket_luan"]}
+    assert tu_yaml == KET_LUAN_CANON
+
+
+def _moi_nhanh() -> list[list[narrate.Cau]]:
+    power = [{"n_sessions": 18, "blocks_per_session": 16, "cv": 0.62, "mde_relative": 0.21}]
+    chung_gop = {"n_sessions": 2, "n_blocks": 32, "n_on": 16, "n_off": 16, "n_draws": 1000}
+    chung_phien = {
+        "loai_phien": "thi_nghiem",
+        "tong_binh_luan": 40,
+        "luot_nhap_hop_le": 50,
+        "thoi_luong_s": 5400.0,
+        "n_blocks": 16,
+        "n_on": 8,
+        "n_off": 8,
+        "n_draws": 1000,
+    }
+    return [
+        tom_tat_gop(**GOP_DUONG),
+        tom_tat_gop(**{**GOP_DUONG, "measured_compliance": None}),
+        tom_tat_gop(estimable=True, estimate=0.2, ci_low=-0.1, ci_high=0.4, p_value=0.2, power_table=power, **chung_gop),
+        tom_tat_gop(estimable=True, estimate=0.2, ci_low=-0.1, ci_high=0.4, p_value=0.2, **chung_gop),
+        tom_tat_gop(estimable=True, estimate=-0.8, ci_low=-1.2, ci_high=-0.4, p_value=0.002, **chung_gop),
+        tom_tat_gop(estimable=False, n_sessions=1, n_blocks=3, n_on=2, n_off=1),
+        tom_tat_gop(estimable=False, n_sessions=5, n_blocks=30, n_on=15, n_off=15),
+        tom_tat_gop(estimable=False, khoa=True, n_sessions=4, n_blocks=64, n_on=32, n_off=32),
+        tom_tat_phien(**chung_phien, estimable=True, estimate=1.2, ci_low=0.9, ci_high=1.5, p_value=0.001),
+        tom_tat_phien(**chung_phien, estimable=True, estimate=-1.2, ci_low=-1.5, ci_high=-0.9, p_value=0.001),
+        tom_tat_phien(**chung_phien, estimable=True, estimate=0.2, ci_low=-0.1, ci_high=0.4, p_value=0.3),
+        tom_tat_phien(**chung_phien, estimable=False),
+        tom_tat_phien(**chung_phien, khoa=True),
+        tom_tat_phien(loai_phien="quan_sat", tong_binh_luan=10),
+    ]
+
+
+def test_cau_khong_co_chu_cam_tren_moi_nhanh():
+    for cau in _moi_nhanh():
+        assert len(cau) == 3
+        for c in cau:
+            for cam in _CHU_CAM:
+                assert cam not in c.text, f"câu còn {cam!r}: {c.text!r}"
+
+
+def test_khoang_tin_cay_viet_bang_loi():
+    cau = tom_tat_gop(**GOP_DUONG)
+    assert "khoảng tin cậy 95% từ +0,932 đến +1,498" in cau[0].text
+    assert "kiểm định ngẫu nhiên hoá 1.000 lần" in cau[1].text
 
 
 # ---------------------------------------------------------------------------
@@ -338,7 +421,7 @@ def test_bao_cao_demo_vang_null_narrate_la_ket_qua_hop_le(vang):
     bc = _bao_cao(client, nhom["null"][0])
     cau = bc["tom_tat_3_cau"]
     assert len(cau) == 3
-    assert "Chưa đủ bằng chứng" in cau[0]["text"]
+    assert KET_LUAN_CANON["DO_THEM"] in cau[0]["text"]
     assert "kết quả hợp lệ" in cau[0]["text"]
     assert "còn chứa 0" in cau[0]["text"]
 

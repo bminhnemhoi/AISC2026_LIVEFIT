@@ -23,7 +23,8 @@
 #   U4 /phien/[id]                 the-doi-dau (hàng 3: hai câu trả lời cho cùng một câu hỏi)
 #   U4 /phien/[id]/nguoi-dan       nguoi-dan
 #   U5 /phien/[id]/tong-ket        ket-luan (thẻ kết luận + thước khoảng tin cậy)
-#   U7 /xem/[code]                 data-chup-bam="dong-y" trên nút đồng ý (bộ chọn chữ là đường lui)
+#   U7 /xem/[code]                 data-chup-bam="dong-y" trên nút đồng ý (bộ chọn chữ là đường lui);
+#                                  thẻ ghim: data-chup="the-ghim" hoặc testid dien-thoai-ghim của DienThoaiLive
 #   U8 /gioi-thieu                 hero, dai-khoi (dải 16 khối có đồng xu)
 # Phần tử không muốn vào ảnh (nút dev, thông báo tạm): gắn data-an-khi-chup (ẩn, giữ chỗ) hoặc
 # data-an-khi-chup="bo" (bỏ hẳn khỏi bố cục).
@@ -52,9 +53,9 @@ canh:
     buoc:
       - bam: ["[data-chup-bam='dong-y']", "[data-testid='xem-consent'] button.ph-btn-primary", "text=Tôi đồng ý và vào phòng"]
       - cho: ["[data-testid='xem-room']"]
-      - cho: ["[data-chup='the-ghim']", "[data-testid='xem-pinned']"]
+      - cho: ["[data-chup='the-ghim']", "[data-testid='dien-thoai-ghim']", "[data-testid='xem-pinned']"]
         trong_ms: 20000
-    ghi_chu: "Phòng xem khi khối BẬT có thẻ ghim. Khối đang TẮT thì bước chờ hết giờ: chạy lại khi tới khối BẬT. Cần phòng riêng (--ma-phong), không dùng phòng thử nội bộ."
+    ghi_chu: "Phòng xem khi khối BẬT có thẻ ghim (thẻ ghim của DienThoaiLive là [data-testid=dien-thoai-ghim]). Khối đang TẮT thì bước chờ hết giờ: chạy lại khi tới khối BẬT. Cần phòng riêng của một phiên dry_run (--ma-phong); chup_next hỏi API và chặn phòng của phiên được tính hoặc phòng thử nội bộ."
 
   - ten: xem-dong-y
     slide: ["M3"]

@@ -7,7 +7,9 @@ import type { BaoCao } from "@/lib/livelift-api/types";
  * Máy chủ là nơi khoá thật: khi `khoa=true` nó không chạy ước lượng nên không có số nào để lộ. Ở đây là lớp thứ hai:
  * - chỉ coi là "đã mở" khi máy chủ nói RÕ `khoa === false` (thiếu báo cáo, phiên quan sát, lỗi mạng: đều là khoá);
  * - báo cáo đang khoá bị xoá mọi trường ước lượng trước khi tới component, kể cả khi máy chủ lỡ gửi;
- * - nền BẬT/TẮT trên đường thời gian chỉ có ở phiên do máy sinh (MÔ PHỎNG) hoặc phòng dàn dựng (DÀN DỰNG).
+ * - nền BẬT/TẮT trên đường thời gian (và mọi thứ để so BẬT với TẮT khi còn khoá) chỉ có ở phiên do máy sinh (MÔ PHỎNG)
+ *   hoặc phòng dàn dựng (DÀN DỰNG). Phiên THẬT, CHẠY THỬ và THỬ NỘI BỘ đang live: không, tới khi máy chủ trả
+ *   `khoa=false`.
  */
 
 type CoKetQua = Pick<BaoCao, "loai_phien" | "ket_qua_thi_nghiem">;
@@ -41,12 +43,24 @@ function nhanChinh(text: string): string {
   return text.split("·")[0].trim();
 }
 
+/** Phòng THỬ NỘI BỘ mang nhãn "DÀN DỰNG · THỬ NỘI BỘ" (desk.sourceLabel) nhưng có người thật bấm: khoá như phiên thật. */
+function laThuNoiBo(text: string): boolean {
+  return /THỬ NỘI BỘ/.test(text);
+}
+
 /**
- * Có được tô nền BẬT/TẮT lên đường thời gian không. MÔ PHỎNG và DÀN DỰNG: được, và nói rõ là mở khoá sớm.
- * THẬT hay CHẠY THỬ đang live: không, đường vẽ một màu tới khi hết phiên.
+ * Có được tô nền BẬT/TẮT lên đường thời gian (và mở sớm mọi thứ so BẬT với TẮT) không. MÔ PHỎNG và DÀN DỰNG: được, và
+ * nói rõ là mở khoá sớm. THẬT, CHẠY THỬ hay THỬ NỘI BỘ đang live: không, đường vẽ một màu tới khi hết phiên.
  */
 export function quyenToNenKhoi(nguon: Pick<SourceLabel, "kind" | "text">, dangLive: boolean): QuyenToNen {
-  if (NGUON_DUOC_TO_NEN.has(nguon.kind)) return { cho: true, dong: `mở khoá sớm vì ${nhanChinh(nguon.text)}` };
+  const thuNoiBoDangLive = dangLive && laThuNoiBo(nguon.text);
+  if (NGUON_DUOC_TO_NEN.has(nguon.kind) && !thuNoiBoDangLive) return { cho: true, dong: `mở khoá sớm vì ${nhanChinh(nguon.text)}` };
+  if (thuNoiBoDangLive) {
+    return {
+      cho: false,
+      dong: "Phòng THỬ NỘI BỘ đang live: không tô nền theo khối tới khi hết phiên, để không ai nhìn trộm kết quả giữa chừng.",
+    };
+  }
   if (dangLive) {
     return {
       cho: false,

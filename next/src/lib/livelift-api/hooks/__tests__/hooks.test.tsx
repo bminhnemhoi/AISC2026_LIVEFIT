@@ -214,8 +214,9 @@ describe("useDuLieuPhien: khoá §7", () => {
     expect(result.current.khoa).toBe(true);
     expect(result.current.khoiDo).toBeNull();
     expect(result.current.baoCao?.ket_qua_thi_nghiem).toMatchObject({ khoa: true, estimate: null, ci_low: null, ci_high: null, p_value: null });
-    // Phòng DÀN DỰNG được tô nền khối (mở khoá sớm), số ước lượng thì không.
-    expect(result.current.toNen).toEqual({ cho: true, dong: "mở khoá sớm vì DÀN DỰNG" });
+    // Phòng THỬ NỘI BỘ đang live: khoá như phiên thật, không tô nền khối, không đường nhỏ Tỷ lệ nhấp (khoá §7).
+    expect(result.current.toNen.cho).toBe(false);
+    expect(result.current.toNen.dong).toContain("THỬ NỘI BỘ đang live");
     expect(result.current.nguon?.text).toBe("DÀN DỰNG · THỬ NỘI BỘ");
   });
 

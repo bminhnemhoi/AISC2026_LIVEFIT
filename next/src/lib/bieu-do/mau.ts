@@ -6,8 +6,8 @@
  *
  * - Người xem / Lượt nhấp / Đơn, cặp kề nhau: ĐẠT mọi cổng, sáng (nền #f6f3ee) và tối (nền #1f1a17).
  * - BẬT / TẮT: tách màu cho người mù màu ĐẠT (sáng ΔE 15,6; tối ΔE 14,6). TẮT cố ý là xám (cổng "độ đậm màu" báo
- *   trượt là chủ ý). TẮT sáng chỉ đạt 2,94:1 trên nền, nên luôn kèm mã phụ: sọc chéo, chữ T, chấm rỗng, chú giải
- *   và bảng số.
+ *   trượt là chủ ý). TẮT sáng chỉ đạt 2,94:1 trên nền, nên màu tô giữ D-026 nhưng VIỀN chấm TẮT và sọc vẽ bằng
+ *   `VIEN_TAT` (≥ 3:1, WCAG 1.4.11), kèm mã phụ: sọc chéo, chữ T, chấm rỗng, chú giải và bảng số.
  * - Người xem và Đơn KHÔNG phân biệt được với người mù màu đỏ lục (ΔE 3,0): không bao giờ đặt hai màu này cạnh nhau
  *   mà không có chữ. Trên giao diện chúng không chung một biểu đồ; bước phễu luôn có tên.
  *
@@ -29,6 +29,18 @@ export const MAU: Readonly<Record<TenMau, { sang: string; toi: string }>> = {
 /** Nền biểu đồ Calm Studio, để kiểm tương phản. */
 export const NEN = { sang: "#f6f3ee", toi: "#1f1a17" } as const;
 
+/** Mặt thẻ chứa biểu đồ (nhạt hơn nền ở giao diện sáng, đậm hơn ở giao diện tối), để kiểm tương phản. */
+export const MAT_THE = { sang: "#fbf7ef", toi: "#2e2722" } as const;
+
+/**
+ * Viền chấm TẮT và sọc chéo của khối TẮT: cùng sắc xám với TẮT nhưng đậm hơn để phần tử đồ hoạ đạt ≥ 3:1 trên nền
+ * (sáng trùng `--n-tat-chu` của components/nen). Màu tô TẮT vẫn là D-026.
+ */
+export const VIEN_TAT = { sang: "#4a4f57", toi: "#a0a5ae" } as const;
+
+/** Trục và vạch chia của biểu đồ: ≥ 3:1 trên cả nền và mặt thẻ (biến `--bd-truc`). */
+export const TRUC = { sang: "#8a7d6c", toi: "#8a7d6c" } as const;
+
 export const BIEN: Readonly<Record<TenMau, string>> = {
   bat: "var(--bd-bat)",
   tat: "var(--bd-tat)",
@@ -38,21 +50,5 @@ export const BIEN: Readonly<Record<TenMau, string>> = {
   trung: "var(--bd-trung)",
 };
 
-function kenh(c: number): number {
-  const s = c / 255;
-  return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-}
-
-/** Độ chói tương đối WCAG 2.x của một mã #rrggbb. */
-export function doChoi(hex: string): number {
-  const m = /^#([0-9a-f]{6})$/i.exec(hex);
-  if (!m) throw new Error(`Mã màu không hợp lệ: ${hex}`);
-  const n = parseInt(m[1], 16);
-  return 0.2126 * kenh((n >> 16) & 255) + 0.7152 * kenh((n >> 8) & 255) + 0.0722 * kenh(n & 255);
-}
-
-/** Tỷ lệ tương phản WCAG giữa hai màu, từ 1 đến 21. */
-export function tuongPhan(a: string, b: string): number {
-  const [l1, l2] = [doChoi(a), doChoi(b)].sort((x, y) => y - x);
-  return (l1 + 0.05) / (l2 + 0.05);
-}
+/** Biến CSS của viền chấm TẮT và sọc (xem `VIEN_TAT`). */
+export const BIEN_VIEN_TAT = "var(--bd-tat-vien)";

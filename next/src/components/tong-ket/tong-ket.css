@@ -1,0 +1,344 @@
+/* Màn tổng kết (U5). Chỉ dùng token --n-* của nen.css; lưới 8 px, bo 12 px, bóng mềm. */
+
+.tk {
+  container: tk / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--n-k6, 24px);
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: var(--n-phong);
+  color: var(--n-muc);
+  font-size: var(--n-c16, 16px);
+  line-height: 1.5;
+}
+
+.tk-loi {
+  margin: 0;
+  padding: var(--n-k3) var(--n-k4);
+  border-radius: var(--n-bo);
+  background: var(--n-gach-nhat);
+  color: var(--n-gach-dam);
+}
+.tk-cho {
+  margin: 0;
+  color: var(--n-muc-2);
+}
+
+/* ---------- thẻ kết luận (ảnh slide) ---------- */
+
+.tk-ket-luan {
+  --tk-nhan: var(--n-vang);
+  --tk-nhan-nen: var(--n-vang-nhat);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--n-k6);
+  padding: var(--n-k6);
+  border: 1px solid var(--n-vach);
+  border-top: 6px solid var(--tk-nhan);
+  border-radius: var(--n-bo);
+  background: var(--n-be-mat);
+  box-shadow: var(--n-bong);
+}
+.tk-ket-luan[data-loai="doi"] {
+  --tk-nhan: var(--n-bat);
+  --tk-nhan-nen: var(--n-bat-nhat);
+}
+.tk-ket-luan[data-loai="giu"] {
+  --tk-nhan: var(--n-muc-2);
+  --tk-nhan-nen: var(--n-be-mat-2);
+}
+.tk-ket-luan[data-loai="khoa"],
+.tk-ket-luan[data-loai="dang_tai"] {
+  --tk-nhan: var(--n-muc-3);
+  --tk-nhan-nen: var(--n-be-mat-2);
+}
+
+.tk-kl-trai {
+  display: flex;
+  flex-direction: column;
+  gap: var(--n-k3);
+  min-width: 0;
+}
+.tk-kl-dau {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--n-k2) var(--n-k3);
+}
+.tk-kl-dong {
+  color: var(--n-muc-2);
+  font-size: var(--n-c16);
+  font-variant-numeric: tabular-nums;
+}
+.tk-kl-hoi {
+  margin: var(--n-k2) 0 0;
+  font-size: var(--n-c18);
+  font-weight: 600;
+  color: var(--n-muc-2);
+  line-height: 1.4;
+}
+.tk-kl-chu {
+  display: flex;
+  align-items: center;
+  gap: var(--n-k3);
+  min-height: 56px;
+}
+.tk-kl-chu strong {
+  font-size: var(--n-c40, 40px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--n-muc);
+}
+.tk-kl-chu strong.tk-kl-chu-vua {
+  font-size: var(--n-c32, 32px);
+}
+.tk-kl-bieu-tuong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--tk-nhan-nen);
+  color: var(--tk-nhan);
+}
+.tk-kl-cau {
+  margin: 0;
+  max-width: 52ch;
+  font-size: var(--n-c18);
+  line-height: 1.55;
+  color: var(--n-muc);
+}
+.tk-kl-phai {
+  min-width: 0;
+  align-self: center;
+}
+
+/* Thẻ kết luận đã nói vùng đúng bằng chữ lớn: bỏ danh sách ba vùng của thước để thẻ gọn trong màn đầu. */
+.tk-kl-phai .bd-vung-ds {
+  display: none;
+}
+
+/* Điện thoại: thẻ phải lọt màn đầu (trên thanh dưới 64 px). Câu nghĩa của khoảng tin cậy đã có ở Chi tiết. */
+@container tk (max-width: 599px) {
+  .tk-ket-luan {
+    gap: var(--n-k4);
+    padding: var(--n-k4);
+  }
+  .tk-kl-hoi {
+    margin-top: 0;
+    font-size: var(--n-c16);
+  }
+  .tk-kl-cau {
+    font-size: var(--n-c16);
+  }
+  .tk-kl-phai .bd-phu-de {
+    display: none;
+  }
+  .tk-o {
+    padding: var(--n-k4);
+  }
+}
+
+@container tk (min-width: 880px) {
+  .tk-ket-luan {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: var(--n-k8);
+    padding: var(--n-k6) var(--n-k8) var(--n-k8);
+  }
+}
+
+/* ---------- ba biểu đồ ---------- */
+
+.tk-luoi {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--n-k6);
+}
+@container tk (min-width: 880px) {
+  .tk-luoi {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.tk-o {
+  min-width: 0;
+  padding: var(--n-k6);
+  border: 1px solid var(--n-vach);
+  border-radius: var(--n-bo);
+  background: var(--n-be-mat);
+  box-shadow: var(--n-bong);
+}
+
+/* ---------- phần dưới ---------- */
+
+.tk-duoi {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--n-k6);
+}
+@container tk (min-width: 880px) {
+  .tk-duoi {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+  .tk-rong {
+    grid-column: 1 / -1;
+  }
+}
+
+.tk-tom-tat,
+.tk-chua-biet,
+.tk-loi-dan {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--n-k3);
+}
+.tk-tom-tat {
+  counter-reset: tk-cau;
+}
+.tk-tom-tat li {
+  counter-increment: tk-cau;
+  position: relative;
+  padding-left: var(--n-k8);
+  font-size: var(--n-c16);
+  line-height: 1.6;
+}
+.tk-tom-tat li::before {
+  content: counter(tk-cau);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--n-be-mat-2);
+  color: var(--n-muc);
+  font-size: var(--n-c13);
+  font-weight: 700;
+}
+.tk-huy-hieu {
+  display: inline-block;
+  margin-right: var(--n-k2);
+  padding: 0 var(--n-k2);
+  border-radius: 999px;
+  background: var(--n-be-mat-2);
+  color: var(--n-muc-2);
+  font-size: var(--n-c13);
+  font-weight: 600;
+  line-height: 22px;
+  vertical-align: 1px;
+}
+.tk-chua-biet li {
+  position: relative;
+  padding-left: var(--n-k6);
+  font-size: var(--n-c16);
+}
+.tk-chua-biet li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0.65em;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--n-vang);
+}
+.tk-loi-dan li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--n-k3);
+  font-size: var(--n-c16);
+}
+.tk-loi-dan-gio {
+  color: var(--n-muc-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.tk-tiep {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--n-k4);
+  padding: var(--n-k6);
+  border-radius: var(--n-bo);
+  background: var(--n-be-mat-2);
+}
+.tk-tiep-cau {
+  margin: 0;
+  font-size: var(--n-c18);
+  font-weight: 600;
+  max-width: 60ch;
+}
+
+.tk-chi-tiet {
+  border: 1px solid var(--n-vach);
+  border-radius: var(--n-bo);
+  background: var(--n-be-mat);
+}
+.tk-chi-tiet > summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--n-k6);
+  font-weight: 600;
+  font-size: var(--n-c16);
+  cursor: pointer;
+  border-radius: var(--n-bo);
+}
+.tk-chi-tiet > summary:focus-visible {
+  outline: 3px solid var(--n-muc);
+  outline-offset: 2px;
+}
+.tk-chi-tiet[open] > summary {
+  border-bottom: 1px solid var(--n-vach);
+  border-radius: var(--n-bo) var(--n-bo) 0 0;
+}
+.tk-dl {
+  margin: 0;
+  padding: var(--n-k4) var(--n-k6);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 var(--n-k8);
+}
+@container tk (min-width: 880px) {
+  .tk-dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.tk-dl-dong {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--n-k4);
+  padding: var(--n-k2) 0;
+  border-bottom: 1px dashed var(--n-vach);
+  font-size: var(--n-c16);
+}
+.tk-dl-dong dt {
+  flex: 0 0 auto;
+  max-width: 55%;
+  color: var(--n-muc-2);
+}
+.tk-dl-dong dd {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.tk-chu-nho {
+  margin: 0;
+  padding: 0 var(--n-k6) var(--n-k4);
+  color: var(--n-muc-2);
+  font-size: var(--n-c14);
+}

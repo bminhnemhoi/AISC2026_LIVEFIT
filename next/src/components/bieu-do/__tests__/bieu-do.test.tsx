@@ -88,6 +88,16 @@ describe("thước khoảng tin cậy khi đã mở", () => {
     kiemChu(screen.getByTestId("bd-thuoc"));
   });
 
+  it("lý do của máy chủ qua chuanHoaChu: không gạch dài, không chữ tắt KTC (soát đợt 1 mục 9)", () => {
+    const k = { ...chuaDu.baoCao.ket_qua_thi_nghiem!, message: "Chưa xác định KTC — cần thêm khối TẮT" };
+    const p = thuocTuBaoCao({ ...chuaDu.baoCao, ket_qua_thi_nghiem: k });
+    expect(p.lyDo).toBe("Chưa xác định khoảng tin cậy, cần thêm khối TẮT");
+    render(<ThuocKhoangTinCay khoa={false} lyDo="KTC rỗng — thiếu khối" />);
+    const o = screen.getByTestId("bd-thuoc");
+    expect(o.textContent).toContain("khoảng tin cậy rỗng, thiếu khối");
+    kiemChu(o);
+  });
+
   it("đã mở nhưng thiếu khối: nói lý do, không vẽ thước", () => {
     render(<ThuocKhoangTinCay {...thuocTuBaoCao(chuaDu.baoCao)} />);
     expect(screen.queryByTestId("bd-thuoc-ve")).toBeNull();
@@ -132,7 +142,13 @@ describe("chấm theo khối khi đã mở", () => {
     const bang = screen.getByRole("table");
     expect(within(bang).getAllByRole("row")).toHaveLength(1 + 16 + 2);
     expect(screen.queryByTestId("bd-cham-ve")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Xem biểu đồ" }));
+    // Một nhãn cố định, trạng thái ở aria-pressed (soát đợt 1 mục 16).
+    const nutSau = screen.getByRole("button", { name: "Xem dạng bảng" });
+    expect(nutSau).toBe(nut);
+    expect(nutSau).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: "Xem biểu đồ" })).toBeNull();
+    fireEvent.click(nutSau);
+    expect(nutSau).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByTestId("bd-cham-ve")).toBeInTheDocument();
   });
 });
@@ -146,6 +162,35 @@ describe("đường thời gian", () => {
     expect(screen.getByTestId("bd-dong-to-nen").textContent).toContain("không tô nền theo khối");
     expect(screen.queryByText(/BẬT: LiveLift ghim/)).toBeNull();
     expect(screen.getByRole("img").getAttribute("aria-label")).not.toContain("Nền tô theo khối");
+  });
+
+  it("lỡ truyền toNenKhoi mà quên nguon: không tô nền, không tự ghi dòng mở khoá (soát đợt 1 mục 3)", () => {
+    render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi dangLive thoiLuongS={5400} />);
+    expect(screen.queryByTestId("bd-dai-khoi")).toBeNull();
+    expect(screen.queryByTestId("bd-dong-to-nen")).toBeNull();
+    expect(screen.queryByText(/mở khoá sớm/)).toBeNull();
+    expect(screen.queryByText(/BẬT: LiveLift ghim/)).toBeNull();
+  });
+
+  it("phòng THỬ NỘI BỘ đang live: không tô nền theo khối, nói vì sao", () => {
+    const nguon = sourceLabel({ platform: "lab", is_demo: false, dry_run: true });
+    expect(nguon.text).toBe("DÀN DỰNG · THỬ NỘI BỘ");
+    render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi nguon={nguon} dangLive />);
+    expect(screen.queryByTestId("bd-dai-khoi")).toBeNull();
+    expect(screen.getByTestId("bd-dong-to-nen").textContent).toContain("THỬ NỘI BỘ đang live");
+    expect(screen.queryByText(/mở khoá sớm/)).toBeNull();
+  });
+
+  it("phiên MÔ PHỎNG không bật toNenKhoi: không nền, không dòng mở khoá", () => {
+    render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} nguon={sourceLabel(live.phien)} dangLive />);
+    expect(screen.queryByTestId("bd-dai-khoi")).toBeNull();
+    expect(screen.queryByTestId("bd-dong-to-nen")).toBeNull();
+  });
+
+  it("ghiChu của người gọi (d.toNen.dong) được hiện nguyên văn", () => {
+    render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi nguon={sourceLabel(live.phien)} dangLive ghiChu="mở khoá sớm vì MÔ PHỎNG" />);
+    expect(screen.getByTestId("bd-dai-khoi")).toBeInTheDocument();
+    expect(screen.getByTestId("bd-dong-to-nen").textContent).toBe("mở khoá sớm vì MÔ PHỎNG");
   });
 
   it("không truyền toNenKhoi thì không tô nền, dù là phiên MÔ PHỎNG", () => {
@@ -166,11 +211,12 @@ describe("đường thời gian", () => {
   });
 
   it("phòng DÀN DỰNG được tô nền, có nhãn nguồn", () => {
-    const nguon = sourceLabel({ platform: "lab", is_demo: false, dry_run: true });
+    const nguon = sourceLabel({ platform: "lab", is_demo: false, dry_run: false });
+    expect(nguon.text).toBe("DÀN DỰNG");
     render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi nguon={nguon} dangLive />);
     expect(screen.getByTestId("bd-dai-khoi")).toBeInTheDocument();
     expect(screen.getByTestId("bd-dong-to-nen").textContent).toBe("mở khoá sớm vì DÀN DỰNG");
-    expect(screen.getByText("DÀN DỰNG · THỬ NỘI BỘ")).toBeInTheDocument();
+    expect(screen.getByText("DÀN DỰNG")).toBeInTheDocument();
   });
 
   it("câu mô tả thay ảnh và bảng 5 phút", () => {

@@ -7,6 +7,7 @@ import { moTaThuoc } from "@/lib/bieu-do/mo-ta";
 import { soDau, soGon } from "@/lib/bieu-do/so";
 import { mienDoiXung, thangTuyenTinh } from "@/lib/bieu-do/thang";
 import { kep } from "@/lib/bieu-do/ve";
+import { chuanHoaChu } from "@/lib/livelift-api/gop";
 import type { BaoCao } from "@/lib/livelift-api/types";
 import { KhungBieuDo, OKhoa, OTrong, useBeRong, type MucTieuDe } from "./dung-chung";
 
@@ -38,7 +39,8 @@ export function thuocTuBaoCao(baoCao: BaoCao | null | undefined): Pick<ThuocKhoa
   if (!daMoKhoa(baoCao)) return { khoa: true };
   const k = baoCao!.ket_qua_thi_nghiem!;
   if (!k.estimable || k.estimate == null || k.ci_low == null || k.ci_high == null) {
-    return { khoa: false, lyDo: k.message ?? "Chưa đủ khối bốc thăm để ước lượng." };
+    // Lý do do máy chủ viết có thể có dấu gạch dài hay chữ tắt KTC: qua chuanHoaChu như rung.ts.
+    return { khoa: false, lyDo: chuanHoaChu(k.message ?? "Chưa đủ khối bốc thăm để ước lượng.") };
   }
   return { khoa: false, uocLuong: k.estimate, thap: k.ci_low, cao: k.ci_high };
 }
@@ -73,7 +75,7 @@ export function ThuocKhoangTinCay({ khoa, uocLuong, thap, cao, lyDo, nhan, tieuD
   if (!coSo || !vung) {
     return (
       <KhungBieuDo tieuDe={tieuDe} phuDe={phuDe} nhan={nhan} moTa={`${tieuDe}: chưa có ước lượng.`} muc={muc} testId="bd-thuoc">
-        <OTrong>{lyDo ? `Chưa có ước lượng. ${lyDo}` : "Chưa có ước lượng."}</OTrong>
+        <OTrong>{lyDo ? `Chưa có ước lượng. ${chuanHoaChu(lyDo)}` : "Chưa có ước lượng."}</OTrong>
       </KhungBieuDo>
     );
   }
@@ -87,6 +89,8 @@ export function ThuocKhoangTinCay({ khoa, uocLuong, thap, cao, lyDo, nhan, tieuD
   const xThap = x(thap);
   const xCao = x(cao);
   const xUoc = x(uocLuong);
+  // Nhãn thước dài (canon nhan_thuoc); khung hẹp thì chỉ giữ chữ lớn để hai nhãn hai bên không chồng nhau.
+  const nhanVung = (v: VungKetLuan): string => (W >= 440 ? KET_LUAN[v].nhanThuoc : KET_LUAN[v].chu);
 
   return (
     <KhungBieuDo
@@ -121,10 +125,10 @@ export function ThuocKhoangTinCay({ khoa, uocLuong, thap, cao, lyDo, nhan, tieuD
           <rect x={DEM.trai} y={20} width={Math.max(0, x0 - DEM.trai)} height={yTruc - 20} fill="var(--bd-vung-giu)" />
           <rect x={x0} y={20} width={Math.max(0, W - DEM.phai - x0)} height={yTruc - 20} fill="var(--bd-vung-doi)" />
           <text x={DEM.trai + 6} y={14} className={vung === "giu" ? "bd-chu-dam" : undefined}>
-            {KET_LUAN.giu.nhanThuoc}
+            {nhanVung("giu")}
           </text>
           <text x={W - DEM.phai - 6} y={14} textAnchor="end" className={vung === "doi" ? "bd-chu-dam" : undefined}>
-            {KET_LUAN.doi.nhanThuoc}
+            {nhanVung("doi")}
           </text>
 
           <line x1={DEM.trai} x2={W - DEM.phai} y1={yTruc} y2={yTruc} className="bd-truc" />
@@ -138,7 +142,7 @@ export function ThuocKhoangTinCay({ khoa, uocLuong, thap, cao, lyDo, nhan, tieuD
           ))}
           <line x1={x0} x2={x0} y1={20} y2={yTruc + 6} className="bd-vach-0" data-testid="bd-vach-0" />
           <text x={x0} y={yTruc + 32} textAnchor="middle" className={vung === "do_them" ? "bd-chu-dam" : undefined}>
-            {KET_LUAN.do_them.nhanThuoc}
+            {nhanVung("do_them")}
           </text>
 
           {/* khoảng tin cậy và điểm ước lượng: một chuỗi, màu mực */}

@@ -18,8 +18,10 @@ import { KhungBieuDo, MauSocTat, ONhac, OTrong, useBeRong, useMaSvg, type MucTie
  * Đường thời gian: hai biểu đồ nhỏ dùng chung trục thời gian (người xem ở trên, Tỷ lệ nhấp ở dưới), không có trục y
  * thứ hai. Trục giá trị bắt đầu ở 0. Nhãn trực tiếp ở điểm cuối mỗi đường; rê chuột có vạch dọc và ô nhắc.
  *
- * Khoá §7: nền BẬT/TẮT chỉ tô khi `toNenKhoi` VÀ nguồn cho phép (MÔ PHỎNG, DÀN DỰNG), kèm dòng "mở khoá sớm vì ...".
- * Phiên THẬT đang live vẽ một màu, không tô nền theo khối, kể cả khi lỡ truyền `toNenKhoi`.
+ * Khoá §7: nền BẬT/TẮT chỉ tô khi `toNenKhoi` VÀ có `nguon` VÀ nguồn cho phép (`quyenToNenKhoi(...).cho === true`:
+ * MÔ PHỎNG, DÀN DỰNG). Thiếu `nguon` thì không tô nền và không tự ghi dòng nào. Phiên THẬT, CHẠY THỬ hay THỬ NỘI BỘ
+ * đang live vẽ một màu, kể cả khi lỡ truyền `toNenKhoi`. Dòng giải thích dưới biểu đồ chỉ lấy từ `ghiChu` (thường là
+ * `DuLieuPhien.toNen.dong`) hoặc từ quyền tính theo `nguon`.
  */
 
 export interface DuongThoiGianProps {
@@ -28,12 +30,12 @@ export interface DuongThoiGianProps {
   batDauTs: string | null | undefined;
   /** Lịch khối (chỉ dùng để tô nền khi được phép). */
   khoi?: Block[];
-  /** Muốn tô nền BẬT/TẮT. Chỉ có tác dụng với phiên MÔ PHỎNG hoặc DÀN DỰNG. */
+  /** Muốn tô nền BẬT/TẮT. Chỉ có tác dụng khi có `nguon` và nguồn là MÔ PHỎNG hoặc DÀN DỰNG (không phải THỬ NỘI BỘ đang live). */
   toNenKhoi?: boolean;
-  /** Nhãn nguồn của phiên; có thì biểu đồ tự kiểm quyền tô nền (lớp bảo vệ thứ hai). */
+  /** Nhãn nguồn của phiên; biểu đồ tự kiểm quyền tô nền (lớp bảo vệ thứ hai). Thiếu thì không tô nền. */
   nguon?: Pick<SourceLabel, "kind" | "text"> | null;
   dangLive?: boolean;
-  /** Ghi đè dòng giải thích dưới biểu đồ. */
+  /** Dòng giải thích dưới biểu đồ (thường là `DuLieuPhien.toNen.dong`). Không truyền thì lấy theo `nguon`, không có thì không ghi gì. */
   ghiChu?: string | null;
   /** Độ dài dự kiến (giây): trục x kéo tới đây để đường mọc dần khi live. */
   thoiLuongS?: number | null;
@@ -46,7 +48,7 @@ export interface DuongThoiGianProps {
   muc?: MucTieuDe;
 }
 
-const DEM = { trai: 44, phai: 60, tren: 22, trenCoKhoi: 40, duoi: 26, giua: 34 };
+const DEM = { trai: 44, phai: 60, tren: 32, trenCoKhoi: 40, duoi: 26, giua: 34 };
 
 export function DuongThoiGian({
   ticks,
@@ -69,9 +71,10 @@ export function DuongThoiGian({
 
   const diem = useMemo(() => chuoiThoiGian(ticks, batDauTs, cuaSoS), [ticks, batDauTs, cuaSoS]);
   const quyen = nguon ? quyenToNenKhoi(nguon, dangLive) : null;
-  const choToNen = toNenKhoi && khoi.length > 0 && (quyen ? quyen.cho : true);
+  const choToNen = toNenKhoi && khoi.length > 0 && quyen?.cho === true;
   const dai: DaiKhoi[] | null = useMemo(() => (choToNen ? daiKhoi(khoi) : null), [choToNen, khoi]);
-  const dong = choToNen ? (ghiChu ?? quyen?.dong ?? "mở khoá sớm vì MÔ PHỎNG") : (ghiChu ?? quyen?.dong ?? null);
+  // "mở khoá sớm" chỉ nói khi thật sự có nền khối; lời giải thích vì sao khoá thì luôn được nói.
+  const dong = ghiChu ?? (quyen && (!quyen.cho || choToNen) ? quyen.dong : null);
 
   const moTa = moTaDuongThoiGian(diem, { cuaSoS, dai });
   const bang = diem.length ? bangDuongThoiGian(diem, dai) : null;
@@ -199,7 +202,7 @@ export function DuongThoiGian({
                 </text>
               </g>
             ))}
-            <text x={0} y={dai ? 12 : yTren0 - 8} className="bd-chu-dam">
+            <text x={0} y={dai ? 12 : yTren0 - 14} className="bd-chu-dam">
               Người xem
             </text>
             <text x={0} y={yDuoi0 - 12} className="bd-chu-dam">

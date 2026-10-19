@@ -2,9 +2,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { HinhMon, Icons, NguoiDanVeTay, timMon, useGiamChuyenDong } from "@/components/minh-hoa";
-import { NHAN_CONG_BO_THEO_MA, NHAN_NGUON_THEO_MA } from "@/lib/tu-ngu";
+import { NhanCongBo, NhanNguon, useDaGan, type MaNhan } from "@/components/nen";
+import { NHAN_CONG_BO_THEO_MA } from "@/lib/tu-ngu";
 import { dinhDangGia, dinhDangNguoiXem, monDangNoi, nguonVideo, type DoanDongThoiGian } from "./dong-thoi-gian";
-import { useCheDoAnhPoster, useDaGan } from "./hooks";
+import { useCheDoAnhPoster } from "./hooks";
+import { maNhanNguonTu } from "./nhan";
 import "@/components/minh-hoa/minh-hoa.css";
 import "./dien-thoai.css";
 
@@ -13,10 +15,18 @@ import "./dien-thoai.css";
  * landing và /minh-hoa. Bố cục mượn cách sắp của live trên điện thoại (không lấy logo hay màu của nền tảng nào):
  * LIVE, số người xem, tim bay lên, bình luận chạy, thẻ ghim thẳng có nút "Xem ngay" / "Mua (tiền ảo)", nút giỏ hàng.
  *
- * Nhãn công bố (D-015): khi `laNguoiDanAI`, huy hiệu HTML "NGƯỜI DẪN AI · GIỌNG TỔNG HỢP" luôn hiện (cả khi tạm dừng,
- * cả khi dùng hình dự phòng) và khung mang thuộc tính `data-nguoi-dan-ai`. Chế độ poster (`cheDoPoster` hoặc
- * `?anh-poster=1`) không có video người dẫn AI nào: khung vẽ người dẫn vẽ tay + chip MINH HOẠ, nên không mang huy hiệu
- * và không có `data-nguoi-dan-ai` (render3.py của poster từ chối khi còn thuộc tính này).
+ * Nhãn công bố (D-015): huy hiệu "NGƯỜI DẪN AI · GIỌNG TỔNG HỢP" (NhanCongBo của nền) và thuộc tính
+ * `data-nguoi-dan-ai` hiện khi và chỉ khi khung đang thật sự hiện nội dung do AI tạo, tức `laNguoiDanAI` và một trong
+ * hai: video người dẫn (`src`) đang được nạp, hoặc ảnh tĩnh dự phòng `anhDuPhong` (ảnh chụp từ chính video AI). Đã
+ * hiện thì hiện liên tục, cả lúc tạm dừng. Khi chỉ có người dẫn vẽ tay (chưa có tệp, video lỗi mà không có ảnh dự
+ * phòng, chế độ poster `cheDoPoster` hoặc `?anh-poster=1`) thì không có huy hiệu AI, không có `data-nguoi-dan-ai`,
+ * thay bằng chip MINH HOẠ (render3.py của poster từ chối khi còn thuộc tính này).
+ *
+ * `toanMan`: bỏ viền máy, phủ đầy khung cha (phòng xem trên điện thoại thật: cha cao 100dvh). Cha không có chiều cao
+ * thì khung giữ tỷ lệ 9:16 theo bề ngang. Mọi lớp phủ giữ nguyên.
+ *
+ * Hợp đồng chụp: thẻ ghim mang `data-chup="the-ghim"` (tắt bằng `chupTheGhim={false}` khi trang có hai khung cùng
+ * ghim); nút "Mua (tiền ảo)" mang `data-nut-chinh`.
  */
 
 export interface GhimDienThoai {
@@ -41,10 +51,13 @@ export interface DienThoaiLiveProps {
   ghim?: GhimDienThoai | null;
   binhLuan?: readonly BinhLuanDienThoai[];
   soNguoiXem?: number;
-  /** video là người dẫn do AI tạo: luôn hiện nhãn công bố */
+  /** video (và ảnh dự phòng) là người dẫn do AI tạo: khung đang hiện chúng thì luôn có nhãn công bố */
   laNguoiDanAI?: boolean;
-  /** chip nguồn ở góc trên (DÀN DỰNG, MÔ PHỎNG, MINH HOẠ...) */
-  nhanNguon?: string;
+  /**
+   * Chip nguồn ở góc trên, theo mã canon: "DAN_DUNG", "MO_PHONG", ["DAN_DUNG", "THU_NOI_BO"]...
+   * Chuỗi chữ cũ ("DÀN DỰNG") vẫn nhận nếu trùng chữ canon; chữ ngoài canon bị bỏ.
+   */
+  nhanNguon?: MaNhan | string;
   /** chế độ chụp poster: không video, người dẫn vẽ tay */
   cheDoPoster?: boolean;
   /** ảnh tĩnh dự phòng khi video lỗi (ảnh chụp từ chính video người dẫn) */
@@ -65,8 +78,18 @@ export interface DienThoaiLiveProps {
   /** nhãn đọc của cả khung */
   nhanAria?: string;
   className?: string;
-  /** thuộc tính để script chụp cắt ảnh theo vùng */
+  /** thuộc tính để script chụp cắt ảnh theo vùng (gắn lên cả khung) */
   "data-chup"?: string;
+  /** bỏ viền máy, phủ đầy khung cha (phòng xem trên điện thoại thật); mặc định false */
+  toanMan?: boolean;
+  /** gắn data-chup="the-ghim" lên thẻ ghim; mặc định true, tắt khi trang có hai khung cùng ghim */
+  chupTheGhim?: boolean;
+  /** phần tử thêm ở lớp phủ trên, ngay dưới hàng LIVE (ví dụ nút "Rút lui") */
+  thanhPhanTren?: React.ReactNode;
+  /** phần tử thêm ở đáy lớp phủ, dưới thẻ ghim (nút riêng của trang) */
+  thanhPhanDuoi?: React.ReactNode;
+  /** như thanhPhanDuoi (đặt sau nó) */
+  children?: React.ReactNode;
 }
 
 const SO_BINH_LUAN = 4;
@@ -98,6 +121,11 @@ export function DienThoaiLive({
   nhanAria = "Khung live của người dẫn",
   className,
   "data-chup": dataChup,
+  toanMan = false,
+  chupTheGhim = true,
+  thanhPhanTren,
+  thanhPhanDuoi,
+  children,
 }: DienThoaiLiveProps) {
   const daGan = useDaGan();
   const posterUrl = useCheDoAnhPoster();
@@ -206,12 +234,18 @@ export function DienThoaiLive({
   }, [nhay]);
 
   const mon = coMedia ? monDangNoi(dongThoiGian, giay) : null;
-  const ai = laNguoiDanAI && !poster;
+  // ảnh tĩnh dự phòng: lúc chưa gắn (máy chủ), khi video lỗi hay khi không có src
+  const hienAnh = !poster && !coMedia && !!anhDuPhong;
+  const veTay = !coMedia && !hienAnh;
+  // chỉ công bố người dẫn AI khi khung thật sự đang hiện video hay ảnh của người dẫn AI
+  const ai = laNguoiDanAI && !poster && (coMedia || hienAnh);
   const monVe = timMon(ghim?.ten)?.ma ?? "ao-thun";
-  const lop = `dt${poster ? " is-poster" : ""}${className ? ` ${className}` : ""}`;
+  const lop = ["dt", poster && "is-poster", toanMan && "is-toan-man", className].filter(Boolean).join(" ");
+  const maNguon = maNhanNguonTu(nhanNguon);
+  const themMinhHoa = veTay && !maNguon.includes("MINH_HOA");
+  const coDuoiThem = thanhPhanDuoi != null || children != null;
 
   let media: React.ReactNode;
-  let veTay = false;
   if (coMedia && nguon?.kieu === "video") {
     media = (
       <video
@@ -241,14 +275,12 @@ export function DienThoaiLive({
         onLoad={() => iframe.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1 }), GOC_YOUTUBE)}
       />
     );
-  } else if (!poster && anhDuPhong && (loi || !nguon)) {
+  } else if (hienAnh) {
     // ảnh nền trang trí (alt rỗng); khung đã có nhãn đọc
     media = <img className="dt-video" src={anhDuPhong} alt="" />;
   } else {
     media = <NguoiDanVeTay className="dt-video dt-ve-tay" cam={monVe} />;
-    veTay = true;
   }
-  const chuMinhHoa = NHAN_NGUON_THEO_MA.MINH_HOA.hien_thi;
 
   return (
     <div
@@ -259,6 +291,7 @@ export function DienThoaiLive({
       data-testid="dien-thoai-live"
       data-nguoi-dan-ai={ai ? "" : undefined}
       data-che-do={poster ? "poster" : coMedia ? (nguon?.kieu ?? "ve") : "du-phong"}
+      data-toan-man={toanMan ? "" : undefined}
       data-chup={dataChup}
     >
       <div className="dt-man">
@@ -276,18 +309,15 @@ export function DienThoaiLive({
                 <span aria-hidden="true">{dinhDangNguoiXem(soNguoiXem)}</span>
               </span>
             )}
-            {(nhanNguon || veTay) && (
+            {(maNguon.length > 0 || themMinhHoa) && (
               <span className="dt-nhan">
-                {nhanNguon && <span className="mh-chip dt-nguon">{nhanNguon}</span>}
-                {veTay && nhanNguon !== chuMinhHoa && <span className="mh-chip dt-chip-minh-hoa">{chuMinhHoa}</span>}
+                {maNguon.length > 0 && <NhanNguon ma={maNguon} tinh className="dt-nguon" />}
+                {themMinhHoa && <NhanNguon ma="MINH_HOA" tinh className="dt-chip-minh-hoa" />}
               </span>
             )}
           </div>
-          {ai && (
-            <p className="dt-ai" data-nhan-cong-bo="NGUOI_DAN_AI">
-              {NHAN_CONG_BO_THEO_MA.NGUOI_DAN_AI.hien_thi}
-            </p>
-          )}
+          {ai && <NhanCongBo ma="NGUOI_DAN_AI" kieu="noi" className="dt-ai" />}
+          {thanhPhanTren != null && <div className="dt-them-tren">{thanhPhanTren}</div>}
         </div>
 
         <div className="dt-tim" aria-hidden="true">
@@ -342,7 +372,7 @@ export function DienThoaiLive({
           </div>
 
           {ghim && (
-            <div className="dt-ghim" data-testid="dien-thoai-ghim">
+            <div className="dt-ghim" data-testid="dien-thoai-ghim" data-chup={chupTheGhim ? "the-ghim" : undefined}>
               <div className="dt-ghim-mon">
                 <span className="dt-ghim-anh" aria-hidden="true">
                   <HinhMon ten={ghim.ten} />
@@ -368,6 +398,7 @@ export function DienThoaiLive({
                 <button
                   type="button"
                   className="dt-nut dt-nut-chinh"
+                  data-nut-chinh=""
                   disabled={khoaNut}
                   onClick={() => {
                     if (soTrongGio === undefined) setGioNoiBo((n) => n + 1);
@@ -382,6 +413,12 @@ export function DienThoaiLive({
                   </span>
                 )}
               </div>
+            </div>
+          )}
+          {coDuoiThem && (
+            <div className="dt-them-duoi">
+              {thanhPhanDuoi}
+              {children}
             </div>
           )}
         </div>

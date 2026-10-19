@@ -20,7 +20,8 @@ import {
   LICH_MINH_HOA,
   LegacyArt,
   LichNiemPhong,
-  MUC_DIEU_HUONG,
+  MAU,
+  MAU_HINH,
   MatXu,
   NGHIENG_TOI_DA,
   NguoiDanVeTay,
@@ -259,14 +260,37 @@ describe("đồng xu", () => {
 });
 
 describe("biểu tượng điều hướng", () => {
-  it("sáu mục đúng chữ canon và đường dẫn", () => {
-    expect(MUC_DIEU_HUONG.map((m) => m.nhan)).toEqual(["Giới thiệu", "Tổng quan", "Phiên live", "Phát lại", "Live Desk minh hoạ", "Quản trị"]);
-    expect(MUC_DIEU_HUONG.map((m) => m.href)).toEqual(["/gioi-thieu", "/tong-quan", "/phien", "/phat-lai", "/minh-hoa", "/quan-tri"]);
-    for (const m of MUC_DIEU_HUONG) {
-      const { container, unmount } = render(<m.Icon size={24} />);
+  it("sáu biểu tượng mà DIEU_HUONG của nền dùng vẫn có; cấu hình nhãn và đường dẫn không còn trùng ở minh-hoa", async () => {
+    const minhHoa = await import("@/components/minh-hoa");
+    expect("MUC_DIEU_HUONG" in minhHoa).toBe(false);
+    for (const Icon of [Icons.IconGioiThieu, Icons.IconTongQuan, Icons.IconPhienLive, Icons.IconPhatLai, Icons.IconMinhHoa, Icons.IconQuanTri]) {
+      const { container, unmount } = render(<Icon size={24} />);
       expect(container.querySelector("svg")?.getAttribute("width")).toBe("24");
       unmount();
     }
+  });
+});
+
+describe("bảng màu hình", () => {
+  it("MAU_HINH là tên mới; MAU chỉ còn là bí danh cũ; màu D-026 đúng", () => {
+    expect(MAU).toBe(MAU_HINH);
+    expect(MAU_HINH.bat).toBe("#3d6b4f");
+    expect(MAU_HINH.tat).toBe("#8a8f98");
+    expect(MAU_HINH.nguoiXem).toBe("#2f74b5");
+    expect(MAU_HINH.luotNhap).toBe("#c8691c");
+    expect(MAU_HINH.don).toBe("#9b4fb0");
+  });
+});
+
+describe("DienThoaiKhoi: chip khối nằm ngoài màn hình của khách", () => {
+  it.each(["bat", "tat"] as const)("khối %s: chip B/T nằm bên phải thân máy, không đè lên màn hình", (khoi) => {
+    const { container } = render(<DienThoaiKhoi khoi={khoi} />);
+    const chip = container.querySelector("[data-chip-khoi]");
+    expect(chip).not.toBeNull();
+    expect(chip?.textContent).toBe(khoi === "bat" ? "B" : "T");
+    // màn hình của khách: x 34..118 trong hệ toạ độ của thân máy; chip đặt từ x ≥ 128 (ngoài thân máy)
+    const x = Number(chip?.querySelector("rect")?.getAttribute("x"));
+    expect(x).toBeGreaterThanOrEqual(128);
   });
 });
 
