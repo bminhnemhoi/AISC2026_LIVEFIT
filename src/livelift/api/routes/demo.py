@@ -254,6 +254,20 @@ def _seed_one_session(
             session_id,
             {"status": "ended", "end_ts": start_ts + timedelta(minutes=duration_min)},
         )
+    else:
+        # Dấu "gieo_xong" (T1b, 19/10/2026; trường duy nhất T1b thêm vào tệp này):
+        # ghi SAU CÙNG, khi mọi tick, lượt nhấp, bình luận và lần ghim ở trên đã vào
+        # kho. Bộ phát tiếp (livelift.api.phat_tiep, KHOA_GIEO_XONG) chỉ chạm phiên có
+        # dấu này, nên không lượt nào chen vào giữa lúc gieo, và đọc đúng hiệu ứng,
+        # seed, giây đã gieo tới. Chỉ máy chủ đặt được: POST /sessions lưu design=None
+        # và /schedule thay cả design.
+        design = dict((store.get_session(session_id) or {}).get("design") or {})
+        design["gieo_xong"] = {
+            "hieu_ung": float(effect),
+            "seed": int(seed),
+            "den_s": float(horizon_s),
+        }
+        store.update_session(session_id, {"design": design})
     return session_id
 
 

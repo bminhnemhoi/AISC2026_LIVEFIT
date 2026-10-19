@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from livelift import __version__
-from livelift.api import autopilot
+from livelift.api import autopilot, phat_tiep
 from livelift.api.auth import GioiHanTanSuat, require_write_auth
 from livelift.api.ingest_jobs import ClientFactory, IngestManager
 from livelift.api.routes import (
@@ -30,6 +30,8 @@ from livelift.api.routes import (
     replays,
     reports,
     sessions,
+    tai_khoan,
+    tong_quan,
     ws,
     xem,
 )
@@ -77,6 +79,7 @@ def create_app(
         # ever called /actions/execute, so every auto session ended with
         # compliance 0.0 and no estimate, silently (incident 12/09).
         app.state.autopilot_task = autopilot.start(app.state.store)
+        app.state.phat_tiep_task = phat_tiep.bat_phat_tiep(app.state.store)
         # Nạp sẵn bộ phân loại ý định (kiểm toán 18/09/2026). Mô hình nạp LƯỜI ở
         # lần phân loại đầu tiên, đo được ~4 giây trong tiến trình nguội — đúng
         # vào bình luận ĐẦU của buổi live, khi người vận hành đang nhìn xem bộ
@@ -98,6 +101,7 @@ def create_app(
             yield
         finally:
             await app.state.ingest.shutdown()
+            await phat_tiep.dung_phat_tiep(app.state.phat_tiep_task)
             await autopilot.stop(app.state.autopilot_task)
             if app.state.snapshot is not None:
                 app.state.snapshot.stop()
@@ -252,6 +256,8 @@ def create_app(
     app.include_router(orders.router, tags=["orders"])
     app.include_router(demo.router, tags=["demo"])
     app.include_router(xem.router, tags=["phong-xem"])
+    app.include_router(tai_khoan.router, tags=["tai-khoan"])
+    app.include_router(tong_quan.router, tags=["tong-quan"])
     app.include_router(ws.router)
     return app
 
