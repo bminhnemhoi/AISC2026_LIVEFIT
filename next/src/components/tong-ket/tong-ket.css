@@ -112,14 +112,13 @@
   line-height: 1.55;
   color: var(--n-muc);
 }
+/* Dòng "Phiên đang live: … số còn đổi": phụ, nhỏ hơn câu kết luận. */
+.tk-kl-cau.tk-kl-som {
+  font-size: var(--n-c16);
+}
 .tk-kl-phai {
   min-width: 0;
   align-self: center;
-}
-
-/* Thẻ kết luận đã nói vùng đúng bằng chữ lớn: bỏ danh sách ba vùng của thước để thẻ gọn trong màn đầu. */
-.tk-kl-phai .bd-vung-ds {
-  display: none;
 }
 
 /* Điện thoại: thẻ phải lọt màn đầu (trên thanh dưới 64 px). Câu nghĩa của khoảng tin cậy đã có ở Chi tiết. */
@@ -134,9 +133,6 @@
   }
   .tk-kl-cau {
     font-size: var(--n-c16);
-  }
-  .tk-kl-phai .bd-phu-de {
-    display: none;
   }
   .tk-o {
     padding: var(--n-k4);

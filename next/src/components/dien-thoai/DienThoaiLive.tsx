@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { HinhMon, Icons, NguoiDanVeTay, timMon, useGiamChuyenDong } from "@/components/minh-hoa";
+import { HinhMon, Icons, NguoiDanVeTay, timMon, useGiamChuyenDong, type MaMon } from "@/components/minh-hoa";
 import { NhanCongBo, NhanNguon, useDaGan, type MaNhan } from "@/components/nen";
 import { NHAN_CONG_BO_THEO_MA } from "@/lib/tu-ngu";
 import { dinhDangGia, dinhDangNguoiXem, monDangNoi, nguonVideo, type DoanDongThoiGian } from "./dong-thoi-gian";
@@ -24,6 +24,9 @@ import "./dien-thoai.css";
  *
  * `toanMan`: bỏ viền máy, phủ đầy khung cha (phòng xem trên điện thoại thật: cha cao 100dvh). Cha không có chiều cao
  * thì khung giữ tỷ lệ 9:16 theo bề ngang. Mọi lớp phủ giữ nguyên.
+ *
+ * Làm mù ở phòng xem: ngoài thẻ ghim, khung không được khác nhau giữa khối BẬT và khối TẮT. Người dẫn vẽ tay mặc định
+ * cầm món đang ghim (minh hoạ, landing); phòng xem truyền `monCam={null}` để hình người dẫn giống hệt nhau ở hai nhánh.
  *
  * Hợp đồng chụp: thẻ ghim mang `data-chup="the-ghim"` (tắt bằng `chupTheGhim={false}` khi trang có hai khung cùng
  * ghim); nút "Mua (tiền ảo)" mang `data-nut-chinh`.
@@ -70,8 +73,17 @@ export interface DienThoaiLiveProps {
   tuPhat?: boolean;
   /** số món trong giỏ; bỏ trống thì khung tự đếm số lần bấm "Mua (tiền ảo)" */
   soTrongGio?: number;
-  /** khoá nút trên thẻ ghim (ví dụ chưa đồng ý tham gia) */
+  /** khoá nút trên thẻ ghim và nút giỏ hàng (không gọi onXemNgay, onMua, onGioHang), ví dụ chưa đồng ý tham gia */
   khoaNut?: boolean;
+  /**
+   * Món người dẫn vẽ tay cầm khi không có video. Bỏ trống: theo món đang ghim (áo thun khi không ghim), hợp cho
+   * minh hoạ. null: không cầm món nào. Phòng xem truyền null để hình người dẫn không đổi theo khối BẬT/TẮT.
+   */
+  monCam?: MaMon | null;
+  /** đang phát; false thì chip "LIVE" đổi thành `chuNgoaiLive` và không có tim bay. Mặc định true */
+  dangLive?: boolean;
+  /** chữ của chip trên cùng khi không phát; mặc định "ĐÃ KẾT THÚC" */
+  chuNgoaiLive?: string;
   onXemNgay?: (ghim: GhimDienThoai) => void;
   onMua?: (ghim: GhimDienThoai) => void;
   onGioHang?: () => void;
@@ -115,6 +127,9 @@ export function DienThoaiLive({
   tuPhat = true,
   soTrongGio,
   khoaNut = false,
+  monCam,
+  dangLive = true,
+  chuNgoaiLive = "ĐÃ KẾT THÚC",
   onXemNgay,
   onMua,
   onGioHang,
@@ -197,7 +212,7 @@ export function DienThoaiLive({
   // tim bay lên: mỗi 0,9 giây một tim khi đang phát; giảm chuyển động thì không có tim bay
   const [tims, setTims] = useState<{ id: number; lech: number; mau: string }[]>([]);
   useEffect(() => {
-    if (!tim || giam || dungThat || !daGan) return;
+    if (!tim || !dangLive || giam || dungThat || !daGan) return;
     let n = 0;
     const id = window.setInterval(() => {
       n += 1;
@@ -206,8 +221,8 @@ export function DienThoaiLive({
       window.setTimeout(() => setTims((ds) => ds.filter((t) => t.id !== ma)), 2600);
     }, 900);
     return () => window.clearInterval(id);
-  }, [tim, giam, dungThat, daGan]);
-  const timHien = tim && !giam && !dungThat ? tims : [];
+  }, [tim, dangLive, giam, dungThat, daGan]);
+  const timHien = tim && dangLive && !giam && !dungThat ? tims : [];
 
   // bình luận chạy vòng (landing): dừng theo nút tạm dừng
   const [vong, setVong] = useState(0);
@@ -239,7 +254,7 @@ export function DienThoaiLive({
   const veTay = !coMedia && !hienAnh;
   // chỉ công bố người dẫn AI khi khung thật sự đang hiện video hay ảnh của người dẫn AI
   const ai = laNguoiDanAI && !poster && (coMedia || hienAnh);
-  const monVe = timMon(ghim?.ten)?.ma ?? "ao-thun";
+  const monVe: MaMon | null = monCam !== undefined ? monCam : (timMon(ghim?.ten)?.ma ?? "ao-thun");
   const lop = ["dt", poster && "is-poster", toanMan && "is-toan-man", className].filter(Boolean).join(" ");
   const maNguon = maNhanNguonTu(nhanNguon);
   const themMinhHoa = veTay && !maNguon.includes("MINH_HOA");
@@ -299,10 +314,14 @@ export function DienThoaiLive({
 
         <div className="dt-dau">
           <div className="dt-tren">
-            <span className="dt-live">
-              <span className="dt-live-cham" aria-hidden="true" />
-              LIVE
-            </span>
+            {dangLive ? (
+              <span className="dt-live">
+                <span className="dt-live-cham" aria-hidden="true" />
+                LIVE
+              </span>
+            ) : (
+              <span className="dt-live is-ngoai">{chuNgoaiLive}</span>
+            )}
             {soNguoiXem !== undefined && (
               <span className="dt-xem" aria-label={`${dinhDangNguoiXem(soNguoiXem)} người xem`}>
                 <Icons.IconEye size={14} />
@@ -343,7 +362,7 @@ export function DienThoaiLive({
                 <ul className="dt-bl" aria-label="Bình luận">
                   {blHien.map((b, i) => (
                     <li key={`${b.id ?? i}-${chayVong ? vong + i : i}`} className="dt-bl-dong">
-                      {b.ten && <b className="dt-bl-ten">{b.ten}</b>} {b.noiDung}
+                      {b.ten && <b className="dt-bl-ten">{b.ten}:</b>} {b.noiDung}
                     </li>
                   ))}
                 </ul>
@@ -360,7 +379,13 @@ export function DienThoaiLive({
                   </button>
                 </>
               )}
-              <button type="button" className="dt-nut-tron dt-gio" onClick={() => onGioHang?.()} aria-label={`Giỏ hàng, ${gio} món`}>
+              <button
+                type="button"
+                className="dt-nut-tron dt-gio"
+                onClick={() => {
+                  if (!khoaNut) onGioHang?.();
+                }}
+                aria-label={`Giỏ hàng, ${gio} món`}>
                 <Icons.IconGioHang size={22} />
                 {gio > 0 && (
                   <span className="dt-gio-so" aria-hidden="true">

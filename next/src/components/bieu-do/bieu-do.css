@@ -110,6 +110,20 @@
   color: var(--bd-chu-2);
 }
 
+/* Phụ đề hai bản: khung rộng đọc bản dài, khung hẹp (dưới 440 px) giữ một dòng ngắn. */
+.bd-phu-de-ngan {
+  display: none;
+}
+
+@container (max-width: 440px) {
+  .bd-phu-de-dai {
+    display: none;
+  }
+  .bd-phu-de-ngan {
+    display: inline;
+  }
+}
+
 .bd-dau-phai {
   display: flex;
   align-items: center;
@@ -214,8 +228,21 @@
 /* chữ trong SVG: luôn màu mực, không bao giờ màu chuỗi */
 .bd-svg text {
   fill: var(--bd-chu-2);
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Nhãn số nằm trên nền có vạch: viền màu nền quanh chữ để vạch không cắt qua chữ. */
+.bd-svg .bd-chu-vien {
+  paint-order: stroke;
+  stroke: var(--bd-nen);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+/* Cụm "trung bình 0,71" không bị bẻ dòng. */
+.bd-lien {
+  white-space: nowrap;
 }
 
 .bd-svg .bd-chu-dam {
@@ -579,16 +606,43 @@
   list-style: none;
 }
 
+/* Ba cột: tên (co được, xuống dòng), thanh (luôn còn ít nhất 56 px), số. Thanh tỷ lệ với số đếm. */
 .bd-thanh {
   display: grid;
-  grid-template-columns: minmax(96px, 9rem) minmax(0, 1fr) minmax(76px, auto);
+  grid-template-columns: minmax(64px, 9rem) minmax(56px, 1fr) max-content;
+  grid-template-areas: "ten ray so";
   align-items: center;
-  gap: 12px;
+  gap: 4px 12px;
   font-size: 0.875rem;
 }
 
 .bd-thanh-ten {
+  grid-area: ten;
+  min-width: 0;
   color: var(--bd-chu);
+  overflow-wrap: anywhere;
+}
+
+.bd-thanh-ray {
+  grid-area: ray;
+}
+
+.bd-thanh-so {
+  grid-area: so;
+}
+
+/* Ngăn hẹp (ngăn phải của bàn, khoảng 240 px): tên và số ở dòng trên, thanh rộng hết dòng dưới. */
+@container (max-width: 320px) {
+  .bd-thanh {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas:
+      "ten so"
+      "ray ray";
+    gap: 2px 8px;
+  }
+  .bd-thanh .bd-thanh-ray {
+    height: 14px;
+  }
 }
 
 .bd-thanh-ray {
@@ -612,6 +666,13 @@
 }
 
 .bd-thanh-so span {
+  color: var(--bd-chu-2);
+}
+
+.bd-pheu-noi-don-vi {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.3;
   color: var(--bd-chu-2);
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { daMoKhoa, chanUocLuongKhiKhoa, quyenToNenKhoi, type QuyenToNen } from "@/lib/bieu-do/khoa";
+import { daMoKhoa, chanUocLuongKhiKhoa, choHienTyLeNhapTheoThoiGian, quyenToNenKhoi, type QuyenToNen } from "@/lib/bieu-do/khoa";
 import { khoiTuTicks, type KhoiDo } from "@/lib/bieu-do/chuoi";
 import { api } from "../client";
 import { sourceLabel, type SourceLabel } from "../desk";
@@ -102,6 +102,8 @@ export interface DuLieuPhien {
   khoiDo: KhoiDo[] | null;
   /** Có được tô nền BẬT/TẮT lên DuongThoiGian không, kèm dòng giải thích. */
   toNen: QuyenToNen;
+  /** D-027: có được hiện chuỗi Tỷ lệ nhấp theo thời gian không (`choHienTyLeNhapTheoThoiGian`). */
+  hienTyLeNhap: boolean;
   loi: string | null;
   dangTai: boolean;
   capNhatLuc: number | null;
@@ -117,7 +119,7 @@ export function useDuLieuPhien(sessionId: string | null, chuKyMs = CHU_KY_MAC_DI
   });
   const d = hoi.duLieu;
   const suyRa = useMemo(() => {
-    if (!d) return { nguon: null, dangLive: false, khoa: true, khoiDo: null, toNen: { cho: false, dong: null } };
+    if (!d) return { nguon: null, dangLive: false, khoa: true, khoiDo: null, toNen: { cho: false, dong: null }, hienTyLeNhap: false };
     const nguon = sourceLabel(d.phien, d.baoCao?.binh_luan_tong_hop ?? 0);
     const dangLive = d.phien.status === "live";
     const moKhoa = daMoKhoa(d.baoCao);
@@ -125,8 +127,10 @@ export function useDuLieuPhien(sessionId: string | null, chuKyMs = CHU_KY_MAC_DI
       nguon,
       dangLive,
       khoa: !moKhoa,
-      khoiDo: moKhoa ? khoiTuTicks(d.khoi, d.ticks, d.phien.start_ts, d.phien.end_ts) : null,
-      toNen: quyenToNenKhoi(nguon, dangLive),
+      // Phiên còn live (MÔ PHỎNG mở sớm): bỏ khối đang chạy, chưa đủ để tính.
+      khoiDo: moKhoa ? khoiTuTicks(d.khoi, d.ticks, d.phien.start_ts, d.phien.end_ts, { boKhoiDangChay: dangLive }) : null,
+      toNen: quyenToNenKhoi(nguon, dangLive, !moKhoa),
+      hienTyLeNhap: choHienTyLeNhapTheoThoiGian(nguon, dangLive, !moKhoa),
     };
   }, [d]);
   return {

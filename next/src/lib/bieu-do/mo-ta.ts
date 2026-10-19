@@ -9,18 +9,23 @@ import { doDai, phanTram, soDau, soGon, soNguyen } from "./so";
  * Không có dấu gạch dài, không viết tắt "khoảng tin cậy" (thuat-ngu.yaml: trên giao diện viết đủ chữ).
  */
 
-export function moTaDuongThoiGian(diem: DiemThoiGian[], tuyChon: { cuaSoS?: number; dai?: DaiKhoi[] | null } = {}): string {
+/** `coTyLeNhap` false (khoá §7, D-027): câu chỉ nói về người xem, không có Tỷ lệ nhấp. */
+export function moTaDuongThoiGian(
+  diem: DiemThoiGian[],
+  tuyChon: { cuaSoS?: number; dai?: DaiKhoi[] | null; coTyLeNhap?: boolean } = {},
+): string {
   if (diem.length === 0) return "Đường thời gian: chưa có điểm đo người xem nào.";
   const dau = diem[0];
   const cuoi = diem[diem.length - 1];
   const dinh = Math.max(...diem.map((d) => d.nguoiXem));
   const cuaSo = doDai(tuyChon.cuaSoS ?? 120);
-  const tyLe =
-    cuoi.tyLeNhap == null
+  const tyLe = !(tuyChon.coTyLeNhap ?? true)
+    ? "Tỷ lệ nhấp theo thời gian mở khi hết phiên."
+    : cuoi.tyLeNhap == null
       ? `Tỷ lệ nhấp gần nhất chưa tính được vì quá ít người xem.`
       : `Tỷ lệ nhấp gần nhất ${soGon(cuoi.tyLeNhap, 2)} ${TY_LE_NHAP_DAY_DU}, tính trên ${cuaSo} gần nhất.`;
   let cau = `Đường thời gian ${doDai(cuoi.t + 30)}: người xem từ ${soGon(dau.nguoiXem)} tới ${soGon(cuoi.nguoiXem)}, cao nhất ${soGon(dinh)}. ${tyLe}`;
-  if (tuyChon.dai?.length) {
+  if (tuyChon.dai?.length && (tuyChon.coTyLeNhap ?? true)) {
     const nBat = tuyChon.dai.filter((d) => d.nhanh === "ON").length;
     const nTat = tuyChon.dai.filter((d) => d.nhanh === "OFF").length;
     cau += ` Nền tô theo khối: ${nBat} khối BẬT, ${nTat} khối TẮT.`;
@@ -32,12 +37,15 @@ export function moTaThuoc(uocLuong: number, thap: number, cao: number, vung: Vun
   return `Chênh lệch Tỷ lệ nhấp, khối BẬT trừ khối TẮT: ${soDau(uocLuong)}; khoảng tin cậy 95% từ ${soDau(thap)} đến ${soDau(cao)}. ${KET_LUAN[vung].chu}: ${KET_LUAN[vung].cau}`;
 }
 
-export function moTaCham(khoi: KhoiDo[], tb: TrungBinhNhanh): string {
+export function moTaCham(khoi: KhoiDo[], tb: TrungBinhNhanh, anTrungBinh = false): string {
   if (khoi.length === 0) return "Chưa có khối BẬT hay TẮT nào để vẽ.";
   const bo = tb.nBo ? `, ${tb.nBo} khối không đo được` : "";
+  if (anTrungBinh) {
+    return `${khoi.length} khối: ${tb.nBat} khối BẬT đo được, ${tb.nTat} khối TẮT đo được${bo}. Chưa đủ khối để so BẬT với TẮT.`;
+  }
   const bat = tb.bat == null ? "chưa có" : soGon(tb.bat, 2);
   const tat = tb.tat == null ? "chưa có" : soGon(tb.tat, 2);
-  return `${khoi.length} khối: ${tb.nBat} khối BẬT đo được, ${tb.nTat} khối TẮT đo được${bo}. Trung bình Tỷ lệ nhấp: BẬT ${bat}, TẮT ${tat} ${TY_LE_NHAP_DAY_DU}. Chấm là mô tả từng khối; kết luận lấy từ phân tích đã đăng ký trước.`;
+  return `${khoi.length} khối: ${tb.nBat} khối BẬT đo được, ${tb.nTat} khối TẮT đo được${bo}. Trung bình Tỷ lệ nhấp: BẬT ${bat}, TẮT ${tat} ${TY_LE_NHAP_DAY_DU}. Mỗi chấm là một khối. Kết luận tính theo cách đã chốt trước giờ live.`;
 }
 
 function chuThuongDau(s: string): string {

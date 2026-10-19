@@ -16,7 +16,9 @@ Chạy:
     ...  --tuyen /phien --phan-tu danh-sach --ten thu-danh-sach --khung 1280x800 --dsf 2   # chụp lẻ
     ...  --tuyen /gioi-thieu --toan-trang --ten landing-ca-trang
 
-Cảnh có {ma_phong} cần --ma-phong (hoặc biến LIVELIFT_MA_PHONG_CHUP) của một phòng riêng để chụp. Cảnh có bước
+Cảnh có {ma_phong} cần --ma-phong (hoặc biến LIVELIFT_MA_PHONG_CHUP) của một phòng riêng để chụp, hoặc
+--phong-gia: mở /xem/<mã giả> và page.route chặn mọi lời gọi /xem-api, /api/ll, trả dữ liệu giả (cảnh có
+'ghim_gia' thì phòng giả đang ghim món đó), nên ảnh không phụ thuộc khối hiện tại và không ghi gì vào phòng nào. Cảnh có bước
 bấm (đồng ý, rút lui) ghi sự kiện vào phòng đó, nên trước khi chạy, tệp hỏi API phòng thuộc phiên nào
 (GET /xem-api/<mã>/trang-thai lấy tiêu đề phòng, GET /sessions tìm phiên 'lab' cùng tiêu đề) và:
   * chặn hẳn nếu phiên được tính vào kết quả (không dry_run, không phải dữ liệu mẫu), kể cả có cờ;
@@ -72,6 +74,8 @@ class Canh:
     buoc: list[dict[str, Any]] = field(default_factory=list)
     cho_ms: int = 1200
     ghi_chu: str = ""
+    ghim_gia: str | None = None
+    """Mã món phòng giả đang ghim khi chụp bằng --phong-gia (None: khối không ghim)."""
 
     @property
     def co_bam(self) -> bool:
@@ -179,6 +183,7 @@ def doc_cau_hinh(du_lieu: dict[str, Any]) -> list[Canh]:
             "buoc",
             "cho_ms",
             "ghi_chu",
+            "ghim_gia",
         }
         if la:
             raise LoiCauHinh(f"{noi}: khoá lạ {sorted(la)}")
@@ -197,6 +202,7 @@ def doc_cau_hinh(du_lieu: dict[str, Any]) -> list[Canh]:
                 buoc=_buoc(c.get("buoc"), noi),
                 cho_ms=int(c.get("cho_ms", md.get("cho_ms", 1200))),
                 ghi_chu=str(c.get("ghi_chu") or ""),
+                ghim_gia=(str(c["ghim_gia"]).strip() or None) if c.get("ghim_gia") else None,
             )
         )
     return ra
@@ -254,9 +260,10 @@ def _chuan(s: Any) -> str:
 
 TRANG_THAI_PHONG = {
     "dang_mo": {"live"},
-    "da_dong": {"ended"},
-    "chua_mo": {"draft", "scheduled", "created"},
+    "da_dong": {"ended", "cancelled"},
+    "chua_mo": {"planned", "scheduled"},
 }
+"""Trạng thái phòng công khai → trạng thái phiên, đúng như lõi (src/livelift/api/routes/xem.py)."""
 TIEU_DE_PHONG_MAC_DINH = "Phòng live dàn dựng"
 """Tiêu đề máy chủ đặt cho phòng khi phiên không có tiêu đề (routes/xem.py)."""
 
@@ -278,17 +285,31 @@ def xac_dinh_phong(
     hop_trang_thai = TRANG_THAI_PHONG.get(str(phong.get("status")), set())
     cung_trang_thai = [s for s in khop if s.get("status") in hop_trang_thai]
     khop = cung_trang_thai or khop
-    if not khop:
-        return ThongTinPhong(
-            ma, False, ly_do=f"không có phiên 'lab' nào có tiêu đề «{phong.get('title')}»"
-        )
-    an_toan = all(bool(s.get("dry_run")) or bool(s.get("is_demo")) for s in khop)
+    # Cờ dry_run công khai của chính phòng (khi lõi có trả) đáng tin hơn khớp tiêu đề: lọc phiên theo cờ.
+    co_dry = phong.get("dry_run")
+    if isinstance(co_dry, bool):
+        khop = [s for s in khop if bool(s.get("dry_run")) == co_dry]
     thu_noi_bo = (
         ma == kg.MA_PHONG_MAC_DINH
         or "thử nội bộ" in tieu_de
         or "thử nội bộ" in _chuan(phong.get("source_label"))
         or any("thử nội bộ" in _chuan(s.get("title")) for s in khop)
     )
+    if co_dry is True:
+        mo_ta = ", ".join(str(s.get("session_id"))[:8] for s in khop) or "chưa khớp phiên nào"
+        return ThongTinPhong(
+            ma,
+            True,
+            an_toan=True,
+            thu_noi_bo=thu_noi_bo,
+            phien=tuple(str(s.get("session_id")) for s in khop),
+            ly_do=f"«{phong.get('title')}» → phòng báo dry_run ({mo_ta})",
+        )
+    if not khop:
+        return ThongTinPhong(
+            ma, False, ly_do=f"không có phiên 'lab' nào có tiêu đề «{phong.get('title')}»"
+        )
+    an_toan = all(bool(s.get("dry_run")) or bool(s.get("is_demo")) for s in khop)
 
     def loai(s: dict[str, Any]) -> str:
         if s.get("dry_run"):
@@ -320,6 +341,19 @@ def doc_phong(api: str, ma: str) -> ThongTinPhong:
     except (urllib.error.URLError, TimeoutError, ValueError) as e:
         return ThongTinPhong(ma, False, ly_do=f"không đọc được /sessions: {e}")
     return xac_dinh_phong(ma, trang_thai, ds if isinstance(ds, list) else [])
+
+
+def dung_phong_gia(c: Canh, bat: bool) -> bool:
+    """Cảnh phòng xem chụp bằng phòng giả (--phong-gia): không chạm phòng thật nào."""
+    return bat and "{ma_phong}" in c.tuyen
+
+
+def tuyen_phong_gia(c: Canh) -> str:
+    return c.tuyen.replace("{ma_phong}", kg.MA_PHONG_GIA)
+
+
+TIEU_DE_PHONG_GIA_CHUP = "Phòng xem LiveLift"
+"""Tiêu đề phòng giả khi chụp ảnh (ảnh lên slide: không ghi chữ 'giả để kiểm')."""
 
 
 def chan_phong_thu_noi_bo(c: Canh, phong: ThongTinPhong | None, cho_phep: bool) -> str | None:
@@ -421,7 +455,7 @@ def _dau_tien_hien(trang: Any, bo_chon: list[str], trong_ms: int) -> Any:
 
 
 def chup_mot(
-    trinh: Any, base: str, c: Canh, tuyen: str, ra: Path, chuyen_dong: bool
+    trinh: Any, base: str, c: Canh, tuyen: str, ra: Path, chuyen_dong: bool, phong_gia: bool = False
 ) -> dict[str, Any]:
     """Chụp một cảnh; trả bản ghi cho chup.json (có 'loi' khi hỏng)."""
     ghi: dict[str, Any] = {
@@ -442,6 +476,10 @@ def chup_mot(
         reduced_motion="no-preference" if chuyen_dong else "reduce",
     )
     trang = ctx.new_page()
+    ro: list[str] = []
+    if phong_gia:
+        ghi["phong_gia"] = {"ma": kg.MA_PHONG_GIA, "ghim": c.ghim_gia}
+        kg._vao_phong_gia(trang, c.ghim_gia, ro, TIEU_DE_PHONG_GIA_CHUP)
     try:
         dap = trang.goto(base.rstrip("/") + tuyen, wait_until="load", timeout=120_000)
         if dap is not None and dap.status >= 400:
@@ -486,6 +524,8 @@ def chup_mot(
             trang.screenshot(path=str(tep), animations="disabled")
         ghi["tep"] = tep.name
         ghi["kich_thuoc"] = list(kich_thuoc_png(tep))
+        if ro:
+            ghi["loi"] = f"lời gọi ngoài mã giả đã bị huỷ: {', '.join(sorted(set(ro)))[:200]}"
     except Exception as e:  # noqa: BLE001 - mọi lỗi trình duyệt của một cảnh: ghi lại, chụp cảnh sau
         ghi["loi"] = str(e).splitlines()[0][:240]
     finally:
@@ -513,6 +553,11 @@ def main(argv: list[str] | None = None) -> int:
         "--ma-phong",
         default=os.environ.get("LIVELIFT_MA_PHONG_CHUP"),
         help="mã phòng xem RIÊNG để chụp (không dùng phòng thử nội bộ)",
+    )
+    ap.add_argument(
+        "--phong-gia",
+        action="store_true",
+        help="cảnh phòng xem dùng phòng giả (page.route, dữ liệu giả), không cần --ma-phong, không chạm máy chủ",
     )
     ap.add_argument(
         "--cho-phep-phong-thu-noi-bo",
@@ -589,7 +634,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"CẢNH BÁO cấu hình: {cb}")
 
     phong: ThongTinPhong | None = None
-    if a.ma_phong and any(c.co_bam and "{ma_phong}" in c.tuyen for c in ds):
+    if a.ma_phong and any(c.co_bam and "{ma_phong}" in c.tuyen and not a.phong_gia for c in ds):
         phong = doc_phong(a.api, a.ma_phong)
         if phong.xac_dinh:
             ket = "được bấm" if phong.an_toan else "KHÔNG được bấm (phiên được tính)"
@@ -608,8 +653,9 @@ def main(argv: list[str] | None = None) -> int:
         trinh = p.chromium.launch()
         try:
             for c in ds:
-                tuyen, thieu = kg.mo_rong_tuyen(c.tuyen, gia)
-                ly_do = chan_phong_thu_noi_bo(c, phong, a.cho_phep_phong_thu_noi_bo)
+                gia_phong = dung_phong_gia(c, a.phong_gia)
+                tuyen, thieu = kg.mo_rong_tuyen(tuyen_phong_gia(c) if gia_phong else c.tuyen, gia)
+                ly_do = None if gia_phong else chan_phong_thu_noi_bo(c, phong, a.cho_phep_phong_thu_noi_bo)
                 if tuyen is None or ly_do:
                     ly_do = ly_do or f"thiếu {', '.join(thieu)}" + (
                         " (truyền --ma-phong)" if "ma_phong" in thieu else ""
@@ -619,7 +665,7 @@ def main(argv: list[str] | None = None) -> int:
                     )
                     print(f"BỎ   {c.ten}: {ly_do}")
                     continue
-                g = chup_mot(trinh, a.base, c, tuyen, ra, a.chuyen_dong)
+                g = chup_mot(trinh, a.base, c, tuyen, ra, a.chuyen_dong, phong_gia=gia_phong)
                 ban_ghi.append(g)
                 if "loi" in g:
                     print(f"HỎNG {c.ten}: {g['loi']}  [{tuyen}]")

@@ -77,9 +77,9 @@ def planned_room(request, env, clock):
         yield client, store, sid, code
 
 
-def _lab_room(client, *, schedule: bool = True) -> tuple[str, str]:
-    """Danh mục, phiên 'lab' (đã bốc lịch nếu ``schedule``) và phòng xem đã bật;
-    chưa bắt đầu phiên."""
+def _lab_room(client, *, schedule: bool = True, dry_run: bool = False) -> tuple[str, str]:
+    """Danh mục, phiên 'lab' (đã bốc lịch nếu ``schedule``, chạy thử nếu
+    ``dry_run``) và phòng xem đã bật; chưa bắt đầu phiên."""
     for pid, price in zip(PRODUCTS, (45_000, 129_000, 99_000), strict=True):
         r = client.post(
             "/products",
@@ -99,6 +99,7 @@ def _lab_room(client, *, schedule: bool = True) -> tuple[str, str]:
             "title": "Phòng thử",
             "planned_duration_min": 60,
             "mode": "auto",
+            "dry_run": dry_run,
         },
     )
     assert r.status_code == 200, r.text
@@ -189,9 +190,26 @@ def test_trang_thai_shape(room):
     }
     assert body["room"]["status"] == "dang_mo"
     assert body["room"]["source_label"] == "DÀN DỰNG"
+    assert body["room"]["dry_run"] is False
     assert [p["product_id"] for p in body["products"]] == list(PRODUCTS)
     assert r.headers["cache-control"] == "no-store"
     assert body["source_code_url"].startswith("https://")
+
+
+def test_trang_thai_gui_co_dry_run_cua_phien(env, clock):
+    """Phòng của phiên chạy thử gửi room.dry_run=true (chip THỬ NỘI BỘ không
+    phải đoán theo tên phòng); cờ cố định cả phiên, không mang nhánh."""
+    store = InMemoryStore()
+    with TestClient(create_app(store=store)) as client:
+        sid, code = _lab_room(client, dry_run=True)
+        assert store.get_session(sid)["dry_run"] is True
+        assert client.post(f"/sessions/{sid}/start").status_code == 200
+        dau = client.get(f"/xem-api/{code}/trang-thai").json()["room"]
+        assert dau["dry_run"] is True
+        assert "Thử nội bộ" not in dau["title"]
+        for b in _blocks(store, sid):
+            _go_to(clock, store, sid, b)
+            assert client.get(f"/xem-api/{code}/trang-thai").json()["room"] == dau
 
 
 def test_responses_in_on_and_off_blocks_differ_only_by_the_pinned_card(room, clock):

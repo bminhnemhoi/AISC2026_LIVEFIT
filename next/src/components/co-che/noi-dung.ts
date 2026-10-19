@@ -46,7 +46,7 @@ export const BUOC_CO_CHE: readonly BuocCoChe[] = Object.freeze([
     so: 2,
     ma: "khoi-bat",
     tieuDe: "Khối BẬT: ghim món đầu nhóm gợi ý",
-    cau: "Ghim món đứng đầu nhóm gợi ý. Khi vài món sát điểm nhau, LiveLift bốc thăm giữa chúng, nên món được ghim có thể khác thẻ gợi ý.",
+    cau: "Ghim món đứng đầu nhóm gợi ý. Khi vài món được máy chấm điểm gần bằng nhau, LiveLift bốc thăm giữa chúng, nên món được ghim có thể khác thẻ gợi ý.",
     phuDe: `BẬT: ${PHU_DE_KHOI.bat}.`,
   },
   {

@@ -3,18 +3,21 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { BieuTuongVung } from "@/components/bieu-do";
 import { TrangThaiTrong } from "@/components/minh-hoa";
-import { AppShell, Chip, NhanNguon, NutBam, NutLienKet, OSo } from "@/components/nen";
+import { AppShell, Chip, NhanNguon, NutBam, NutLienKet, OSo, type ToneChip } from "@/components/nen";
 import { daMoKhoa, vungCua, type VungKetLuan } from "@/lib/bieu-do";
 import { api } from "@/lib/livelift-api/client";
 import { sourceLabel } from "@/lib/livelift-api/desk";
 import type { BaoCao, Session } from "@/lib/livelift-api/types";
-import { CHO_CANON, KET_LUAN_THEO_MA, NHAN_NGUON_THEO_MA, TU, type MaKetLuan, type MaNhanNguon } from "@/lib/tu-ngu";
+import { loiTiengViet } from "@/lib/livelift-api/gop";
+import { KET_LUAN_THEO_MA, LOI_THUONG, NHAN_NGUON_THEO_MA, TU, type MaKetLuan, type MaNhanNguon } from "@/lib/tu-ngu";
 import "./phien-list.css";
+import { tenPhienHienThi } from "@/components/tong-ket/noi-dung";
 
 /**
  * Trang /phien: mọi phiên trên máy chủ LiveLift, kèm nhãn nguồn (THẬT / THỬ NỘI BỘ / DÀN DỰNG / MÔ PHỎNG) để một
  * phiên mẫu không bao giờ trông như kết quả thật. Kết luận ĐỔI / GIỮ / ĐO THÊM chỉ hiện khi máy chủ trả khoa=false;
- * phiên THẬT hay THỬ NỘI BỘ đang live thì luôn khoá ở đây, kể cả khi máy chủ lỡ mở (khoá §7, lớp thứ hai).
+ * phiên nào không phải MÔ PHỎNG mà đang live (THẬT, THỬ NỘI BỘ, DÀN DỰNG) thì luôn khoá ở đây, kể cả khi máy chủ lỡ
+ * mở (khoá §7, lớp thứ hai, D-027). Lịch BẬT/TẮT của phiên còn khoá cũng không được tải về trình duyệt.
  */
 
 const NHOM: Array<{ status: string; title: string }> = [
@@ -23,11 +26,31 @@ const NHOM: Array<{ status: string; title: string }> = [
   { status: "ended", title: "Đã xong" },
 ];
 
-export function groupSessions(sessions: Session[]): Array<{ title: string; status: string; items: Session[] }> {
+/**
+ * Nhóm phiên theo trạng thái, mới nhất trước. `hangXong` (tuỳ chọn) xếp nhóm "Đã xong" theo kết luận trước rồi mới
+ * tới giờ, để phiên ĐỔI không bị các phiên ĐO THÊM đẩy xuống dưới.
+ */
+export function groupSessions(
+  sessions: Session[],
+  hangXong?: (s: Session) => number,
+): Array<{ title: string; status: string; items: Session[] }> {
   const byStart = (a: Session, b: Session): number => (b.start_ts ?? "").localeCompare(a.start_ts ?? "");
-  return NHOM.map(g => ({ title: g.title, status: g.status, items: sessions.filter(s => s.status === g.status).sort(byStart) })).filter(
-    g => g.items.length > 0,
-  );
+  const theoHang = (a: Session, b: Session): number => (hangXong ? hangXong(a) - hangXong(b) : 0) || byStart(a, b);
+  return NHOM.map(g => ({
+    title: g.title,
+    status: g.status,
+    items: sessions.filter(s => s.status === g.status).sort(g.status === "ended" ? theoHang : byStart),
+  })).filter(g => g.items.length > 0);
+}
+
+/** Phiên đang live mà không phải MÔ PHỎNG: còn khoá §7 (D-027), không hiện kết luận, không tải lịch. */
+export function conKhoaKhiLive(s: Pick<Session, "platform" | "is_demo" | "dry_run" | "status">): boolean {
+  return s.status === "live" && maNhanPhien(s) !== "MO_PHONG";
+}
+
+/** Được tải lịch (để đếm khối) không: chỉ MÔ PHỎNG, hoặc phiên đã xong. Phiên còn khoá thì không tải lịch BẬT/TẮT. */
+export function duocTaiLich(s: Pick<Session, "platform" | "is_demo" | "dry_run" | "status">): boolean {
+  return s.status === "ended" || s.status === "cancelled" || maNhanPhien(s) === "MO_PHONG";
 }
 
 /** Mã nhãn nguồn canon của một phiên. Phiên tập dượt trên nền tảng thật (CHẠY THỬ) tính là THỬ NỘI BỘ. */
@@ -89,13 +112,13 @@ const VUNG_THEO_MA: Record<MaKetLuan, VungKetLuan> = { DOI: "doi", GIU: "giu", D
 
 /**
  * Ô kết luận của một hàng. `baoCao` undefined: chưa tải; null: tải lỗi (coi là khoá).
- * Chỉ mở khi máy chủ nói rõ khoa=false; THẬT và THỬ NỘI BỘ đang live thì khoá bất kể máy chủ.
+ * Chỉ mở khi máy chủ nói rõ khoa=false; phiên đang live mà không phải MÔ PHỎNG thì khoá bất kể máy chủ.
  */
 export function ketLuanPhien(s: Session, baoCao: BaoCao | null | undefined): KetLuanHang {
   if (s.status === "planned") return { loai: "chua_phat" };
   const ma = maNhanPhien(s);
   const dangLive = s.status === "live";
-  if (dangLive && (ma === "THAT" || ma === "THU_NOI_BO")) return { loai: "khoa" };
+  if (conKhoaKhiLive(s)) return { loai: "khoa" };
   if (baoCao === undefined) return { loai: "dang_tai" };
   if (baoCao?.loai_phien === "quan_sat") return { loai: "quan_sat" };
   if (!baoCao || !daMoKhoa(baoCao)) return { loai: "khoa" };
@@ -113,6 +136,20 @@ export function ketLuanPhien(s: Session, baoCao: BaoCao | null | undefined): Ket
 export function thoiLuongVaKhoi(phut: number, soKhoi: number | null | undefined): string {
   const p = `${phut.toLocaleString("vi-VN")} phút`;
   return soKhoi ? `${p} · ${soKhoi} khối` : p;
+}
+
+/** Sắc chung của ba kết luận (cùng bộ màu với trang giới thiệu): ĐỔI xanh BẬT, GIỮ mực, ĐO THÊM vàng. */
+export const TONE_KET_LUAN: Readonly<Record<MaKetLuan, ToneChip>> = { DOI: "bat", GIU: "trung", DO_THEM: "vang" };
+
+/** Câu rê chuột của chip kết luận. Thiếu khối thì không có khoảng tin cậy, nên dùng câu ĐO THÊM khi chưa đủ khối. */
+export function cauChipKetLuan(ma: MaKetLuan, thieuKhoi: boolean): string {
+  return thieuKhoi ? LOI_THUONG.chuaDuKhoi : KET_LUAN_THEO_MA[ma].cau;
+}
+
+/** Thứ tự trong nhóm "Đã xong": ĐỔI, GIỮ, ĐO THÊM, rồi phiên chưa có kết luận. */
+export function hangKetLuan(kl: KetLuanHang): number {
+  if (kl.loai !== "mo") return 3;
+  return kl.ma === "DOI" ? 0 : kl.ma === "GIU" ? 1 : 2;
 }
 
 function when(ts: string | null | undefined): string {
@@ -145,11 +182,15 @@ function OKetLuan({ kl, dangLive }: { kl: KetLuanHang; dangLive: boolean }) {
       const k = KET_LUAN_THEO_MA[kl.ma];
       return (
         <div className="pl-kl" data-ket-luan={kl.ma}>
-          <Chip tone={kl.ma === "DOI" ? "dam" : "trung"} bieuTuong={<BieuTuongVung vung={VUNG_THEO_MA[kl.ma]} co={16} />} title={k.cau}>
+          <Chip
+            tone={TONE_KET_LUAN[kl.ma]}
+            bieuTuong={<BieuTuongVung vung={VUNG_THEO_MA[kl.ma]} co={16} />}
+            title={cauChipKetLuan(kl.ma, kl.thieuKhoi)}
+          >
             {k.chu}
           </Chip>
-          {kl.thieuKhoi ? <span className="pl-phu">Chưa đủ khối để ước lượng</span> : null}
-          {kl.somVi ? <span className="pl-phu">Mở khoá sớm vì {kl.somVi}</span> : null}
+          {kl.thieuKhoi ? <span className="pl-phu">Chưa đủ khối để so BẬT với TẮT</span> : null}
+          {kl.somVi ? <span className="pl-phu">Hiện sớm vì {kl.somVi}</span> : null}
         </div>
       );
     }
@@ -188,7 +229,7 @@ function HangPhien({ s, ct }: { s: Session; ct: ChiTiet | undefined }) {
   return (
     <li className="pl-hang" data-trang-thai={s.status} data-nhan={ma}>
       <div className="pl-o pl-o--ten">
-        <p className="pl-ten">{s.title || "Phiên không tên"}</p>
+        <p className="pl-ten">{s.title ? tenPhienHienThi(s.title) : "Phiên không tên"}</p>
         <div className="pl-ten__phu">
           <NhanNguon ma={ma} />
           <span className="pl-gio">{when(s.start_ts)}</span>
@@ -225,29 +266,64 @@ function HangPhien({ s, ct }: { s: Session; ct: ChiTiet | undefined }) {
   );
 }
 
-/** Trên màn rộng, danh sách tự cuộn bên trong để cả khối nằm gọn trong màn đầu. */
-function useCaoToiDa(ref: RefObject<HTMLElement | null>, san: boolean): void {
+/** Chỗ chừa cho dòng "Cuộn để xem thêm …" dưới khung cuộn. */
+const CAO_DONG_NHAC = 36;
+
+/**
+ * Chiều cao khung cuộn, cắt đúng ở mép dưới một hàng (không cắt đôi nút). `day` là mép dưới của từng hàng tính từ
+ * đỉnh khung; lấy mép lớn nhất còn vừa, không vừa hàng nào thì giữ chiều cao thô.
+ */
+export function caoTheoHang(caoTho: number, day: readonly number[]): number {
+  const vua = day.filter(d => d <= caoTho);
+  return vua.length > 0 ? Math.ceil(Math.max(...vua)) + 1 : caoTho;
+}
+
+/**
+ * Trên màn rộng, danh sách tự cuộn bên trong để cả khối nằm gọn trong màn đầu. Trả số phiên còn nằm dưới mép khung
+ * (để hiện dòng nhắc cuộn và dải mờ).
+ */
+function useCaoToiDa(ref: RefObject<HTMLElement | null>, san: boolean): number {
+  const [conDuoi, setConDuoi] = useState(0);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || !san) return;
+    const dem = (): void => {
+      const day = el.getBoundingClientRect().bottom;
+      const hang = el.querySelectorAll<HTMLElement>(".pl-hang:not(.pl-hang--dau)");
+      let n = 0;
+      hang.forEach(h => {
+        if (h.getBoundingClientRect().bottom > day + 2) n += 1;
+      });
+      setConDuoi(n);
+    };
     const tinh = (): void => {
       if (window.innerWidth < 1024) {
         el.style.removeProperty("--pl-cao-toi-da");
+        setConDuoi(0);
         return;
       }
-      const tren = el.getBoundingClientRect().top + window.scrollY;
-      const cao = Math.max(280, Math.floor(window.innerHeight - tren - 16));
-      el.style.setProperty("--pl-cao-toi-da", `${cao}px`);
+      const hop = el.getBoundingClientRect();
+      const tren = hop.top + window.scrollY;
+      const caoTho = Math.max(280, Math.floor(window.innerHeight - tren - 16 - CAO_DONG_NHAC));
+      const goc = hop.top - el.scrollTop;
+      const day = Array.from(el.querySelectorAll<HTMLElement>(".pl-hang:not(.pl-hang--dau)")).map(
+        h => h.getBoundingClientRect().bottom - goc,
+      );
+      el.style.setProperty("--pl-cao-toi-da", `${caoTheoHang(caoTho, day)}px`);
+      dem();
     };
     tinh();
     window.addEventListener("resize", tinh);
+    el.addEventListener("scroll", dem, { passive: true });
     const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(tinh);
     ro?.observe(document.body);
     return () => {
       window.removeEventListener("resize", tinh);
+      el.removeEventListener("scroll", dem);
       ro?.disconnect();
     };
   }, [ref, san]);
+  return conDuoi;
 }
 
 export function PhienList() {
@@ -266,7 +342,7 @@ export function PhienList() {
         setSessions(s);
         setError(null);
       })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Không tải được danh sách phiên."));
+      .catch((e: unknown) => setError(loiTiengViet(e, "Máy chủ chưa trả lời.")));
   }, []);
 
   useEffect(() => {
@@ -282,7 +358,7 @@ export function PhienList() {
     const bay = Date.now();
     for (const s of sessions) {
       const id = s.session_id;
-      if (!daLayLich.current.has(id)) {
+      if (!daLayLich.current.has(id) && duocTaiLich(s)) {
         daLayLich.current.add(id);
         api.schedule(id).then(
           b => gan(id, { soKhoi: b.length }),
@@ -307,30 +383,30 @@ export function PhienList() {
       await (kind === "demo" ? api.seedDemo() : api.seedVang());
       load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Không gieo được dữ liệu mẫu.");
+      setError(loiTiengViet(e, "Không tạo được dữ liệu mẫu."));
     } finally {
       setBusy(false);
     }
   };
 
   const coPhien = !!sessions && sessions.length > 0;
-  useCaoToiDa(refDs, coPhien);
-  const groups = groupSessions(sessions ?? []);
+  const conDuoi = useCaoToiDa(refDs, coPhien);
+  const groups = groupSessions(sessions ?? [], s => hangKetLuan(ketLuanPhien(s, chiTiet[s.session_id]?.baoCao)));
   const dem = demTheoNhan(sessions ?? []);
 
   const nutMau = (
     <>
       <NutBam bien="vien" cao={44} disabled={busy} onClick={() => void seed("vang")}>
-        Bộ phiên mẫu
+        Tạo bộ phiên mẫu
       </NutBam>
       <NutBam bien="vien" cao={44} disabled={busy} onClick={() => void seed("demo")}>
-        Gieo phiên mẫu đang phát
+        Tạo phiên mẫu đang phát
       </NutBam>
     </>
   );
 
   return (
-    <AppShell hienTai="phien" tieuDe={TU.danhSachPhien.chu} phuDe={CHO_CANON.danhSachPhienPhuDe}>
+    <AppShell hienTai="phien" tieuDe={TU.danhSachPhien.chu} phuDe={LOI_THUONG.danhSachPhienPhuDe}>
       <div className="pl" data-testid="phien-list">
         {error ? (
           <div className="pl-loi" role="alert">
@@ -362,13 +438,14 @@ export function PhienList() {
         {sessions && sessions.length === 0 ? (
           <TrangThaiTrong
             tieuDe="Chưa có phiên nào"
-            moTa="Gieo bộ phiên mẫu để xem thử cách LiveLift đo hiệu quả ghim. Phiên mẫu luôn mang nhãn MÔ PHỎNG."
+            moTa="Tạo bộ phiên mẫu để xem thử cách LiveLift đo hiệu quả ghim. Phiên mẫu luôn mang nhãn MÔ PHỎNG."
           >
             {nutMau}
           </TrangThaiTrong>
         ) : null}
 
         {coPhien ? (
+          <div className="pl-ds-boc" data-con-them={conDuoi > 0 ? "" : undefined}>
           <section ref={refDs} className="pl-ds" data-chup="danh-sach" data-vung-chinh="" aria-label="Danh sách phiên">
             <ul className="pl-luoi">
               <li className="pl-hang pl-hang--dau" aria-hidden="true">
@@ -392,6 +469,12 @@ export function PhienList() {
               ))}
             </ul>
           </section>
+          {conDuoi > 0 ? (
+            <p className="pl-ds__nhac" aria-live="polite">
+              Cuộn để xem thêm {conDuoi.toLocaleString("vi-VN")} phiên
+            </p>
+          ) : null}
+          </div>
         ) : null}
 
         {coPhien ? (
@@ -400,7 +483,7 @@ export function PhienList() {
               <h2 id="pl-mau-tieu-de" className="pl-mau__tieu-de">
                 Dữ liệu mẫu
               </h2>
-              <p className="pl-phu">Gieo thêm phiên MÔ PHỎNG để xem thử. Tạo phiên live ngay trên trang này: sắp có.</p>
+              <p className="pl-phu">Tạo thêm phiên MÔ PHỎNG để xem thử. Tạo phiên live ngay trên trang này: sắp có.</p>
             </div>
             <div className="pl-mau__nut">{nutMau}</div>
           </section>

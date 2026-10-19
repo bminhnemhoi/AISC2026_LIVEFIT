@@ -1,5 +1,5 @@
 import type { BaoCao, Block, KetQua, OrderSummary, Session, Tick } from "./types";
-import { KET_LUAN_THEO_MA } from "@/lib/tu-ngu";
+import { KET_LUAN_THEO_MA, LOI_THUONG } from "@/lib/tu-ngu";
 
 /**
  * Pure mappings from API payloads to what the experiment desk shows. No fetching, no React: every number on the
@@ -157,7 +157,7 @@ function quartiles(xs: number[]): [number, number] {
  * SEVERAL signals stay bad together (AISC26-0068) — here viewers AND click rate under their band for two windows
  * in a row, so one noisy minute never pages the operator. It never feeds the causal estimate.
  */
-export function roomPulse(ticks: Tick[]): RoomPulse {
+export function roomPulse(ticks: Tick[], tuyChon: { chiNguoiXem?: boolean } = {}): RoomPulse {
   const per = PULSE_WINDOW_S / BUCKET_S;
   const windows: PulseWindow[] = [];
   for (let i = 0; i + per <= ticks.length; i += per) {
@@ -172,11 +172,26 @@ export function roomPulse(ticks: Tick[]): RoomPulse {
     return { windows, last, viewersBand: null, clickBand: null, alert: false, note: "Chưa đủ lịch sử trong phiên để có dải bình thường (cần khoảng 30 phút)." };
   }
   const viewersBand = quartiles(ref.map(w => w.viewers));
-  const clickBand = quartiles(ref.map(w => w.clickRate));
   const tail = windows.slice(-2);
+  if (tuyChon.chiNguoiXem) {
+    // Khoá §7 (D-027): phiên có người bấm còn khoá thì không tính gì từ lượt nhấp theo cửa sổ (cửa sổ 5 phút gần trùng
+    // ranh giới khối). Cảnh báo chỉ theo người xem; không trả dải hay tỷ lệ nhấp của từng cửa sổ.
+    const alertXem = tail.length === 2 && tail.every(w => w.viewers < viewersBand[0]);
+    return {
+      windows: windows.map(w => ({ viewers: w.viewers, clickRate: 0 })),
+      last: last ? { viewers: last.viewers, clickRate: 0 } : null,
+      viewersBand,
+      clickBand: null,
+      alert: alertXem,
+      note: alertXem
+        ? "Người xem dưới dải bình thường 10 phút liền. Đây chỉ là mô tả, chưa nói được vì sao; lịch bốc thăm vẫn giữ nguyên."
+        : "Người xem trong hoặc trên dải bình thường của phiên.",
+    };
+  }
+  const clickBand = quartiles(ref.map(w => w.clickRate));
   const alert = tail.length === 2 && tail.every(w => w.viewers < viewersBand[0] && w.clickRate < clickBand[0]);
   const note = alert
-    ? "Người xem và lượt nhấp cùng dưới dải bình thường 10 phút liền. Đây là mô tả, không phải kết luận nhân quả; lịch thí nghiệm vẫn giữ nguyên."
+    ? "Người xem và lượt nhấp cùng dưới dải bình thường 10 phút liền. Đây chỉ là mô tả, chưa nói được vì sao; lịch bốc thăm vẫn giữ nguyên."
     : "Trong hoặc trên dải bình thường của phiên.";
   return { windows, last, viewersBand, clickBand, alert, note };
 }
@@ -202,18 +217,15 @@ export function verdict(state: EstimateState): Verdict {
         return { kind: "doi", label: KET_LUAN_THEO_MA.DOI.nhan_thuoc, detail: KET_LUAN_THEO_MA.DOI.cau };
       }
       if (state.ciHigh < 0) {
-        return {
-          kind: "giu",
-          label: KET_LUAN_THEO_MA.GIU.nhan_thuoc,
-          detail: `${KET_LUAN_THEO_MA.GIU.cau} Tác dụng ngược cũng là một phép đo thật.`,
-        };
+        return { kind: "giu", label: KET_LUAN_THEO_MA.GIU.nhan_thuoc, detail: KET_LUAN_THEO_MA.GIU.cau };
       }
       return { kind: "do_them", label: KET_LUAN_THEO_MA.DO_THEM.nhan_thuoc, detail: KET_LUAN_THEO_MA.DO_THEM.cau };
     case "not_enough":
       return {
         kind: "do_them",
         label: KET_LUAN_THEO_MA.DO_THEM.nhan_thuoc,
-        detail: `Mới có ${state.nBlocks} khối đo được, chưa đủ để kết luận. Phiên thí nghiệm cần từ 90 phút với khối 5 phút, nên chạy thêm phiên rồi gộp lại.`,
+        // Câu ĐO THÊM duy nhất khi chưa đủ khối (D-028): tổng kết, bàn và danh sách cùng đọc LOI_THUONG.chuaDuKhoi.
+        detail: LOI_THUONG.chuaDuKhoi,
       };
     case "locked":
       return { kind: "cho", label: "CHỜ HẾT PHIÊN", detail: "Kết quả khoá đến khi phiên kết thúc, để không ai nhìn trộm giữa chừng." };

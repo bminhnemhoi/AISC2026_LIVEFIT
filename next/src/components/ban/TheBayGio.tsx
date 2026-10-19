@@ -10,14 +10,15 @@ import type { BayGio } from "./logic";
 export const PHU_DE_NUT_GHIM: string =
   TU.ghimMonKhoiNay.phu_de ?? (TU.ghimMonKhoiNay.nghia ?? "").split("; ").slice(1).join("; ");
 
-const BAN_KINH = 40;
+// Bán kính lớn trong viewBox 100, nét 7: lòng vòng ≈ 68 px ở 84 px, chữ 18 px "03:55" (≈ 50 px) không chạm nét.
+const BAN_KINH = 44;
 const CHU_VI = 2 * Math.PI * BAN_KINH;
 
 /** Vòng đếm ngược tới hết khối. Màu theo khối (BẬT xanh, TẮT xám), chữ ở giữa nói rõ còn bao lâu. */
 function VongDem({ phanCon, conGiay, loai }: { phanCon: number; conGiay: number | null; loai: BayGio["loai"] }) {
   return (
     <div className="ban-vong" data-loai={loai}>
-      <svg viewBox="0 0 100 100" width="80" height="80" aria-hidden="true">
+      <svg viewBox="0 0 100 100" width="84" height="84" aria-hidden="true">
         <circle cx="50" cy="50" r={BAN_KINH} className="ban-vong__nen" />
         <circle
           cx="50"
@@ -71,7 +72,7 @@ export function TheBayGio({ bayGio, sessionId, monGhim, dangGhim, onGhim, thongB
           </p>
           {b.soKhoi != null ? (
             <p className="ban-phu">
-              Khối {b.soKhoi}/{b.tongKhoi} · còn lại trong khối
+              Khối {b.soKhoi} trên {b.tongKhoi}
             </p>
           ) : b.loai === "ngoai_khoi" ? (
             <p className="ban-phu">Đã qua hết {b.tongKhoi} khối. Kết thúc phiên để xem tổng kết.</p>
@@ -79,16 +80,25 @@ export function TheBayGio({ bayGio, sessionId, monGhim, dangGhim, onGhim, thongB
         </div>
       </div>
 
-      <div className="ban-mon" data-co-mon={monGhim ? "1" : undefined}>
-        <p className="ban-mon__nhan">Đang ghim</p>
-        <p className="ban-mon__ten">{monGhim ? monGhim.ten : "Chưa ghim món nào"}</p>
-        {monGhim?.gia != null ? <p className="ban-phu">{monGhim.gia.toLocaleString("vi-VN")} đ</p> : null}
-        {b.conTuKhoiTruoc ? (
-          <p className="ban-phu" data-testid="off-block-carryover">
-            Còn từ khối trước: khối TẮT không tự gỡ ghim.
-          </p>
-        ) : null}
-      </div>
+      {b.khachKhongThayGhim ? (
+        // Phòng xem chỉ hiện món ghim trong đúng khối đã ghim: ở khối TẮT khách không thấy thẻ ghim nào.
+        <div className="ban-mon" data-testid="lab-off-khong-ghim">
+          <p className="ban-mon__nhan">Khách đang thấy</p>
+          <p className="ban-mon__ten">Không có thẻ ghim</p>
+          <p className="ban-phu">Phòng xem: khối TẮT không hiện thẻ ghim cho khách.</p>
+        </div>
+      ) : (
+        <div className="ban-mon" data-co-mon={monGhim ? "1" : undefined}>
+          <p className="ban-mon__nhan">Đang ghim</p>
+          <p className="ban-mon__ten">{monGhim ? monGhim.ten : "Chưa ghim món nào"}</p>
+          {monGhim?.gia != null ? <p className="ban-phu">{monGhim.gia.toLocaleString("vi-VN")} đ</p> : null}
+          {b.conTuKhoiTruoc ? (
+            <p className="ban-phu" data-testid="off-block-carryover">
+              Món này còn từ khối trước. Ở khối TẮT, LiveLift để yên.
+            </p>
+          ) : null}
+        </div>
+      )}
 
       {b.hienNut ? (
         <div className="ban-bay-gio__nut">

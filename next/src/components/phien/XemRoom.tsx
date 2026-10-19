@@ -27,6 +27,9 @@ import "./xem.css";
  * Giao diện 2.0 (U7, kế hoạch 3.1, 19/10/2026): chỉ đổi phần trình bày. Phòng là một live dọc kiểu TikTok
  * (DienThoaiLive toàn màn trên điện thoại, khung máy ở giữa trên máy tính). Mọi sự kiện gửi đi giữ nguyên: cùng nút,
  * cùng loại, cùng thời điểm. Danh sách sản phẩm nằm sau nút giỏ hàng (ngăn kéo), không gửi sự kiện nào khi mở.
+ *
+ * Làm mù (soát đợt 2): ngoài thẻ ghim do máy chủ gửi, khung không khác nhau giữa khối BẬT và khối TẮT. Người dẫn vẽ
+ * tay không cầm món nào (monCam={null}); lời dặn bên cạnh không nhắc tới thẻ ghim.
  */
 
 export const XEM_API = `${process.env.NEXT_PUBLIC_XEM_API_BASE ?? ""}/xem-api`;
@@ -42,7 +45,7 @@ const StateSchema = z.object({
     video_url: z.string().nullish(),
     consent_version: z.string(),
     source_label: z.string(),
-    /** Optional: the public API does not send it yet (19/10/2026); the title is the fallback hint. */
+    /** Phòng của buổi chạy thử (THỬ NỘI BỘ). Máy chủ gửi từ 19/10/2026; máy chủ cũ không gửi thì đọc tên phòng. */
     dry_run: z.boolean().nullish(),
   }),
   pinned: ProductSchema.nullish(),
@@ -167,14 +170,24 @@ function vnd(n: number): string {
 
 /**
  * Nhãn nguồn của phòng (mã canon): chữ máy chủ gửi nếu khớp canon, không thì DÀN DỰNG (mọi phòng xem đều dàn dựng);
- * thêm THỬ NỘI BỘ khi phòng là buổi chạy thử. API công khai chưa gửi cờ dry_run nên tạm đọc tên phòng
- * ("Thử nội bộ · ..."), xem rủi ro U7.
+ * thêm THỬ NỘI BỘ khi phòng là buổi chạy thử. Có cờ dry_run thì chỉ theo cờ; chỉ khi máy chủ cũ không gửi cờ mới
+ * đọc tên phòng ("Thử nội bộ · ...").
  */
 export function nhanPhong(room: { title: string; source_label: string; dry_run?: boolean | null }): MaNhanNguon[] {
   const thu = room.dry_run ?? /th[ửu] n[ộo]i b[ộo]/i.test(room.title.normalize("NFC"));
   const ma = maNhanNguonTu(room.source_label).filter(m => m !== "THU_NOI_BO");
   const ds: MaNhanNguon[] = ma.length > 0 ? ma : ["DAN_DUNG"];
   return thu ? [...ds, "THU_NOI_BO"] : ds;
+}
+
+/**
+ * Video là người dẫn AI khi và chỉ khi đường dẫn (bỏ chuỗi truy vấn) trỏ tới tệp người dẫn AI chuẩn. Video khác
+ * (YouTube, mp4 người thật quay) không mang nhãn "NGƯỜI DẪN AI" (D-015).
+ */
+export function laVideoNguoiDanAI(videoUrl: string | null | undefined): boolean {
+  if (!videoUrl) return false;
+  const duong = videoUrl.split(/[?#]/)[0];
+  return duong === DUONG_VIDEO_NGUOI_DAN || duong.endsWith(DUONG_VIDEO_NGUOI_DAN);
 }
 
 /** Câu ghi chú cạnh khung live trên máy tính (giữ nguyên chữ của kế hoạch 3.1). */
@@ -213,12 +226,6 @@ function RutLui({
     }
   };
 
-  // Hop chưa nhận thuộc tính riêng cho nút xác nhận: gắn data-chup-bam sau khi hộp mở (script chụp bấm theo nó).
-  useEffect(() => {
-    if (step !== "hoi") return;
-    document.querySelector(".xem2-hop .nen-nut--chinh")?.setAttribute("data-chup-bam", "xac-nhan-rut-lui");
-  }, [step]);
-
   const ngan = nhanNgan && step !== "gui";
   return (
     <div className={["xem2-rut-lui", className].filter(Boolean).join(" ")} data-testid="xem-leave">
@@ -238,7 +245,7 @@ function RutLui({
       </NutBam>
       {note && (
         <p
-          className={note.kind === "loi" ? "ph-err xem2-bao xem2-bao--loi" : "ph-muted xem2-bao"}
+          className={note.kind === "loi" ? "xem2-bao xem2-bao--loi" : "xem2-bao"}
           role={note.kind === "loi" ? "alert" : "status"}
         >
           {note.text}
@@ -252,6 +259,7 @@ function RutLui({
         nutXacNhan="Xác nhận rút lui"
         nutHuy="Huỷ"
         nguyHiem
+        thuocTinhXacNhan={{ "data-chup-bam": "xac-nhan-rut-lui" }}
         onXacNhan={() => {
           void go();
         }}
@@ -281,7 +289,7 @@ function TrangXem({ children, nguon, laPhong = false }: { children: ReactNode; n
 const BA_Y: ReadonlyArray<{ tieuDe: string; cau: string }> = [
   {
     tieuDe: "Phòng xem dàn dựng",
-    cau: "Phục vụ nghiên cứu sinh viên, không phải buổi bán hàng thật. Cách sản phẩm hiển thị có thể đổi theo thời gian.",
+    cau: "Phục vụ đề tài nghiên cứu của sinh viên, không phải buổi bán hàng thật. Cách sản phẩm hiển thị có thể đổi theo thời gian.",
   },
   {
     tieuDe: "Mua bằng tiền ảo",
@@ -289,7 +297,11 @@ const BA_Y: ReadonlyArray<{ tieuDe: string; cau: string }> = [
   },
   {
     tieuDe: "Rút lui bất cứ lúc nào",
-    cau: "Bấm \"Rút lui\" ở góc trên, toàn bộ dữ liệu của bạn bị xoá.",
+    cau: "Bấm “Rút lui” ở góc trên là mọi dữ liệu của bạn được xoá.",
+  },
+  {
+    tieuDe: "Chỉ dùng cho đề tài",
+    cau: "Dữ liệu chỉ dùng cho LiveLift (AISC'26), xoá chậm nhất 31/12/2026, không liên quan điểm số.",
   },
 ];
 
@@ -401,7 +413,8 @@ export function XemRoom({ code }: { code: string }) {
 
   // Dòng "Người dẫn đang nói về" chỉ có nghĩa với video người dẫn AI mặc định; null thì không tải gì.
   const videoUrl = state?.room.video_url ?? null;
-  const dongThoiGian = useDongThoiGian(consented && videoUrl && videoUrl.endsWith(DUONG_VIDEO_NGUOI_DAN) ? DUONG_DONG_THOI_GIAN : null);
+  const videoAI = laVideoNguoiDanAI(videoUrl);
+  const dongThoiGian = useDongThoiGian(consented && videoAI ? DUONG_DONG_THOI_GIAN : null);
 
   const agree = async (): Promise<void> => {
     if (!state) return;
@@ -518,7 +531,7 @@ export function XemRoom({ code }: { code: string }) {
               <p className="xem2-cau">Cảm ơn bạn. Bạn có thể đóng trang này.</p>
             ) : (
               <>
-                <p className="xem2-cau">Trước khi vào phòng, bạn đọc nhanh 3 điều này nhé.</p>
+                <p className="xem2-cau">Trước khi vào phòng, bạn đọc nhanh {BA_Y.length} điều này nhé.</p>
                 <ol className="xem2-ba-y">
                   {BA_Y.map((y, i) => (
                     <li key={y.tieuDe}>
@@ -539,8 +552,8 @@ export function XemRoom({ code }: { code: string }) {
                     <li>Bạn có thể bấm &quot;Rút lui&quot; bất cứ lúc nào. Khi đó toàn bộ dữ liệu của bạn bị xoá.</li>
                     <li>Dữ liệu chỉ dùng cho đề tài LiveLift (AISC&apos;26), xoá chậm nhất ngày 31/12/2026, không liên quan đến điểm số.</li>
                   </ul>
-                  <p className="xem2-nho">Phiên bản lời đồng ý: {state.room.consent_version}. Căn cứ Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15.</p>
                 </details>
+                <p className="xem2-nho xem2-phien-ban">Phiên bản lời đồng ý: {state.room.consent_version}. Căn cứ Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15.</p>
                 <div className="xem2-hang-nut">
                   <NutBam
                     bien="chinh"
@@ -601,7 +614,10 @@ export function XemRoom({ code }: { code: string }) {
             dongThoiGian={dongThoiGian}
             ghim={pinned ? { ten: pinned.name, gia: pinned.price_vnd } : null}
             binhLuan={[LOI_CHAO, ...binhLuan]}
-            laNguoiDanAI={!!videoUrl}
+            monCam={null}
+            dangLive={state.room.status === "dang_mo"}
+            chuNgoaiLive={state.room.status === "chua_mo" ? "CHƯA MỞ" : "ĐÃ KẾT THÚC"}
+            laNguoiDanAI={videoAI}
             nhanNguon={nhan}
             soTrongGio={gio}
             onXemNgay={() => {
@@ -626,7 +642,6 @@ export function XemRoom({ code }: { code: string }) {
           <NhanNguon ma={nhan} />
           <p className="xem2-ghi-chu">{GHI_CHU_PHONG}.</p>
           <ul className="xem2-meo">
-            <li>Thẻ &quot;Đang ghim&quot; hiện ở cuối khung khi người dẫn ghim một món.</li>
             <li>Bấm giỏ hàng để xem mọi sản phẩm của phòng.</li>
             <li>Muốn dừng tham gia: bấm &quot;Rút lui&quot; ở góc trên khung.</li>
           </ul>

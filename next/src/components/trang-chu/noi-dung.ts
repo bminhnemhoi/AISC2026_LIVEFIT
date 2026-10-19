@@ -1,6 +1,6 @@
 // Chữ và số của trang giới thiệu (U8, kế hoạch bản 3.1 mục 4). Số chép từ docs/canon/so.yaml (trường hien_thi và
 // nhan) và docs/competition/FACT-SHEET.md; test trang-chu.test.tsx đọc lại hai tệp đó để bắt chỗ lệch.
-import { CHO_CANON, TU, hoaChuDau, type MaNhanNguon } from "@/lib/tu-ngu";
+import { LOI_THUONG, TU, hoaChuDau, type MaNhanNguon } from "@/lib/tu-ngu";
 
 /** Câu định vị, dùng nguyên văn (CLAUDE.md). */
 export const CAU_DINH_VI =
@@ -31,8 +31,11 @@ export const DIEU_HUONG_TRANG = [
 
 /* ---------- dải 16 khối ---------- */
 
-/** so.yaml id phien_90_khoi: "phiên 90 phút = 16 khối (8 BẬT / 8 TẮT)". */
-export const TIEU_DE_DAI_KHOI = "Phiên 90 phút = 16 khối";
+/**
+ * so.yaml id phien_90_khoi: "phiên 90 phút = 16 khối (8 BẬT / 8 TẮT)"; duoc_noi kèm điều kiện "khối đầu và cuối dài
+ * gấp đôi" (16 × 5 = 80, hai khối đầu cuối 10 phút mới đủ 90).
+ */
+export const TIEU_DE_DAI_KHOI = "Phiên 90 phút = 16 khối (khối đầu và cuối 10 phút)";
 
 /* ---------- vấn đề ---------- */
 
@@ -50,7 +53,7 @@ export const VAN_DE = {
 export const SO_SANH = {
   tieuDe: "Hai cách trả lời cùng một câu hỏi",
   trai: {
-    ten: hoaChuDau(CHO_CANON.tuongQuan),
+    ten: hoaChuDau(LOI_THUONG.tuongQuan),
     chip: "Dễ nhầm",
     y: [
       "Người bán hay ghim đúng lúc đông khách.",
@@ -112,8 +115,8 @@ export const KET_QUA_MO_PHONG: readonly SoKetQua[] = [
     nhan: "MÔ PHỎNG",
     maNhan: "MO_PHONG",
     ten: hoaChuDau(TU.duAm.chu),
-    dieuKien: "Dư âm kéo dài (nửa đời 300 giây); bỏ 180 giây đầu khối thì độ lệch giảm từ −46% còn −35%.",
-    yNghia: "Có lệch thì lệch về phía 0: sai thì sai về phía thận trọng.",
+    dieuKien: "Dư âm kéo dài (sau 300 giây còn một nửa); bỏ 180 giây đầu khối thì độ lệch giảm từ −46% còn −35%.",
+    yNghia: "Nếu đo sai thì đo ra nhỏ hơn thật, không thổi phồng tác dụng của ghim.",
   },
 ];
 
@@ -142,13 +145,13 @@ export const BA_MAN: readonly ManGioiThieu[] = [
   {
     ma: "phong",
     ten: hoaChuDau(TU.phongXem.chu),
-    cau: "Người xem bấm Xem ngay hoặc Mua bằng tiền ảo. Không lưu thông tin cá nhân.",
-    lienKet: { chu: "Lấy mã phòng ở bàn thí nghiệm", href: "/phien" },
+    cau: "Người xem bấm “Xem ngay” hoặc “Mua (tiền ảo)”. Không lưu thông tin cá nhân. Mã phòng do nhóm gửi riêng cho từng buổi thử.",
+    lienKet: { chu: "Xem danh sách phiên", href: "/phien" },
   },
   {
     ma: "tong-ket",
     ten: "Tổng kết",
-    cau: "Hết phiên, LiveLift chốt một trong ba chữ ĐỔI, GIỮ hoặc ĐO THÊM, kèm lý do bằng lời thường.",
+    cau: "Hết phiên, LiveLift đưa ra một trong ba kết luận: ĐỔI, GIỮ hoặc ĐO THÊM, kèm lý do bằng lời thường.",
     lienKet: { chu: "Chọn một phiên đã xong", href: "/phien" },
   },
 ];
@@ -165,18 +168,19 @@ export interface SuThat {
 
 export const SU_THAT: readonly SuThat[] = [
   { id: "phien_nguoi_ban_that", so: "0", chu: "phiên với người bán thật", maNhan: "THAT" },
-  { id: "phong_van", so: "0", chu: "phỏng vấn người bán; giá là giả thuyết", maNhan: "THAT" },
+  { id: "phong_van", so: "0", chu: "phỏng vấn người bán", maNhan: "THAT" },
+  { chu: "Giá bán: chưa hỏi người bán, mới là giả thuyết.", maNhan: "GIA_THUYET" },
   {
-    chu: `Phòng xem: ${TU.thuNoiBo.chu}, ${TU.thuNoiBo.nghia ?? ""}`,
+    chu: `Phòng xem: tối 20/10/2026 ${TU.thuNoiBo.chu}, chỉ người trong nhóm. Người ngoài nhóm vào từ Vòng 3 của cuộc thi.`,
     maNhan: "THU_NOI_BO",
   },
 ];
 
 /* ---------- chân trang ---------- */
 
-export const DOI = "Đội AISC26-0039 · TDTU · track Data Driven Business";
+export const DOI = "Đội AISC26-0039 · TDTU · hạng mục Data Driven Business";
 /** README.md của repo: git clone https://github.com/bminhnemhoi/AISC2026_LIVEFIT.git */
-export const MA_NGUON = { chu: "Mã nguồn trên GitHub", href: "https://github.com/bminhnemhoi/AISC2026_LIVEFIT" } as const;
+export const MA_NGUON = { chu: "Mã nguồn", href: "https://github.com/bminhnemhoi/AISC2026_LIVEFIT" } as const;
 
 export const MO_TA_TRANG =
   "Ghim một món khi livestream có làm khách bấm mua nhiều hơn không? LiveLift bốc thăm bật/tắt theo từng khối 5 phút để người bán tự đo.";

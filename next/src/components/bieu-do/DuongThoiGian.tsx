@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { bangDuongThoiGian, nhanhTai, tenNhanh } from "@/lib/bieu-do/bang";
 import { chuoiThoiGian, daiKhoi, O_DO_S, type DaiKhoi } from "@/lib/bieu-do/chuoi";
 import { PHU_DE_BAT, PHU_DE_TAT, TY_LE_NHAP, TY_LE_NHAP_DAY_DU } from "@/lib/bieu-do/ket-luan";
-import { quyenToNenKhoi } from "@/lib/bieu-do/khoa";
+import { choHienTyLeNhapTheoThoiGian, quyenToNenKhoi } from "@/lib/bieu-do/khoa";
 import { BIEN } from "@/lib/bieu-do/mau";
 import { moTaDuongThoiGian } from "@/lib/bieu-do/mo-ta";
 import { moc, soGon } from "@/lib/bieu-do/so";
@@ -18,10 +18,10 @@ import { KhungBieuDo, MauSocTat, ONhac, OTrong, useBeRong, useMaSvg, type MucTie
  * Đường thời gian: hai biểu đồ nhỏ dùng chung trục thời gian (người xem ở trên, Tỷ lệ nhấp ở dưới), không có trục y
  * thứ hai. Trục giá trị bắt đầu ở 0. Nhãn trực tiếp ở điểm cuối mỗi đường; rê chuột có vạch dọc và ô nhắc.
  *
- * Khoá §7: nền BẬT/TẮT chỉ tô khi `toNenKhoi` VÀ có `nguon` VÀ nguồn cho phép (`quyenToNenKhoi(...).cho === true`:
- * MÔ PHỎNG, DÀN DỰNG). Thiếu `nguon` thì không tô nền và không tự ghi dòng nào. Phiên THẬT, CHẠY THỬ hay THỬ NỘI BỘ
- * đang live vẽ một màu, kể cả khi lỡ truyền `toNenKhoi`. Dòng giải thích dưới biểu đồ chỉ lấy từ `ghiChu` (thường là
- * `DuLieuPhien.toNen.dong`) hoặc từ quyền tính theo `nguon`.
+ * Khoá §7 (D-027): nền BẬT/TẮT chỉ tô khi `toNenKhoi` VÀ có `nguon` VÀ `quyenToNenKhoi(nguon, dangLive, khoa).cho`.
+ * Chuỗi Tỷ lệ nhấp theo thời gian (đường, nhãn đầu đường, ô nhắc, bảng thay ảnh, câu mô tả) chỉ có khi
+ * `choHienTyLeNhapTheoThoiGian(nguon, dangLive, khoa)`: MÔ PHỎNG, hoặc máy chủ đã trả `khoa=false`. Phiên THẬT, CHẠY
+ * THỬ, THỬ NỘI BỘ hay DÀN DỰNG còn khoá chỉ có biểu đồ Người xem và một dòng giải thích. `khoa` mặc định true.
  */
 
 export interface DuongThoiGianProps {
@@ -30,11 +30,13 @@ export interface DuongThoiGianProps {
   batDauTs: string | null | undefined;
   /** Lịch khối (chỉ dùng để tô nền khi được phép). */
   khoi?: Block[];
-  /** Muốn tô nền BẬT/TẮT. Chỉ có tác dụng khi có `nguon` và nguồn là MÔ PHỎNG hoặc DÀN DỰNG (không phải THỬ NỘI BỘ đang live). */
+  /** Muốn tô nền BẬT/TẮT. Chỉ có tác dụng khi có `nguon` và nguồn là MÔ PHỎNG, hoặc máy chủ đã mở (`khoa={false}`). */
   toNenKhoi?: boolean;
   /** Nhãn nguồn của phiên; biểu đồ tự kiểm quyền tô nền (lớp bảo vệ thứ hai). Thiếu thì không tô nền. */
   nguon?: Pick<SourceLabel, "kind" | "text"> | null;
   dangLive?: boolean;
+  /** True trừ khi máy chủ nói rõ kết quả đã mở (`DuLieuPhien.khoa`). Mặc định true: thiếu thì coi như còn khoá. */
+  khoa?: boolean;
   /** Dòng giải thích dưới biểu đồ (thường là `DuLieuPhien.toNen.dong`). Không truyền thì lấy theo `nguon`, không có thì không ghi gì. */
   ghiChu?: string | null;
   /** Độ dài dự kiến (giây): trục x kéo tới đây để đường mọc dần khi live. */
@@ -57,6 +59,7 @@ export function DuongThoiGian({
   toNenKhoi = false,
   nguon = null,
   dangLive = false,
+  khoa = true,
   ghiChu,
   thoiLuongS,
   cuaSoS = 120,
@@ -69,15 +72,19 @@ export function DuongThoiGian({
   const [tro, setTro] = useState<number | null>(null);
   const maSoc = useMaSvg("bd-soc-tat");
 
-  const diem = useMemo(() => chuoiThoiGian(ticks, batDauTs, cuaSoS), [ticks, batDauTs, cuaSoS]);
-  const quyen = nguon ? quyenToNenKhoi(nguon, dangLive) : null;
-  const choToNen = toNenKhoi && khoi.length > 0 && quyen?.cho === true;
+  const hienNhap = choHienTyLeNhapTheoThoiGian(nguon, dangLive, khoa);
+  const diemDu = useMemo(() => chuoiThoiGian(ticks, batDauTs, cuaSoS), [ticks, batDauTs, cuaSoS]);
+  // Khoá: bỏ hẳn tỷ lệ nhấp khỏi dữ liệu vẽ, để không chỗ nào (bảng, ô nhắc, câu mô tả) lỡ in ra.
+  const diem = useMemo(() => (hienNhap ? diemDu : diemDu.map((d) => ({ ...d, tyLeNhap: null }))), [hienNhap, diemDu]);
+  const quyen = nguon ? quyenToNenKhoi(nguon, dangLive, khoa) : null;
+  const choToNen = hienNhap && toNenKhoi && khoi.length > 0 && quyen?.cho === true;
   const dai: DaiKhoi[] | null = useMemo(() => (choToNen ? daiKhoi(khoi) : null), [choToNen, khoi]);
-  // "mở khoá sớm" chỉ nói khi thật sự có nền khối; lời giải thích vì sao khoá thì luôn được nói.
+  // Câu mở sớm chỉ nói khi thật sự có nền khối; lời giải thích vì sao khoá thì luôn được nói.
   const dong = ghiChu ?? (quyen && (!quyen.cho || choToNen) ? quyen.dong : null);
 
-  const moTa = moTaDuongThoiGian(diem, { cuaSoS, dai });
-  const bang = diem.length ? bangDuongThoiGian(diem, dai) : null;
+  const moTa = moTaDuongThoiGian(diem, { cuaSoS, dai, coTyLeNhap: hienNhap });
+  const bang = diem.length ? bangDuongThoiGian(diem, dai, { cuaSoS, coTyLeNhap: hienNhap }) : null;
+  const phutCuaSo = Math.round(cuaSoS / 60);
 
   const cuoiT = diem.length ? diem[diem.length - 1].t + O_DO_S : 0;
   const mien = Math.max(60, cuoiT, thoiLuongS ?? 0, dai?.length ? Math.max(...dai.map((d) => d.den)) : 0);
@@ -85,11 +92,11 @@ export function DuongThoiGian({
   const H = Math.max(180, cao);
   const veW = W - DEM.trai - DEM.phai;
   const tren = dai ? DEM.trenCoKhoi : DEM.tren;
-  const veH = H - tren - DEM.duoi - DEM.giua;
-  const caoTren = Math.round(veH * 0.55);
-  const caoDuoi = veH - caoTren;
+  const veH = H - tren - DEM.duoi - (hienNhap ? DEM.giua : 0);
+  const caoTren = hienNhap ? Math.round(veH * 0.55) : veH;
+  const caoDuoi = hienNhap ? veH - caoTren : 0;
   const yTren0 = tren;
-  const yDuoi0 = tren + caoTren + DEM.giua;
+  const yDuoi0 = tren + caoTren + (hienNhap ? DEM.giua : 0);
   const x = thangTuyenTinh([0, mien], [DEM.trai, DEM.trai + veW]);
 
   const truXem = vachTu0(Math.max(1, ...diem.map((d) => d.nguoiXem)), 2);
@@ -118,11 +125,16 @@ export function DuongThoiGian({
 
   const d = tro != null && tro >= 0 ? diem[tro] : null;
   const nhanhTro = d && dai ? nhanhTai(dai, d.t) : null;
+  const dayVe = hienNhap ? yDuoi0 + caoDuoi : yTren0 + caoTren;
 
   return (
     <KhungBieuDo
-      tieuDe={tieuDe}
-      phuDe={`${TY_LE_NHAP}: ${TY_LE_NHAP_DAY_DU}, tính trên ${Math.round(cuaSoS / 60)} phút gần nhất`}
+      tieuDe={hienNhap ? tieuDe : "Người xem theo thời gian"}
+      phuDe={
+        hienNhap
+          ? `${TY_LE_NHAP}: ${TY_LE_NHAP_DAY_DU}, tính trên ${phutCuaSo} phút gần nhất`
+          : "Người xem cùng lúc. Tỷ lệ nhấp theo thời gian mở khi hết phiên."
+      }
       nhan={nguon?.text ?? null}
       moTa={moTa}
       bang={bang}
@@ -135,10 +147,12 @@ export function DuongThoiGian({
             <i className="bd-mau-net" style={{ color: BIEN.nguoiXem }} aria-hidden="true" />
             Người xem cùng lúc
           </li>
-          <li>
-            <i className="bd-mau-net" style={{ color: BIEN.luotNhap }} aria-hidden="true" />
-            {TY_LE_NHAP}
-          </li>
+          {hienNhap ? (
+            <li>
+              <i className="bd-mau-net" style={{ color: BIEN.luotNhap }} aria-hidden="true" />
+              {TY_LE_NHAP}
+            </li>
+          ) : null}
           {dai ? (
             <>
               <li>
@@ -171,11 +185,13 @@ export function DuongThoiGian({
                   const x0 = x(k.tu) + 1;
                   const w = Math.max(0, x(Math.min(k.den, mien)) - x(k.tu) - 2);
                   const fill = k.nhanh === "ON" ? "var(--bd-bat-nen)" : `url(#${maSoc})`;
+                  // Hai dải riêng cho hai biểu đồ: khe giữa để trống cho nhãn "Tỷ lệ nhấp".
                   return (
                     <g key={k.index} data-nhanh={k.nhanh}>
-                      <rect x={x0} y={yTren0 - 16} width={w} height={yDuoi0 + caoDuoi - yTren0 + 16} fill={fill} />
-                      {w >= 18 ? (
-                        <text x={x0 + w / 2} y={yTren0 - 5} textAnchor="middle" className="bd-chu-nhat">
+                      <rect x={x0} y={yTren0 - 16} width={w} height={caoTren + 16} fill={fill} />
+                      <rect x={x0} y={yDuoi0} width={w} height={caoDuoi} fill={fill} />
+                      {w >= 9 ? (
+                        <text x={x0 + w / 2} y={yTren0 - 5} textAnchor="middle" className="bd-chu-nhat" fontSize={w >= 18 ? undefined : 10}>
                           {k.nhanh === "ON" ? "B" : "T"}
                         </text>
                       ) : null}
@@ -194,7 +210,7 @@ export function DuongThoiGian({
                 </text>
               </g>
             ))}
-            {truNhap.vach.map((v) => (
+            {(hienNhap ? truNhap.vach : []).map((v) => (
               <g key={`vn${v}`}>
                 <line x1={DEM.trai} x2={DEM.trai + veW} y1={yNhap(v)} y2={yNhap(v)} className={v === 0 ? "bd-truc" : "bd-luoi"} />
                 <text x={DEM.trai - 8} y={yNhap(v) + 4} textAnchor="end">
@@ -205,9 +221,11 @@ export function DuongThoiGian({
             <text x={0} y={dai ? 12 : yTren0 - 14} className="bd-chu-dam">
               Người xem
             </text>
-            <text x={0} y={yDuoi0 - 12} className="bd-chu-dam">
-              {TY_LE_NHAP}
-            </text>
+            {hienNhap ? (
+              <text x={0} y={yDuoi0 - 12} className="bd-chu-dam">
+                {TY_LE_NHAP}
+              </text>
+            ) : null}
             {vachX.map((t, i) => (
               <text key={`t${t}`} x={x(t)} y={H - 6} textAnchor={i === 0 ? "start" : t >= mien - 1 ? "end" : "middle"}>
                 {moc(t)}
@@ -217,7 +235,7 @@ export function DuongThoiGian({
             {/* chuỗi */}
             <path d={vungDuoi(ptXem, yTren0 + caoTren)} fill={BIEN.nguoiXem} fillOpacity={0.1} />
             <path d={duongDut(ptXem)} className="bd-duong" stroke={BIEN.nguoiXem} data-testid="bd-duong-nguoi-xem" />
-            <path d={duongDut(ptNhap)} className="bd-duong" stroke={BIEN.luotNhap} data-testid="bd-duong-ty-le-nhap" />
+            {hienNhap ? <path d={duongDut(ptNhap)} className="bd-duong" stroke={BIEN.luotNhap} data-testid="bd-duong-ty-le-nhap" /> : null}
 
             {cuoiXem ? (
               <g>
@@ -227,7 +245,7 @@ export function DuongThoiGian({
                 </text>
               </g>
             ) : null}
-            {cuoiNhapI >= 0 ? (
+            {hienNhap && cuoiNhapI >= 0 ? (
               <g>
                 <circle cx={x(diem[cuoiNhapI].t)} cy={yNhap(diem[cuoiNhapI].tyLeNhap as number)} r={4} fill={BIEN.luotNhap} stroke="var(--bd-nen)" strokeWidth={2} />
                 <text x={x(diem[cuoiNhapI].t) + 8} y={yNhap(diem[cuoiNhapI].tyLeNhap as number) + 4} className="bd-chu-dam">
@@ -238,16 +256,16 @@ export function DuongThoiGian({
 
             {d ? (
               <g pointerEvents="none">
-                <line x1={x(d.t)} x2={x(d.t)} y1={yTren0} y2={yDuoi0 + caoDuoi} className="bd-ngang" />
+                <line x1={x(d.t)} x2={x(d.t)} y1={yTren0} y2={dayVe} className="bd-ngang" />
                 <circle cx={x(d.t)} cy={yXem(d.nguoiXem)} r={4} fill={BIEN.nguoiXem} stroke="var(--bd-nen)" strokeWidth={2} />
-                {d.tyLeNhap != null ? <circle cx={x(d.t)} cy={yNhap(d.tyLeNhap)} r={4} fill={BIEN.luotNhap} stroke="var(--bd-nen)" strokeWidth={2} /> : null}
+                {hienNhap && d.tyLeNhap != null ? <circle cx={x(d.t)} cy={yNhap(d.tyLeNhap)} r={4} fill={BIEN.luotNhap} stroke="var(--bd-nen)" strokeWidth={2} /> : null}
               </g>
             ) : null}
             <rect
               x={DEM.trai}
               y={yTren0}
               width={veW}
-              height={yDuoi0 + caoDuoi - yTren0}
+              height={dayVe - yTren0}
               fill="transparent"
               onPointerMove={diChuot}
               onPointerDown={diChuot}
@@ -262,7 +280,15 @@ export function DuongThoiGian({
             dau={`${moc(d.t)}${nhanhTro && nhanhTro.nhanh !== "WASH" ? ` · khối ${nhanhTro.index + 1} ${tenNhanh(nhanhTro.nhanh)}` : ""}`}
             dong={[
               { giaTri: soGon(d.nguoiXem), ten: "người xem", mau: BIEN.nguoiXem },
-              { giaTri: d.tyLeNhap == null ? "chưa tính được" : soGon(d.tyLeNhap, 2), ten: TY_LE_NHAP.toLowerCase(), mau: BIEN.luotNhap },
+              ...(hienNhap
+                ? [
+                    {
+                      giaTri: d.tyLeNhap == null ? "chưa tính được" : soGon(d.tyLeNhap, 2),
+                      ten: `${TY_LE_NHAP.toLowerCase()}, ${phutCuaSo} phút trước`,
+                      mau: BIEN.luotNhap,
+                    },
+                  ]
+                : []),
             ]}
           />
         ) : null}

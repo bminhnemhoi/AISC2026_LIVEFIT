@@ -371,3 +371,28 @@
     white-space: normal;
   }
 }
+
+/* Khung cuộn: dải mờ ở đáy và dòng nhắc khi còn phiên bên dưới (chỉ màn rộng mới có khung cuộn). */
+.pl-ds-boc {
+  position: relative;
+  min-width: 0;
+}
+.pl-ds-boc[data-con-them]::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: calc(var(--n-c14) * 1.5 + var(--n-k2));
+  height: 48px;
+  border-radius: 0 0 var(--n-bo) var(--n-bo);
+  background: linear-gradient(to bottom, transparent, var(--n-be-mat));
+  pointer-events: none;
+}
+.pl-ds__nhac {
+  margin: 0;
+  padding: var(--n-k2) var(--n-k1) 0;
+  font-size: var(--n-c14);
+  line-height: 1.5;
+  color: var(--n-muc-2);
+  text-align: center;
+}

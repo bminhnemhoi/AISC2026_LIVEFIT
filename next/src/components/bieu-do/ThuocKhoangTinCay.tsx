@@ -31,6 +31,8 @@ export interface ThuocKhoangTinCayProps {
   tieuDe?: string;
   /** Gọn: chỉ hiện câu của vùng đang chọn (thẻ kết luận). */
   gon?: boolean;
+  /** Ẩn danh sách ba vùng GIỮ / ĐO THÊM / ĐỔI dưới thước (thẻ kết luận đã nói vùng bằng chữ lớn). */
+  anVung?: boolean;
   muc?: MucTieuDe;
 }
 
@@ -63,14 +65,40 @@ export function BieuTuongVung({ vung, co = 20 }: { vung: VungKetLuan; co?: numbe
 const CAO = 112;
 const DEM = { trai: 16, phai: 16 };
 
-export function ThuocKhoangTinCay({ khoa, uocLuong, thap, cao, lyDo, nhan, tieuDe = "Khoảng tin cậy của chênh lệch", gon = false, muc }: ThuocKhoangTinCayProps) {
+function hoaDau(chu: string): string {
+  return chu ? chu[0].toLocaleUpperCase("vi") + chu.slice(1) : chu;
+}
+
+/** Bề rộng ước của một nhãn số trên thước (px): đủ để biết nhãn có chạm vạch 0 không. */
+function rongNhan(chu: string): number {
+  return chu.length * 8 + 8;
+}
+
+export function ThuocKhoangTinCay({
+  khoa,
+  uocLuong,
+  thap,
+  cao,
+  lyDo,
+  nhan,
+  tieuDe = "Khoảng tin cậy 95% của chênh lệch",
+  gon = false,
+  anVung = false,
+  muc,
+}: ThuocKhoangTinCayProps) {
   const [refVe, rong] = useBeRong<HTMLDivElement>();
   if (khoa) {
     return <OKhoa tieuDe={tieuDe} testId="bd-thuoc-khoa" />;
   }
   const coSo = uocLuong != null && thap != null && cao != null && Number.isFinite(uocLuong) && Number.isFinite(thap) && Number.isFinite(cao);
   const vung = coSo ? vungCua(thap, cao) : null;
-  const phuDe = `${TY_LE_NHAP} khối BẬT trừ khối TẮT (${TY_LE_NHAP_DAY_DU}). Khoảng tin cậy 95%: ${PHU_DE_KHOANG_TIN_CAY}.`;
+  // Khung hẹp: chỉ giữ một dòng ngắn (lời thường của khoảng tin cậy), phần dài ẩn bằng CSS container.
+  const phuDe = (
+    <>
+      <span className="bd-phu-de-dai">{`${TY_LE_NHAP} khối BẬT trừ khối TẮT (${TY_LE_NHAP_DAY_DU}). Khoảng tin cậy 95%: ${PHU_DE_KHOANG_TIN_CAY}.`}</span>
+      <span className="bd-phu-de-ngan">{`${hoaDau(PHU_DE_KHOANG_TIN_CAY)}.`}</span>
+    </>
+  );
 
   if (!coSo || !vung) {
     return (
@@ -91,6 +119,16 @@ export function ThuocKhoangTinCay({ khoa, uocLuong, thap, cao, lyDo, nhan, tieuD
   const xUoc = x(uocLuong);
   // Nhãn thước dài (canon nhan_thuoc); khung hẹp thì chỉ giữ chữ lớn để hai nhãn hai bên không chồng nhau.
   const nhanVung = (v: VungKetLuan): string => (W >= 440 ? KET_LUAN[v].nhanThuoc : KET_LUAN[v].chu);
+  // Nhãn số ước lượng: không để vạch 0 cắt qua. Chạm vạch thì đẩy sang phía của ước lượng, canh mép từ vạch.
+  const chuUoc = soDau(uocLuong);
+  const nuaNhan = rongNhan(chuUoc) / 2;
+  const xNhanGiua = kep(xUoc, DEM.trai + nuaNhan, W - DEM.phai - nuaNhan);
+  const chamVach = Math.abs(xNhanGiua - x0) < nuaNhan + 3;
+  const nhanUoc: { x: number; neo: "start" | "middle" | "end" } = !chamVach
+    ? { x: xNhanGiua, neo: "middle" }
+    : uocLuong >= 0
+      ? { x: Math.min(x0 + 5, W - DEM.phai - 2 * nuaNhan), neo: "start" }
+      : { x: Math.max(x0 - 5, DEM.trai + 2 * nuaNhan), neo: "end" };
 
   return (
     <KhungBieuDo
@@ -106,17 +144,19 @@ export function ThuocKhoangTinCay({ khoa, uocLuong, thap, cao, lyDo, nhan, tieuD
           <p className="bd-thuoc-so">
             Chênh lệch <strong>{soDau(uocLuong)}</strong>, khoảng tin cậy 95% từ <strong>{soDau(thap)}</strong> đến <strong>{soDau(cao)}</strong>
           </p>
-          <ul className={`bd-vung-ds${gon ? " is-gon" : ""}`} data-testid="bd-thuoc-vung">
-            {THU_TU_VUNG.map((v) => (
-              <li key={v} className="bd-vung" aria-current={v === vung ? "true" : undefined} data-vung={v}>
-                <span className="bd-vung-chu">
-                  <BieuTuongVung vung={v} />
-                  {KET_LUAN[v].chu}
-                </span>
-                {!gon || v === vung ? <span className="bd-vung-cau">{KET_LUAN[v].cau}</span> : null}
-              </li>
-            ))}
-          </ul>
+          {anVung ? null : (
+            <ul className={`bd-vung-ds${gon ? " is-gon" : ""}`} data-testid="bd-thuoc-vung">
+              {THU_TU_VUNG.map((v) => (
+                <li key={v} className="bd-vung" aria-current={v === vung ? "true" : undefined} data-vung={v}>
+                  <span className="bd-vung-chu">
+                    <BieuTuongVung vung={v} />
+                    {KET_LUAN[v].chu}
+                  </span>
+                  {!gon || v === vung ? <span className="bd-vung-cau">{KET_LUAN[v].cau}</span> : null}
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       }
     >
@@ -150,8 +190,15 @@ export function ThuocKhoangTinCay({ khoa, uocLuong, thap, cao, lyDo, nhan, tieuD
           <line x1={xThap} x2={xThap} y1={yKhoang - 9} y2={yKhoang + 9} stroke="var(--bd-chu)" strokeWidth={2} strokeLinecap="round" />
           <line x1={xCao} x2={xCao} y1={yKhoang - 9} y2={yKhoang + 9} stroke="var(--bd-chu)" strokeWidth={2} strokeLinecap="round" />
           <circle cx={xUoc} cy={yKhoang} r={7} fill="var(--bd-chu)" stroke="var(--bd-nen)" strokeWidth={2} data-testid="bd-thuoc-diem" />
-          <text x={kep(xUoc, DEM.trai + 24, W - DEM.phai - 24)} y={yKhoang - 14} textAnchor="middle" className="bd-chu-dam">
-            {soDau(uocLuong)}
+          <text
+            x={nhanUoc.x}
+            y={yKhoang - 14}
+            textAnchor={nhanUoc.neo}
+            className="bd-chu-dam bd-chu-vien"
+            data-testid="bd-thuoc-nhan-uoc"
+            data-neo={nhanUoc.neo}
+          >
+            {chuUoc}
           </text>
         </svg>
       </div>

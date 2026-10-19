@@ -26,6 +26,8 @@ export interface HopProps {
   dangChay?: boolean;
   /** Khoá nút xác nhận (ví dụ chưa điền đủ). */
   tatXacNhan?: boolean;
+  /** Thuộc tính data-* gắn lên nút xác nhận (ví dụ { "data-chup-bam": "xac-nhan-rut-lui" } cho script chụp). */
+  thuocTinhXacNhan?: Readonly<Record<`data-${string}`, string>>;
   className?: string;
 }
 
@@ -42,6 +44,7 @@ export function Hop({
   nguyHiem = false,
   dangChay: dangChayNgoai = false,
   tatXacNhan = false,
+  thuocTinhXacNhan,
   className,
 }: HopProps): React.ReactElement | null {
   const daGan = useDaGan();
@@ -115,6 +118,7 @@ export function Hop({
             </NutBam>
           ) : null}
           <NutBam
+            {...thuocTinhXacNhan}
             ref={nutXacNhanRef}
             bien="chinh"
             cao={48}

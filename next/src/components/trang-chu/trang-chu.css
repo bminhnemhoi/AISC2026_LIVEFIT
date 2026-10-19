@@ -417,7 +417,7 @@ body:has(.tc) {
 }
 .tc-su-that-ds {
   display: grid;
-  grid-template-columns: 1fr 1fr 2fr;
+  grid-template-columns: 1fr 1fr 1.4fr 1.6fr;
   gap: 24px;
   margin: 0;
   padding: 0;

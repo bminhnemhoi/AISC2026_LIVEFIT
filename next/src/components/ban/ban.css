@@ -241,26 +241,27 @@
   align-items: center;
   gap: var(--n-k3);
 }
+/* Vòng 84 px, bán kính 44/100, nét 7/100: lòng vòng ≈ 68 px, chữ 18 px (≈ 50 px) cách nét ít nhất 8 px mỗi bên. */
 .ban-vong {
   position: relative;
   flex: none;
-  width: 80px;
-  height: 80px;
+  width: 84px;
+  height: 84px;
 }
 .ban-vong svg {
   display: block;
-  width: 80px;
-  height: 80px;
+  width: 84px;
+  height: 84px;
 }
 .ban-vong__nen {
   fill: none;
   stroke: var(--n-be-mat-2);
-  stroke-width: 9;
+  stroke-width: 7;
 }
 .ban-vong__dac {
   fill: none;
   stroke: var(--n-tat-chu);
-  stroke-width: 9;
+  stroke-width: 7;
   stroke-linecap: round;
   transition: stroke-dasharray var(--n-t-cham) var(--n-ease);
 }
@@ -272,8 +273,9 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: var(--n-c20);
+  font-size: var(--n-c18);
   font-weight: 600;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
 .ban-bay-gio__ten-khoi {
@@ -313,7 +315,7 @@
 }
 .ban-mon__nhan {
   margin: 0;
-  font-size: var(--n-c13);
+  font-size: var(--n-c14);
   color: var(--n-muc-2);
 }
 .ban-mon__ten {
@@ -525,18 +527,38 @@
   gap: var(--n-k1);
 }
 .ban-nhip__ds div {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--n-k2);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--n-k2);
+  align-items: baseline;
   font-size: var(--n-c16);
 }
 .ban-nhip__ds dt {
   color: var(--n-muc-2);
+  white-space: nowrap;
 }
 .ban-nhip__ds dd {
   margin: 0;
   text-align: right;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ban-nhip__ds dd.ban-nhip__dai {
+  grid-column: 1 / -1;
+  text-align: left;
+  font-weight: 400;
+}
+/* D-027: thẻ chỉ có người xem khi phiên có người bấm còn khoá */
+.ban-nguoi-xem {
+  display: grid;
+  gap: var(--n-k2);
+}
+.ban-nguoi-xem .ban-the__tieu-de {
+  margin: 0;
+}
+.ban-nguoi-xem svg {
+  width: 100%;
+  height: auto;
 }
 .ban-lien-ket {
   display: grid;
@@ -617,6 +639,37 @@
   }
   .ban-hang1 {
     padding: var(--n-k2) var(--n-k3);
+  }
+}
+
+/* Màn thấp (1280×633: laptop có thanh trình duyệt): vùng chính phải lọt màn đầu. Biểu đồ thấp hơn đặt ở JS (useManThap);
+   ở đây siết ô số và thẻ Bây giờ. */
+@media (min-width: 768px) and (max-height: 700px) {
+  .ban-chinh {
+    gap: var(--n-k2);
+  }
+  .ban-so .nen-oso {
+    padding: 8px var(--n-k3);
+  }
+  .ban-so .nen-oso__gia-tri {
+    font-size: 24px;
+  }
+  /* đường nhỏ trong ô số nhường chỗ: biểu đồ ngay dưới đã có cùng chuỗi */
+  .ban-so .nen-oso__duong-nho {
+    display: none;
+  }
+  .ban-hang1 {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .ban-dai__ds {
+    height: 24px;
+  }
+  .ban-bay-gio {
+    gap: var(--n-k2);
+  }
+  .ban-bieu-do {
+    padding: 4px var(--n-k3);
   }
 }
 
@@ -703,5 +756,21 @@
   }
   .ban-nd__mon {
     font-size: clamp(64px, 6vw, 96px);
+  }
+}
+/* điện thoại: máy nhắc chữ gọn hơn để món ghim và câu hỏi đầu tiên lọt màn đầu */
+@media (max-width: 767px) {
+  .ban-nd {
+    gap: var(--n-k4);
+    padding: var(--n-k4) 16px;
+  }
+  .ban-nd__giua {
+    gap: var(--n-k6);
+  }
+  .ban-nd__mon {
+    font-size: clamp(44px, 12vw, 64px);
+  }
+  .ban-nd__gia {
+    font-size: 26px;
   }
 }

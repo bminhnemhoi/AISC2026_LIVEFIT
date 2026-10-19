@@ -163,7 +163,7 @@ describe("phòng đã tắt (trang-thai 404)", () => {
 
     const msg = await screen.findByRole("alert");
     expect(msg).toHaveTextContent("Dữ liệu của bạn chưa bị xoá.");
-    expect(msg).toHaveClass("ph-err");
+    expect(msg).toHaveClass("xem2-bao--loi");
     expect(screen.getByRole("button", { name: "Rút lui và xoá dữ liệu của tôi" })).toBeEnabled();
     expect(localStorage.getItem(VIEWER_KEY)).toBe(ID);
     expect(screen.queryByTestId("xem-withdrawn")).toBeNull();
@@ -363,7 +363,7 @@ describe("G3-xem-ui: phòng tắt giữa chừng, bộ nhớ bị chặn, lời 
 
       await withdrawNow("Rút lui và xoá dữ liệu của tôi", 2_000); // covers the retry backoff of a 5xx
       const msg = screen.getByRole("alert");
-      expect(msg).toHaveClass("ph-err");
+      expect(msg).toHaveClass("xem2-bao--loi");
       expect(msg).toHaveTextContent("Dữ liệu của bạn chưa bị xoá.");
       const text = msg.textContent ?? "";
       expect(text).toMatch(/[ạảãàáâầấậẩẫăằắặẳẵđẹẻẽèéêềếệểễịỉĩìíọỏõòóôồốộổỗơờớợởỡụủũùúưừứựửữỵỷỹỳý]/);
@@ -392,5 +392,146 @@ describe("G3-xem-ui: phòng tắt giữa chừng, bộ nhớ bị chặn, lời 
     expect(posted).toHaveLength(1);
     expect(localStorage.length).toBe(0);
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+/* ---------- U7 · đường bấm của người xem, làm mù, nhãn (soát đợt 2: ĐỎ 2, VÀNG 7, 9, 10, 11) ---------- */
+
+const MON = [
+  { product_id: "LAB-1", name: "Áo thun cotton basic", price_vnd: 129_000, image_url: null },
+  { product_id: "LAB-3", name: "Bình giữ nhiệt inox 750ml", price_vnd: 159_000, image_url: null },
+];
+const PHONG_TAT = { ...OPEN_ROOM, products: MON };
+const PHONG_BAT = { ...PHONG_TAT, pinned: MON[1] };
+
+/** Vào phòng với dấu đồng ý có sẵn (không bấm đồng ý), trả các body đã gửi. */
+async function vaoPhong(room: object): Promise<Array<Record<string, unknown>>> {
+  localStorage.setItem(VIEWER_KEY, ID);
+  localStorage.setItem(consentKey(CODE, "v1"), "1");
+  const { sent } = stubFetch(room);
+  render(<XemRoom code={CODE} />);
+  await screen.findByTestId("xem-room");
+  return sent;
+}
+
+/** Mọi body trừ nhịp tim. */
+const thaoTac = (sent: Array<Record<string, unknown>>): Array<Record<string, unknown>> => sent.filter(b => b.kind !== "nhip");
+
+/** Khung điện thoại bỏ thẻ ghim: phần còn lại phải giống hệt nhau giữa khối BẬT và khối TẮT. */
+function khungTruGhim(): string {
+  const goc = screen.getByTestId("dien-thoai-live").cloneNode(true) as HTMLElement;
+  goc.querySelector("[data-testid='dien-thoai-ghim']")?.remove();
+  return goc.outerHTML;
+}
+
+describe("U7 · đường bấm của người xem", () => {
+  it("màn đồng ý: chưa gửi gì; 4 ý gồm mục đích và hạn xoá; dòng phiên bản nằm ngoài phần thu gọn", async () => {
+    const { sent } = stubFetch(PHONG_BAT);
+    render(<XemRoom code={CODE} />);
+    const the = await screen.findByTestId("xem-consent");
+    expect(the.querySelectorAll(".xem2-ba-y > li")).toHaveLength(4);
+    const tomTat = the.querySelector(".xem2-ba-y")?.textContent ?? "";
+    expect(tomTat).toContain("31/12/2026");
+    expect(tomTat).toContain("không liên quan điểm số");
+    expect(tomTat).not.toContain("nghiên cứu sinh viên");
+    const phienBan = screen.getByText(/Phiên bản lời đồng ý: v1/);
+    expect(phienBan.closest("details")).toBeNull();
+    expect(sent).toHaveLength(0);
+    expect(screen.queryByTestId("dien-thoai-ghim")).toBeNull();
+  });
+
+  it("thẻ ghim chỉ hiện khi trang-thai có pinned", async () => {
+    await vaoPhong(PHONG_TAT);
+    expect(screen.queryByTestId("dien-thoai-ghim")).toBeNull();
+    cleanup();
+    await vaoPhong(PHONG_BAT);
+    expect(screen.getByTestId("dien-thoai-ghim")).toHaveTextContent("Bình giữ nhiệt inox 750ml");
+  });
+
+  it("Xem ngay gửi đúng 1 bam kèm món ghim; Mua (tiền ảo) gửi đúng 1 mua", async () => {
+    const sent = await vaoPhong(PHONG_BAT);
+    fireEvent.click(screen.getByRole("button", { name: "Xem ngay" }));
+    await waitFor(() => expect(thaoTac(sent)).toHaveLength(1));
+    expect(thaoTac(sent)[0]).toMatchObject({ kind: "bam", product_id: "LAB-3" });
+    fireEvent.click(screen.getByRole("button", { name: "Mua (tiền ảo)" }));
+    await waitFor(() => expect(thaoTac(sent)).toHaveLength(2));
+    expect(thaoTac(sent)[1]).toMatchObject({ kind: "mua", product_id: "LAB-3" });
+    await waitFor(() => expect(screen.getByRole("button", { name: "Giỏ hàng, 1 món" })).toBeInTheDocument());
+  });
+
+  it("mở giỏ không gửi gì; Thêm giỏ gửi them_gio của đúng món", async () => {
+    const sent = await vaoPhong(PHONG_TAT);
+    fireEvent.click(screen.getByRole("button", { name: "Giỏ hàng, 0 món" }));
+    await screen.findByText("Sản phẩm trong phòng");
+    expect(thaoTac(sent)).toHaveLength(0);
+    fireEvent.click(screen.getAllByRole("button", { name: "Thêm giỏ" })[0]);
+    await waitFor(() => expect(thaoTac(sent)).toHaveLength(1));
+    expect(thaoTac(sent)[0]).toMatchObject({ kind: "them_gio", product_id: "LAB-1" });
+  });
+
+  it("bình luận gửi qua form (Enter hay nút Gửi) thành một binh_luan", async () => {
+    const sent = await vaoPhong(PHONG_TAT);
+    const o = screen.getByLabelText("Bình luận", { selector: "input" });
+    fireEvent.change(o, { target: { value: "Áo có size L không ạ?" } });
+    fireEvent.submit(o.closest("form") as HTMLFormElement);
+    await waitFor(() => expect(thaoTac(sent)).toHaveLength(1));
+    expect(thaoTac(sent)[0]).toMatchObject({ kind: "binh_luan", text: "Áo có size L không ạ?" });
+  });
+
+  it("làm mù: ngoài thẻ ghim, khung giống hệt nhau ở khối BẬT và khối TẮT (người dẫn vẽ tay không cầm món ghim)", async () => {
+    await vaoPhong(PHONG_TAT);
+    const tat = khungTruGhim();
+    const veTat = screen.getByTestId("dien-thoai-live").querySelector(".dt-ve-tay")?.outerHTML;
+    expect(veTat).toBeTruthy();
+    cleanup();
+    await vaoPhong(PHONG_BAT);
+    expect(screen.getByTestId("dien-thoai-live").querySelector(".dt-ve-tay")?.outerHTML).toBe(veTat);
+    expect(khungTruGhim()).toBe(tat);
+  });
+
+  it("lời dặn cạnh khung không nhắc tới thẻ ghim", async () => {
+    await vaoPhong(PHONG_BAT);
+    const ben = screen.getByRole("complementary", { name: "Ghi chú về phòng" });
+    expect(ben.textContent ?? "").not.toMatch(/ghim/i);
+  });
+
+  it("nút xác nhận rút lui mang data-chup-bam qua prop của Hop", async () => {
+    await vaoPhong(PHONG_TAT);
+    fireEvent.click(screen.getByRole("button", { name: "Rút lui khỏi nghiên cứu" }));
+    expect(screen.getByRole("button", { name: "Xác nhận rút lui" })).toHaveAttribute("data-chup-bam", "xac-nhan-rut-lui");
+  });
+
+  it("nhãn THỬ NỘI BỘ theo cờ dry_run của máy chủ, không theo tên phòng", async () => {
+    await vaoPhong({ ...PHONG_TAT, room: { ...PHONG_TAT.room, title: "Phòng giám khảo", dry_run: true } });
+    expect(screen.getByRole("complementary", { name: "Ghi chú về phòng" }).textContent).toContain("THỬ NỘI BỘ");
+    expect(screen.getByTestId("dien-thoai-live").textContent).toContain("THỬ NỘI BỘ");
+  });
+
+  it("phòng đã đóng: chip trên khung ghi ĐÃ KẾT THÚC, không còn LIVE", async () => {
+    await vaoPhong({ ...PHONG_TAT, room: { ...PHONG_TAT.room, status: "da_dong" } });
+    expect(screen.queryByText("LIVE")).toBeNull();
+    expect(screen.getByText("ĐÃ KẾT THÚC")).toBeInTheDocument();
+  });
+});
+
+describe("U7 · huy hiệu NGƯỜI DẪN AI theo video", () => {
+  beforeEach(() => {
+    Object.defineProperty(HTMLMediaElement.prototype, "play", { configurable: true, writable: true, value: vi.fn(() => Promise.resolve()) });
+    Object.defineProperty(HTMLMediaElement.prototype, "pause", { configurable: true, writable: true, value: vi.fn() });
+  });
+
+  it("video YouTube: không data-nguoi-dan-ai, không huy hiệu", async () => {
+    await vaoPhong({ ...PHONG_TAT, room: { ...PHONG_TAT.room, video_url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ" } });
+    const khung = screen.getByTestId("dien-thoai-live");
+    await waitFor(() => expect(khung.getAttribute("data-che-do")).toBe("youtube"));
+    expect(khung).not.toHaveAttribute("data-nguoi-dan-ai");
+    expect(screen.queryByText("NGƯỜI DẪN AI · GIỌNG TỔNG HỢP")).toBeNull();
+  });
+
+  it("video người dẫn AI chuẩn: có data-nguoi-dan-ai và huy hiệu", async () => {
+    await vaoPhong({ ...PHONG_TAT, room: { ...PHONG_TAT.room, video_url: "/xem/nguoi-dan-ai.mp4" } });
+    const khung = screen.getByTestId("dien-thoai-live");
+    await waitFor(() => expect(khung).toHaveAttribute("data-nguoi-dan-ai"));
+    expect(screen.getByText("NGƯỜI DẪN AI · GIỌNG TỔNG HỢP")).toBeInTheDocument();
   });
 });

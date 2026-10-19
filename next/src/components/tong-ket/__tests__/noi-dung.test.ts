@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { sourceLabel } from "@/lib/livelift-api/desk";
 import { BaoCaoSchema, type BaoCao, type Session } from "@/lib/livelift-api/types";
-import { KET_LUAN_THEO_MA } from "@/lib/tu-ngu";
+import { KET_LUAN_THEO_MA, LOI_THUONG } from "@/lib/tu-ngu";
 import {
   CAU_KHOA,
   CAU_QUAN_SAT,
@@ -16,6 +16,7 @@ import {
   lamSachCau,
   maBamLich,
   maNhanTuNguon,
+  tenPhienHienThi,
   tomTatPhien,
 } from "../noi-dung";
 
@@ -85,9 +86,17 @@ describe("ketLuanTuBaoCao", () => {
     expect(dongPhien(PHIEN, voiKetQua({ khoa: true, n_blocks: 0 }))).toBe("Phiên 90 phút");
   });
 
-  it("phiên quan sát: ĐO THÊM, câu nói không bốc thăm", () => {
+  it("phiên quan sát: không có kết luận, câu nói không bốc thăm (không ĐO THÊM cạnh thước khoá)", () => {
     const k = ketLuanTuBaoCao({ ...DOI, loai_phien: "quan_sat", ket_qua_thi_nghiem: null } as BaoCao);
-    expect(k).toMatchObject({ ma: "DO_THEM", cau: CAU_QUAN_SAT });
+    expect(k).toEqual({ loai: "quan_sat", cau: CAU_QUAN_SAT });
+  });
+
+  it("chưa đủ khối: đúng câu canon LOI_THUONG.chuaDuKhoi; đủ khối mà không ước lượng được thì không nói 'vài khối'", () => {
+    expect(cauChuaDuKhoi(3)).toBe(LOI_THUONG.chuaDuKhoi);
+    expect(cauChuaDuKhoi(0)).toBe(LOI_THUONG.chuaDuKhoi);
+    expect(cauChuaDuKhoi(16)).not.toContain("vài khối");
+    const k = ketLuanTuBaoCao(voiKetQua({ estimable: false, n_blocks: 3, n_on: 1, n_off: 2, estimate: null, ci_low: null, ci_high: null }));
+    expect(k).toMatchObject({ loai: "ket_luan", ma: "DO_THEM", coUocLuong: false, cau: LOI_THUONG.chuaDuKhoi });
   });
 
   it("chưa có báo cáo thì đang tải", () => {
@@ -107,6 +116,21 @@ describe("nhãn nguồn và dòng ngắn", () => {
   it("Phiên X phút · N khối đo được", () => {
     expect(dongPhien(PHIEN, DOI)).toBe("Phiên 90 phút · 16 khối đo được");
   });
+
+  it("phiên đang live: ghi đã chạy X/Y phút", () => {
+    const dangChay = { ...DOI, tong_quan: { ...DOI.tong_quan, thoi_luong_s: 63 * 60 } } as BaoCao;
+    expect(dongPhien(PHIEN, dangChay, true)).toBe("Đã chạy 63/90 phút · 16 khối đo được");
+    const chuaCoThoiLuong = { ...DOI, tong_quan: { ...DOI.tong_quan, thoi_luong_s: null } } as unknown as BaoCao;
+    const batDau = { ...PHIEN, start_ts: "2026-10-19T07:00:00Z" } as Session;
+    expect(dongPhien(batDau, chuaCoThoiLuong, true, Date.parse("2026-10-19T07:40:00Z"))).toBe("Đã chạy 40/90 phút · 16 khối đo được");
+    expect(dongPhien(batDau, chuaCoThoiLuong, true, Date.parse("2026-10-19T08:43:00Z"))).toBe("Đã chạy 103 phút (dự kiến 90) · 16 khối đo được");
+  });
+
+  it("tên phiên bỏ chữ nội bộ của máy gieo mẫu", () => {
+    expect(tenPhienHienThi("Demo vàng · ĐỔI #1")).toBe("Phiên mẫu · ĐỔI #1");
+    expect(tenPhienHienThi("Phiên đang phát (mô phỏng) · gieo 13:43 19/10")).toBe("Phiên đang phát (mô phỏng)");
+    expect(tenPhienHienThi(null)).toBe("Phiên LiveLift");
+  });
 });
 
 describe("tóm tắt, điều chưa biết, chi tiết", () => {
@@ -115,6 +139,9 @@ describe("tóm tắt, điều chưa biết, chi tiết", () => {
     expect(t).toHaveLength(3);
     for (const c of t) sach(c.text);
     expect(t[0].huyHieu).toBe("Từ bốc thăm");
+    // Câu "Việc nên làm…" là lời khuyên: không mang huy hiệu bằng chứng (không "Số đếm").
+    expect(t[2].text).toMatch(/^Việc nên làm/);
+    expect(t[2].huyHieu).toBeNull();
   });
 
   it("lưới an toàn cho câu cũ của máy chủ", () => {
@@ -122,7 +149,10 @@ describe("tóm tắt, điều chưa biết, chi tiết", () => {
       "Chưa đủ bằng chứng (ước lượng -0,173, KTC 95% [-0,490; +0,181] còn chứa 0) — tích lũy thêm ~16 phiên, CV đo được 0,62, kiểm định hoán vị 1.000 lần vẽ lại; nếu chuỗi vẫn null, hiệu ứng thật nhỏ.";
     const moi = lamSachCau(cu);
     sach(moi);
-    expect(moi).toContain("từ -0,490 đến +0,181");
+    expect(moi).toContain("từ −0,490 đến +0,181");
+    expect(moi).toContain("ước lượng −0,173");
+    expect(lamSachCau("dư âm (hiệu ứng lưu)")).toBe("dư âm (hiệu ứng lưu)");
+    expect(lamSachCau("tạo thêm 1,2 lượt nhấp trên mỗi 1.000 giây·người xem")).toContain("lượt nhấp hợp lệ / 1.000 giây·người xem");
     expect(moi).toContain("khoảng 16 phiên");
     expect(moi).toContain("kiểm định ngẫu nhiên hoá 1.000 lần bốc thăm lại");
   });
@@ -151,6 +181,15 @@ describe("tóm tắt, điều chưa biết, chi tiết", () => {
     expect(theoNhan["Kiểm định ngẫu nhiên hoá"]).toContain("1.000");
     expect(theoNhan["Khối bỏ, không vào phép đo"]).toBe("2");
     expect(theoNhan["Mã băm lịch đã niêm phong"]).toBe("1a6405509fab…");
+    // Số có dấu như thước (+0,932, dấu trừ "−"), nhãn Tỷ lệ nhấp đúng chữ canon.
+    expect(theoNhan["Chênh lệch Tỷ lệ nhấp (BẬT trừ TẮT)"]).toBe("+1,224");
+    expect(theoNhan["Khoảng tin cậy 95%"]).toBe("từ +0,932 đến +1,498");
+    expect(theoNhan).toHaveProperty(["Tỷ lệ nhấp (lượt nhấp hợp lệ / 1.000 giây·người xem)"]);
+    const am = chiTietNguoiKiem({ phien: PHIEN, baoCao: voiKetQua({ estimate: -0.173, ci_low: -0.49, ci_high: 0.181 }), khoi, ticks: [], don: null });
+    expect(Object.fromEntries(am.map((d) => [d.nhan, d.giaTri]))["Khoảng tin cậy 95%"]).toBe("từ −0,490 đến +0,181");
+    // Phiên còn live: khối chưa phát không phải "khối bỏ".
+    const live = chiTietNguoiKiem({ phien: { ...PHIEN, status: "live" } as Session, baoCao: DOI, khoi, ticks: [], don: null });
+    expect(live.map((d) => d.nhan)).not.toContain("Khối bỏ, không vào phép đo");
     expect(maBamLich(PHIEN)).toHaveLength(64);
     for (const d of ct) sach(`${d.nhan} ${d.giaTri}`);
   });

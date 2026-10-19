@@ -42,7 +42,7 @@ export function coNguonDon(phien: Pick<Session, "platform"> | null | undefined):
 export function pheuTuXemDenMua(p: Funnel, coDon: boolean, tenDon = "Đơn"): Pheu {
   return {
     buoc: [
-      { khoa: "xem", ten: "Người xem", so: soNguyen(p.viewerMinutes), donVi: "phút·người xem", mau: "nguoiXem", thieu: null },
+      { khoa: "xem", ten: "Thời gian xem", so: soNguyen(p.viewerMinutes), donVi: "phút·người xem", mau: "nguoiXem", thieu: null },
       { khoa: "nhap", ten: "Lượt nhấp hợp lệ", so: soNguyen(p.clicks), donVi: "lượt nhấp", mau: "luotNhap", thieu: null },
       coDon
         ? { khoa: "don", ten: tenDon, so: soNguyen(p.orders), donVi: "đơn", mau: "don", thieu: null }

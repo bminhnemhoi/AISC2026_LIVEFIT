@@ -4,10 +4,9 @@ import { useId, useMemo } from "react";
 import { BieuTuongKhoa, BieuTuongVung, ChamTheoKhoi, ThanhYDinh, ThuocKhoangTinCay, TuXemDenMua, thuocTuBaoCao } from "@/components/bieu-do";
 import { useDongThoiGian } from "@/components/dien-thoai/hooks";
 import { AppShell, NhanCongBo, NhanNguon, NutLienKet, Th, chuNhanNguon } from "@/components/nen";
-import { PHU_DE_KHOANG_TIN_CAY } from "@/lib/bieu-do/ket-luan";
 import { coNguonDon } from "@/lib/bieu-do/pheu";
 import { useDuLieuPhien } from "@/lib/livelift-api/hooks";
-import { CHO_CANON, TU, nhanVaPhuDe } from "@/lib/tu-ngu";
+import { LOI_THUONG, TU, nhanVaPhuDe, type MaNhanNguon } from "@/lib/tu-ngu";
 import {
   VUNG_THEO_MA,
   chiTietNguoiKiem,
@@ -16,6 +15,7 @@ import {
   dongPhien,
   ketLuanTuBaoCao,
   maNhanTuNguon,
+  tenPhienHienThi,
   tomTatPhien,
   type KetLuanTongKet,
 } from "./noi-dung";
@@ -38,9 +38,13 @@ export function TongKet({ sessionId }: { sessionId: string }) {
   const coYDinh = (demYDinh != null && Object.keys(demYDinh).length > 0) || d.binhLuan.some((c) => c.intent);
   const chuaBiet = baoCao ? dieuChuaBiet(ma, baoCao, coYDinh) : [];
   const chiTiet = chiTietNguoiKiem({ phien, baoCao, khoi: d.khoi, ticks: d.ticks, don: d.don });
-  const loiDan = useDongThoiGian(phien?.platform === "lab" ? undefined : null).filter((x) => x.loi && x.loi.trim());
-  const dong = dongPhien(phien, baoCao);
-  const tieuDePhien = phien?.title || "Phiên LiveLift";
+  // Lời chép là của video người dẫn AI dùng chung, không theo phiên: chỉ hiện khi bản ghi phiên khai rõ phòng phát
+  // đúng video đó (soát đợt 2 mục 63). Lõi chưa trả trường này nên hiện tại mục này ẩn.
+  const loiDan = useDongThoiGian(phatVideoNguoiDanAI(phien) ? undefined : null).filter((x) => x.loi && x.loi.trim());
+  const dong = dongPhien(phien, baoCao, d.dangLive);
+  const tieuDePhien = tenPhienHienThi(phien?.title);
+  // Chưa đủ khối (hoặc phiên quan sát): chấm từng khối thôi, không vẽ trung bình BẬT/TẮT (soát đợt 2 mục 1, 52).
+  const anTrungBinh = ketLuan.loai === "quan_sat" || (ketLuan.loai === "ket_luan" && !ketLuan.coUocLuong);
 
   if (!phien) {
     return (
@@ -80,11 +84,19 @@ export function TongKet({ sessionId }: { sessionId: string }) {
           </p>
         ) : null}
 
-        <TheKetLuan ketLuan={ketLuan} ma={ma} dong={dong} baoCaoThuoc={thuocTuBaoCao(baoCao)} />
+        <TheKetLuan ketLuan={ketLuan} ma={ma} dong={dong} dangLive={d.dangLive} baoCaoThuoc={thuocTuBaoCao(baoCao)} />
 
         <div className="tk-luoi" data-testid="tong-ket-bieu-do">
           <div className="tk-o">
-            <ChamTheoKhoi khoa={d.khoa} khoiDo={d.khoiDo} nhan={chuNhan} tieuDe="Từng khối" dangTai={d.dangTai && !d.khoiDo} muc={2} />
+            <ChamTheoKhoi
+              khoa={d.khoa}
+              khoiDo={d.khoiDo}
+              nhan={chuNhan}
+              tieuDe="Từng khối"
+              dangTai={d.dangTai && !d.khoiDo}
+              muc={2}
+              anTrungBinh={anTrungBinh}
+            />
           </div>
           <div className="tk-o">
             <TuXemDenMua
@@ -92,7 +104,7 @@ export function TongKet({ sessionId }: { sessionId: string }) {
               don={d.don}
               coNguonDon={coNguonDon(phien)}
               tenDon={phien.platform === "lab" ? "Đơn (tiền ảo)" : "Đơn"}
-              tieuDe={CHO_CANON.pheu}
+              tieuDe={LOI_THUONG.pheu}
               nhan={chuNhan}
               muc={2}
             />
@@ -140,20 +152,15 @@ export function TongKet({ sessionId }: { sessionId: string }) {
           ) : null}
 
           <section className="tk-tiep tk-rong" aria-label="Việc tiếp theo">
-            <p className="tk-tiep-cau">
-              {ketLuan.loai === "khoa"
-                ? "Kết quả sẽ mở khi phiên kết thúc. Trong lúc chờ, có thể lên lịch phiên tiếp."
-                : ketLuan.loai === "ket_luan" && ketLuan.ma === "DO_THEM"
-                  ? "Chạy thêm một phiên cùng cách đo, rồi đọc kết quả gộp."
-                  : "Một phiên chưa đủ để chốt. Lên lịch phiên tiếp theo cùng cách đo."}
-            </p>
+            <p className="tk-tiep-cau">{cauViecTiep(ketLuan)}</p>
+            {/* Chưa có màn tạo phiên (/phien/moi): nút không hứa "lên lịch", chỉ đưa về danh sách (soát đợt 2 mục 19, 56). */}
             <NutLienKet bien="chinh" href="/phien" data-testid="tong-ket-len-lich">
-              Lên lịch phiên tiếp
+              Về danh sách phiên
             </NutLienKet>
           </section>
 
           <details className="tk-chi-tiet tk-rong" data-testid="tong-ket-chi-tiet">
-            <summary>{CHO_CANON.chiTietNguoiKiem}</summary>
+            <summary>{LOI_THUONG.chiTietNguoiKiem}</summary>
             <dl className="tk-dl">
               {chiTiet.map((r) => (
                 <div key={r.nhan} className="tk-dl-dong">
@@ -163,14 +170,39 @@ export function TongKet({ sessionId }: { sessionId: string }) {
               ))}
             </dl>
             <p className="tk-chu-nho">
-              {nhanVaPhuDe(TU.khoangTinCay).nhan}: {TU.khoangTinCay.phu_de ?? PHU_DE_KHOANG_TIN_CAY}.{" "}
-              {nhanVaPhuDe(TU.kiemDinh).nhan}: {TU.kiemDinh.phu_de ?? "bốc thăm lại lịch nhiều lần để xem chênh lệch đo được có lớn bất thường không"}.
+              {[TU.khoangTinCay, TU.kiemDinh]
+                .map((tu) => nhanVaPhuDe(tu))
+                .filter((x) => x.phuDe)
+                .map((x) => `${x.nhan}: ${x.phuDe}.`)
+                .join(" ")}
             </p>
           </details>
         </div>
       </div>
     </AppShell>
   );
+}
+
+/** Câu của phần "Việc tiếp theo": không lặp câu kết luận, không hứa việc màn này chưa làm được. */
+function cauViecTiep(ketLuan: KetLuanTongKet): string {
+  if (ketLuan.loai === "khoa") return "Kết quả sẽ mở khi phiên kết thúc.";
+  if (ketLuan.loai === "quan_sat") return "Lần sau chạy phiên có bốc thăm BẬT/TẮT để đo được tác dụng của ghim.";
+  if (ketLuan.loai === "ket_luan" && !ketLuan.coUocLuong) return "Phiên tới chạy từ 90 phút trở lên để có đủ khối đo được.";
+  if (ketLuan.loai === "ket_luan" && ketLuan.ma === "DO_THEM") return "Chạy thêm một phiên cùng cách đo, rồi đọc kết quả gộp.";
+  return "Lặp lại cách đo này ở phiên tới để kết quả chắc hơn.";
+}
+
+/** Video người dẫn AI phát trong phòng của phiên, nếu bản ghi phiên khai (trường `phong_xem.video_url`). */
+function phatVideoNguoiDanAI(phien: unknown): boolean {
+  const url = (phien as { phong_xem?: { video_url?: unknown } } | null)?.phong_xem?.video_url;
+  return typeof url === "string" && url.endsWith("/xem/nguoi-dan-ai.mp4");
+}
+
+/** Dòng nói rõ phiên đang live mà kết quả đã hiện (chỉ MÔ PHỎNG được hiện sớm, D-027). */
+function cauDangLive(ma: readonly MaNhanNguon[]): string {
+  return ma.includes("MO_PHONG")
+    ? "Phiên đang live: đây là MÔ PHỎNG nên kết quả hiện sớm. Số còn đổi tới hết phiên."
+    : "Phiên đang live: số còn đổi tới hết phiên.";
 }
 
 function phutGiay(s: number): string {
@@ -183,17 +215,25 @@ function TheKetLuan({
   ketLuan,
   ma,
   dong,
+  dangLive,
   baoCaoThuoc,
 }: {
   ketLuan: KetLuanTongKet;
   ma: ReturnType<typeof maNhanTuNguon>;
   dong: string | null;
+  dangLive: boolean;
   baoCaoThuoc: ReturnType<typeof thuocTuBaoCao>;
 }) {
   const idTieuDe = useId();
   const loai = ketLuan.loai === "ket_luan" ? ketLuan.ma.toLowerCase() : ketLuan.loai;
-  // Thước: khi chưa có ước lượng thì một câu thường thay cho lý do kỹ thuật của máy chủ.
-  const thuoc = ketLuan.loai === "ket_luan" && !ketLuan.coUocLuong ? { ...baoCaoThuoc, lyDo: "Cần thêm khối đo được để vẽ khoảng tin cậy." } : baoCaoThuoc;
+  // Thước: khi chưa có ước lượng thì một câu thường thay cho lý do kỹ thuật của máy chủ. Phiên quan sát: không khoá,
+  // không số, chỉ nói vì sao không có thước.
+  const thuoc =
+    ketLuan.loai === "quan_sat"
+      ? { khoa: false, uocLuong: null, thap: null, cao: null, lyDo: "Phiên quan sát không bốc thăm nên không có khoảng tin cậy." }
+      : ketLuan.loai === "ket_luan" && !ketLuan.coUocLuong
+        ? { ...baoCaoThuoc, lyDo: "Cần thêm khối đo được để vẽ khoảng tin cậy." }
+        : baoCaoThuoc;
   return (
     <section className="tk-ket-luan" data-chup="ket-luan" data-vung-chinh="" data-loai={loai} aria-labelledby={idTieuDe}>
       <div className="tk-kl-trai">
@@ -221,14 +261,25 @@ function TheKetLuan({
               </span>
               <strong className="tk-kl-chu-vua">Đang khoá</strong>
             </>
+          ) : ketLuan.loai === "quan_sat" ? (
+            <strong className="tk-kl-chu-vua">Không có kết luận</strong>
           ) : (
             <strong className="tk-kl-chu-vua">Đang đọc báo cáo…</strong>
           )}
         </div>
-        {ketLuan.loai === "ket_luan" ? <p className="tk-kl-cau">{ketLuan.cau}</p> : ketLuan.loai === "khoa" ? <p className="tk-kl-cau">{ketLuan.lyDo}</p> : null}
+        {ketLuan.loai === "ket_luan" || ketLuan.loai === "quan_sat" ? (
+          <p className="tk-kl-cau">{ketLuan.cau}</p>
+        ) : ketLuan.loai === "khoa" ? (
+          <p className="tk-kl-cau">{ketLuan.lyDo}</p>
+        ) : null}
+        {dangLive && ketLuan.loai === "ket_luan" ? (
+          <p className="tk-kl-cau tk-kl-som" data-testid="tong-ket-dang-live">
+            {cauDangLive(ma)}
+          </p>
+        ) : null}
       </div>
       <div className="tk-kl-phai" data-testid="estimate-card">
-        <ThuocKhoangTinCay {...thuoc} gon muc={3} />
+        <ThuocKhoangTinCay {...thuoc} gon anVung muc={3} />
       </div>
     </section>
   );

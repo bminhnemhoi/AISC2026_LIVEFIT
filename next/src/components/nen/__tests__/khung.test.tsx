@@ -196,14 +196,14 @@ describe("Th và OSo", () => {
         giaTri="1.284"
         donVi="người"
         phuDe="đang xem phiên"
-        thayDoi={{ chu: "+12% so với khối TẮT", huong: "len", danhGia: "tot" }}
+        thayDoi={{ chu: "+12% so với phiên trước", huong: "len", danhGia: "tot" }}
       />,
     );
     expect(container.querySelector(".nen-oso")).not.toHaveAttribute("data-trong");
     expect(screen.getByText("người")).toHaveClass("nen-oso__don-vi");
     const td = container.querySelector(".nen-oso__thay-doi");
     expect(td).toHaveAttribute("data-danh-gia", "tot");
-    expect(td?.textContent).toBe("↑ +12% so với khối TẮT");
+    expect(td?.textContent).toBe("↑ +12% so với phiên trước");
     expect(() => render(<OSo giaTri="1" />)).toThrow(/cần `nhan` hoặc `tu`/);
   });
 });

@@ -5,7 +5,7 @@ import type { MaNhan } from "./nhan";
 import "./nen.css";
 
 export interface ThayDoi {
-  /** Chữ đã định dạng, có dấu và mốc so sánh, ví dụ "+12% so với khối TẮT". */
+  /** Chữ đã định dạng, có dấu và mốc so sánh, ví dụ "+12% so với phiên trước". */
   chu: string;
   huong: "len" | "xuong" | "ngang";
   /** Hướng này tốt hay xấu cho người bán; bỏ trống thì hiện màu trung tính. */

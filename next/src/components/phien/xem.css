@@ -123,6 +123,19 @@
   display: block;
   color: var(--n-muc-2);
 }
+/* màn rộng: bốn ý xếp lưới 2 × 2 để thẻ đồng ý vừa màn đầu (1280 × 633) */
+@media (min-width: 760px) {
+  .xem2-dong-y {
+    max-width: 760px;
+  }
+  .xem2-ba-y {
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: var(--n-k2);
+  }
+  .xem2-dong-y .xem2-chi-tiet {
+    margin-bottom: var(--n-k2);
+  }
+}
 .xem2-chi-tiet {
   margin: 0 0 var(--n-k4);
   color: var(--n-muc-2);
@@ -147,6 +160,10 @@
 }
 .xem2-chi-tiet li + li {
   margin-top: var(--n-k2);
+}
+/* dòng phiên bản lời đồng ý nằm ngay trên hai nút, cách nút một khoảng nhỏ */
+.xem2-dong-y .xem2-phien-ban {
+  margin: 0 0 var(--n-k2);
 }
 .xem2-hang-nut {
   display: grid;
@@ -378,6 +395,8 @@
     height: 100%;
     max-height: 800px;
     aspect-ratio: 9 / 16;
+    /* màn thấp (cửa sổ dưới ~670 px): khung rộng hơn 9:16 một chút thay vì cắt thẻ ghim, nút Gửi và nút giỏ */
+    min-width: 344px;
     padding: 10px;
     border-radius: 36px;
     background: #2a2522;

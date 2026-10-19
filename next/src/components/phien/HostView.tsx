@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cauHoiMoiNhat, maNhanNguon } from "@/components/ban/logic";
+import { cauHoiMoiNhat, docChoDaChe, maNhanNguon } from "@/components/ban/logic";
 import { NhanNguon } from "@/components/nen";
 import { api, useHostView } from "@/lib/livelift-api/client";
 import { mmss, sourceLabel, type SourceLabel } from "@/lib/livelift-api/desk";
 import { useHoiDinhKy } from "@/lib/livelift-api/hooks";
 import type { Comment } from "@/lib/livelift-api/types";
-import { CHO_CANON } from "@/lib/tu-ngu";
+import { LOI_THUONG } from "@/lib/tu-ngu";
 import "@/components/ban/ban.css";
 
 /**
  * Màn người dẫn, kiểu máy nhắc chữ. LÀM MÙ MỘT PHẦN theo cách dựng: phần live chỉ đọc từ
- * `GET /sessions/{id}/state?role=host` (món đang ghim, giá, thời gian đã phát), không bao giờ có khối, nhánh hay lịch
- * (luật L6). Bản ghi phiên đọc một lần để lấy nhãn nguồn (platform/demo không nói gì về nhánh). Bình luận chỉ dùng để
- * lấy 3 câu hỏi mới nhất của khách; bình luận không mang thông tin khối.
+ * `GET /sessions/{id}/state?role=host` (món đang ghim, giá, thời gian đã phát), không có khối, nhánh hay lịch (luật L6).
+ * Nhãn nguồn lấy từ DANH SÁCH phiên (`GET /sessions`, không kèm lịch), không gọi `GET /sessions/{id}` vì bản ghi đó
+ * có cả lịch BẬT/TẮT đã niêm phong. Khối "Khách đang hỏi": 3 câu hỏi mới nhất từ bình luận của khách, đã lọc trùng.
+ * Lưu ý còn mở: `GET /sessions/{id}/comments` vẫn trả block_id của từng bình luận (cần lõi làm endpoint riêng).
  */
 export function HostView({ sessionId }: { sessionId: string }) {
   const { state, error } = useHostView(sessionId);
@@ -24,10 +25,19 @@ export function HostView({ sessionId }: { sessionId: string }) {
     loiMacDinh: "Không đọc được bình luận.",
   });
   useEffect(() => {
+    let huy = false;
     api
-      .session(sessionId)
-      .then((s) => setNhan(sourceLabel(s)))
-      .catch(() => setNhan(null));
+      .sessions()
+      .then((ds) => {
+        const s = ds.find((x) => x.session_id === sessionId);
+        if (!huy) setNhan(s ? sourceLabel(s) : null);
+      })
+      .catch(() => {
+        if (!huy) setNhan(null);
+      });
+    return () => {
+      huy = true;
+    };
   }, [sessionId]);
   const cauHoi = cauHoiMoiNhat(binhLuan.duLieu ?? [], 3);
   const mon = state?.pinned_product ?? null;
@@ -35,7 +45,7 @@ export function HostView({ sessionId }: { sessionId: string }) {
   return (
     <div className="ban-nd" data-testid="host-view" data-vung-chinh="" data-chup="nguoi-dan">
       <header className="ban-nd__tren">
-        <p className="ban-nd__nho">Màn người dẫn · {CHO_CANON.lamMuMotPhan}</p>
+        <p className="ban-nd__nho">Màn người dẫn · {LOI_THUONG.lamMuMotPhan}</p>
         {nhan ? <NhanNguon ma={maNhanNguon(nhan)} canh="phai" /> : null}
       </header>
 
@@ -55,7 +65,8 @@ export function HostView({ sessionId }: { sessionId: string }) {
           </p>
           {mon && state?.price != null ? (
             <p className="ban-nd__gia">
-              {state.price.toLocaleString("vi-VN")} đ{state.stock != null ? ` · còn ${state.stock.toLocaleString("vi-VN")}` : ""}
+              {state.price.toLocaleString("vi-VN")} đ
+              {state.stock != null ? ` · còn ${state.stock.toLocaleString("vi-VN")} trong kho` : ""}
             </p>
           ) : null}
         </section>
@@ -63,12 +74,15 @@ export function HostView({ sessionId }: { sessionId: string }) {
           <h2 id="nd-h-hoi" className="ban-nd__nhan">
             Khách đang hỏi
           </h2>
+          <p className="ban-nd__nho" data-testid="nguoi-dan-nguon-hoi">
+            Lấy từ bình luận của khách: 3 câu hỏi mới nhất, câu trùng chỉ giữ một.
+          </p>
           {cauHoi.length === 0 ? (
             <p className="ban-nd__nho">Chưa có câu hỏi mới.</p>
           ) : (
-            <ul className="ban-nd__cau-hoi">
+            <ul className="ban-nd__cau-hoi" data-testid="nguoi-dan-cau-hoi">
               {cauHoi.map((c) => (
-                <li key={c.comment_id}>{c.text}</li>
+                <li key={c.comment_id}>{docChoDaChe(c.text)}</li>
               ))}
             </ul>
           )}

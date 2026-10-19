@@ -471,10 +471,52 @@ def test_chu_cam_canon_mien_tru(chu):
 def test_so_cu_va_a_b_chi_vang():
     # số dữ liệu chạy có thể trùng số cũ (4,5%, 18 khối): chỉ VÀNG; A/B chỉ cấm theo ngữ cảnh: VÀNG
     assert _muc_nhan("Hiệu quả ước lượng +4,5%") == [("VÀNG", "canon tu_cam: 4,5\\s*%")]
-    assert _muc_nhan("Đã chạy 18 khối") == [("VÀNG", "canon tu_cam: 18 khối")]
+    assert _muc_nhan("Phiên 90 phút = 18 khối") == [("VÀNG", "canon tu_cam: 18 khối")]
     assert _muc_nhan("A/B chia người xem") == [("VÀNG", "canon: A/B")]
-    phat = kg.phan_tich(_do(chu="Đã chạy 18 khối"), "/phien/x", (1280, 720))
+    phat = kg.phan_tich(_do(chu="Phiên 90 phút chia 18 khối"), "/phien/x", (1280, 720))
     assert _loai(phat) == {("VÀNG", "chu-cam")}
+
+
+@pytest.mark.parametrize(
+    "chu",
+    [
+        "Lịch 34 khối: 18 khối BẬT, 16 khối TẮT",
+        "Phiên 180 phút · 34 khối, trong đó 18 khối bật",
+        "Đã chạy 18 khối",
+        "Phiên 180 phút = 18 khối mỗi giờ rưỡi",
+    ],
+)
+def test_18_khoi_chi_bat_khi_noi_ve_phien_90_phut(chu):
+    # soát đợt 2 XANH 27: aria của phiên thử nội bộ 180 phút "18 khối BẬT" không phải số cũ
+    assert kg.tim_chu_cam_muc(chu) == []
+
+
+def test_phong_gia_khong_bao_gio_goi_may_chu():
+    # soát đợt 2 VÀNG 24 / XANH 6: phòng xem bên trong đo bằng dữ liệu giả, lời gọi khác bị huỷ
+    import json as _json
+
+    assert "/xem-gia" in kg.TUYEN_MAC_DINH
+    assert "/xem-gia/ghim" in kg.TUYEN_MAC_DINH
+    assert kg.PHONG_GIA["/xem-gia"] is None
+    assert kg.PHONG_GIA["/xem-gia/ghim"]
+    ma = kg.MA_PHONG_GIA
+    assert len(ma) != 8  # mã phòng thật 8 ký tự: mã giả không trùng phòng nào
+    goc = "http://127.0.0.1:3130"
+    tra = kg.tra_loi_phong_gia(f"{goc}/xem-api/{ma}/trang-thai", "GET", "LAB-3", 5)
+    assert tra is not None
+    assert tra[0] == 200
+    than = _json.loads(tra[1])
+    assert than["pinned"]["product_id"] == "LAB-3"
+    assert than["room"]["status"] == "dang_mo"
+    assert than["room"]["video_url"] is None
+    khong_ghim = kg.tra_loi_phong_gia(f"/xem-api/{ma}/trang-thai", "GET", None)
+    assert _json.loads(khong_ghim[1])["pinned"] is None
+    ok = (200, '{"ok":true,"status":"ok"}')
+    assert kg.tra_loi_phong_gia(f"/xem-api/{ma}/su-kien", "POST", None) == ok
+    # lời gọi không mang mã giả (phòng thật) hay qua proxy lõi: huỷ
+    assert kg.tra_loi_phong_gia(f"{goc}/xem-api/FuFAHIVv/trang-thai", "GET", None) is None
+    assert kg.tra_loi_phong_gia(f"{goc}/api/ll/sessions?x={ma}", "GET", None) is None
+    assert kg.ten_tep("/xem-gia/ghim") == "xem-gia_ghim"
 
 
 def test_mot_cho_chi_bao_mot_lan():

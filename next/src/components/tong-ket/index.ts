@@ -12,6 +12,8 @@ export {
   ketLuanTuBaoCao,
   maBamLich,
   maNhanTuNguon,
+  NGUONG_KHOI_BAO_CAO,
+  tenPhienHienThi,
   tomTatPhien,
   type CauTomTat,
   type DongChiTiet,

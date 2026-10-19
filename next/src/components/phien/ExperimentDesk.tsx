@@ -17,12 +17,21 @@ import { thuocTuBaoCao } from "@/components/bieu-do/ThuocKhoangTinCay";
 import { CoChe } from "@/components/co-che";
 import { DienThoaiLive, DUONG_VIDEO_NGUOI_DAN, useDongThoiGian } from "@/components/dien-thoai";
 import { AppShell, Hop, NganKeo, NutBam, OSo } from "@/components/nen";
-import { chanUocLuongKhiKhoa, daMoKhoa, duongNhoTyLeNhap, quyenToNenKhoi, theoCuaSo } from "@/lib/bieu-do";
+import {
+  CAU_MO_SOM_MO_PHONG,
+  chanUocLuongKhiKhoa,
+  choHienTyLeNhapTheoThoiGian,
+  daMoKhoa,
+  duongNhoTyLeNhap,
+  quyenToNenKhoi,
+  theoCuaSo,
+} from "@/lib/bieu-do";
 import { api, useExperimentDesk } from "@/lib/livelift-api/client";
-import { estimateState, fmtNum, funnel, mmss, roomPulse, sourceLabel, verdict } from "@/lib/livelift-api/desk";
-import { chuanHoaChu } from "@/lib/livelift-api/gop";
-import { TU, type MaKetLuan } from "@/lib/tu-ngu";
+import { estimateState, fmtFixed, fmtNum, funnel, mmss, roomPulse, sourceLabel, verdict } from "@/lib/livelift-api/desk";
+import { chuanHoaChu, loiTiengViet } from "@/lib/livelift-api/gop";
+import { LOI_THUONG, TU, type MaKetLuan } from "@/lib/tu-ngu";
 import "@/components/ban/ban.css";
+import { tenPhienHienThi } from "@/components/tong-ket/noi-dung";
 
 const MA_KL: Record<"doi" | "giu" | "do_them", MaKetLuan> = { doi: "DOI", giu: "GIU", do_them: "DO_THEM" };
 
@@ -44,11 +53,26 @@ function useCoVideoNguoiDan(): string | undefined {
   return src;
 }
 
+/** Màn thấp (laptop có thanh trình duyệt, 1280×633): biểu đồ thấp hơn để vùng chính lọt màn đầu. */
+function useManThap(): boolean {
+  const [thap, setThap] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(min-width: 768px) and (max-height: 700px)");
+    const doi = (): void => setThap(mq.matches);
+    doi();
+    mq.addEventListener?.("change", doi);
+    return () => mq.removeEventListener?.("change", doi);
+  }, []);
+  return thap;
+}
+
 /**
  * Bàn thí nghiệm /phien/[id], đọc từ API thật: cùng một màn cho phiên mô phỏng, dàn dựng và thật.
  * Thanh trên · hàng 1 dải khối · hàng 2 (vùng chính) ô số, "Bây giờ", đường thời gian, điện thoại · hàng 3 hai câu
- * trả lời cho cùng một câu hỏi · ngăn phải bình luận. Khoá §7: không so BẬT với TẮT cho tới khi máy chủ mở khoá
- * (MÔ PHỎNG và DÀN DỰNG được mở sớm, có dòng giải thích).
+ * trả lời cho cùng một câu hỏi · ngăn phải bình luận. Khoá §7 (D-027): không so BẬT với TẮT cho tới khi máy chủ mở
+ * khoá. Chỉ MÔ PHỎNG được mở sớm. Phiên có người bấm (THẬT, THỬ NỘI BỘ, DÀN DỰNG) còn khoá thì không hiện chuỗi Tỷ lệ
+ * nhấp theo thời gian ở bất kỳ đâu trên bàn: chỉ người xem và tổng lượt nhấp hợp lệ cả phiên.
  */
 export function ExperimentDesk({ sessionId }: { sessionId: string }) {
   const { data, refresh } = useExperimentDesk(sessionId);
@@ -57,6 +81,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
   const [moCoChe, setMoCoChe] = useState(false);
   const [moPhong, setMoPhong] = useState(false);
   const [moKetThuc, setMoKetThuc] = useState(false);
+  const manThap = useManThap();
   const srcVideo = useCoVideoNguoiDan();
   const dongThoiGian = useDongThoiGian(srcVideo ? undefined : null);
   const { session, state, blocks, ticks, comments, orders, report } = data;
@@ -67,20 +92,25 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
     const dangLive = session.status === "live";
     const moKhoa = daMoKhoa(report);
     const baoCao = report ? chanUocLuongKhiKhoa(report) : null;
-    const quyen = quyenSoSanh(nhan, dangLive, !moKhoa, quyenToNenKhoi(nhan, dangLive));
+    const quyen = quyenSoSanh(nhan, dangLive, !moKhoa, quyenToNenKhoi(nhan, dangLive, !moKhoa));
+    // D-027: hai lớp cùng phải cho phép (hàm chung của lib/bieu-do và quyền của bàn); một lớp nói khoá là khoá.
+    const khoaChuoi = quyen.khoaChuoi || !choHienTyLeNhapTheoThoiGian(nhan, dangLive, !moKhoa);
     const uoc = estimateState(baoCao);
     const v = verdict(uoc);
+    const thuoc = thuocTuBaoCao(baoCao);
     return {
       nhan,
       ma: maNhanNguon(nhan),
       dangLive,
-      quyen,
-      thuoc: thuocTuBaoCao(baoCao),
-      ketLuan: v.kind === "cho" || uoc.kind !== "estimate" ? null : MA_KL[v.kind],
+      quyen: { ...quyen, khoaChuoi, toNen: quyen.toNen && !khoaChuoi },
+      thuoc: uoc.kind === "not_enough" && !thuoc.khoa ? { ...thuoc, lyDo: "Cần thêm khối đo được để vẽ khoảng tin cậy." } : thuoc,
+      // Chưa đủ khối cũng là ĐO THÊM (canon), câu đi kèm là LOI_THUONG.chuaDuKhoi.
+      ketLuan: v.kind === "cho" ? null : uoc.kind === "estimate" || uoc.kind === "not_enough" ? MA_KL[v.kind] : null,
+      cauChuaDuKhoi: uoc.kind === "not_enough" ? LOI_THUONG.chuaDuKhoi : null,
       cheDo: cheDoGhim(session, report?.loai_phien),
       duongNguoiXem: theoCuaSo(ticks, session.start_ts, 300).map((w) => w.nguoiXem),
-      // Khoá §7: null khi còn khoá và nguồn không được mở sớm (THẬT, THỬ NỘI BỘ, CHẠY THỬ đang live).
-      duongTyLeNhap: duongNhoTyLeNhap(ticks, session, { khoa: !moKhoa, toNen: { cho: quyen.toNen } }),
+      // Khoá §7: null khi còn khoá và nguồn không được mở sớm (mọi nguồn có người bấm).
+      duongTyLeNhap: khoaChuoi ? null : duongNhoTyLeNhap(ticks, session, { khoa: !moKhoa, toNen: { cho: quyen.toNen } }),
     };
   }, [session, report, ticks]);
 
@@ -109,8 +139,8 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
   const monGhim = state.pinned_product ? { ten: state.pinned_product.name, gia: state.pinned_product.price } : null;
   const conLai = conLaiPhien(session, state.elapsed_s);
   const phongDanDung = session.platform === "lab";
-  // Nhịp phòng cắt cửa sổ 5 phút, trùng ranh giới khối: tỷ lệ nhấp theo cửa sổ chỉ hiện khi được so (khoá §7).
-  const pulse = roomPulse(ticks);
+  // Nhịp phòng cắt cửa sổ 5 phút, gần trùng ranh giới khối: khi khoá chỉ tính theo người xem (D-027).
+  const pulse = roomPulse(ticks, { chiNguoiXem: quyen.khoaChuoi });
 
   const ghim = async (): Promise<void> => {
     setDangGhim(true);
@@ -120,7 +150,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
       setThongBao("Đã ghim qua hệ thống, có ghi nhật ký ghim.");
       refresh();
     } catch (e) {
-      setThongBao(e instanceof Error ? e.message : "Không ghim được.");
+      setThongBao(loiTiengViet(e, "Không ghim được."));
     } finally {
       setDangGhim(false);
     }
@@ -129,17 +159,19 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
   const ketThuc = async (): Promise<void> => {
     try {
       await api.end(sessionId);
+      setMoKetThuc(false);
       setThongBao("Đã kết thúc phiên. Kết quả sẽ mở khi báo cáo tính xong.");
       refresh();
     } catch (e) {
-      setThongBao(e instanceof Error ? e.message : "Không kết thúc được phiên.");
+      setMoKetThuc(false);
+      setThongBao(loiTiengViet(e, "Không kết thúc được phiên."));
     }
   };
 
   const hanhDong = (
     <div className="ban-hanh-dong">
       <NutBam bien="vien" onClick={() => setMoPhong(true)}>
-        Mở phòng xem + QR
+        Phòng xem
       </NutBam>
       {dangLive ? (
         <NutBam bien="phu" onClick={() => setMoKetThuc(true)}>
@@ -154,7 +186,7 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
       thuGon
       dem="khong"
       hienTai="phien"
-      tieuDe={session.title || "Phiên LiveLift"}
+      tieuDe={tenPhienHienThi(session.title)}
       phuDe={`Bàn thí nghiệm · ${suyRa.cheDo} · đã chạy ${mmss(state.elapsed_s)}`}
       nhanNguon={ma}
       live={dangLive}
@@ -194,15 +226,26 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
                 }
               />
               <OSo nhan="Lượt nhấp hợp lệ" giaTri={fmtNum(f.clicks, 0)} phuDe="cả phiên" />
-              <OSo
-                tu={TU.tyLeNhap}
-                giaTri={f.clickRate == null ? null : fmtNum(f.clickRate, 2)}
-                duongNho={
-                  suyRa.duongTyLeNhap && suyRa.duongTyLeNhap.length > 1 ? (
-                    <DuongNho giaTri={suyRa.duongTyLeNhap} ten="Tỷ lệ nhấp trượt 2 phút" mau="luotNhap" rong={120} cao={16} />
-                  ) : undefined
-                }
-              />
+              {quyen.khoaChuoi ? (
+                <OSo tu={TU.tyLeNhap} giaTri={null} chuTrong="Khoá" phuDe="tới hết phiên, để không ai so khối giữa chừng" />
+              ) : (
+                <OSo
+                  tu={TU.tyLeNhap}
+                  nhan="Tỷ lệ nhấp cả phiên"
+                  giaTri={f.clickRate == null ? null : fmtNum(f.clickRate, 2)}
+                  duongNho={
+                    suyRa.duongTyLeNhap && suyRa.duongTyLeNhap.length > 1 ? (
+                      <DuongNho
+                        giaTri={suyRa.duongTyLeNhap}
+                        ten="Tỷ lệ nhấp, tính trên 2 phút gần nhất"
+                        mau="luotNhap"
+                        rong={120}
+                        cao={16}
+                      />
+                    ) : undefined
+                  }
+                />
+              )}
               <OSo
                 nhan="Thời gian còn lại"
                 giaTri={dangLive ? mmss(conLai) : session.status === "ended" ? "Đã xong" : null}
@@ -221,20 +264,40 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
               />
             </div>
 
-            <div className="ban-the ban-bieu-do">
-              <DuongThoiGian
-                ticks={ticks}
-                batDauTs={session.start_ts}
-                khoi={blocks}
-                toNenKhoi={quyen.toNen}
-                nguon={nhan}
-                dangLive={dangLive}
-                ghiChu={quyen.dong ?? undefined}
-                thoiLuongS={session.planned_duration_min * 60}
-                cao={136}
-                muc={2}
-                tieuDe="Người xem và Tỷ lệ nhấp"
-              />
+            <div className="ban-the ban-bieu-do" data-khoa-chuoi={quyen.khoaChuoi ? "" : undefined}>
+              {quyen.khoaChuoi ? (
+                // D-027: phiên có người bấm còn khoá thì không đưa chuỗi Tỷ lệ nhấp nào vào biểu đồ, kể cả bảng thay ảnh.
+                <section className="ban-nguoi-xem" aria-labelledby="ban-h-nguoi-xem" data-testid="ban-nguoi-xem-khoa">
+                  <h2 id="ban-h-nguoi-xem" className="ban-the__tieu-de">
+                    Người xem
+                  </h2>
+                  {ticks.length > 1 ? (
+                    <DuongNho giaTri={ticks.map((t) => t.viewers)} ten="Người xem" mau="nguoiXem" rong={480} cao={manThap ? 72 : 112} />
+                  ) : (
+                    <p className="ban-phu">Chưa có số người xem.</p>
+                  )}
+                  <p className="ban-phu" data-testid="bd-dong-to-nen">
+                    {quyen.dong ?? "Tỷ lệ nhấp theo thời gian mở khi hết phiên."}
+                  </p>
+                </section>
+              ) : (
+                <DuongThoiGian
+                  ticks={ticks}
+                  batDauTs={session.start_ts}
+                  khoi={blocks}
+                  toNenKhoi={quyen.toNen}
+                  nguon={nhan}
+                  dangLive={dangLive}
+                  // Nhánh này chỉ chạy khi D-027 cho hiện chuỗi Tỷ lệ nhấp (MÔ PHỎNG hoặc máy chủ đã mở khoá).
+                  khoa={false}
+                  // Câu mở sớm của MÔ PHỎNG đã có ở hàng 3: dưới biểu đồ để trống cho vùng chính lọt màn đầu.
+                  ghiChu=""
+                  thoiLuongS={session.planned_duration_min * 60}
+                  cao={manThap ? 80 : 136}
+                  muc={2}
+                  tieuDe="Người xem và Tỷ lệ nhấp"
+                />
+              )}
             </div>
 
             <div className="ban-dien-thoai">
@@ -245,7 +308,8 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
                 ghim={bayGio.ghimDienThoai}
                 binhLuan={comments.slice(-2).map((c) => ({ id: c.comment_id, noiDung: c.text }))}
                 soNguoiXem={nguoiXemNay ?? undefined}
-                nhanNguon={nhan.text}
+                nhanNguon={ma}
+                dangLive={dangLive}
                 tim={false}
                 khoaNut
                 nhanAria="Màn khách thấy lúc này"
@@ -259,9 +323,17 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
             hienKetQua={quyen.hienKetQua}
             thuoc={suyRa.thuoc}
             ketLuan={suyRa.ketLuan}
+            cauKetLuan={suyRa.cauChuaDuKhoi}
             nhanNguon={ma}
             conLaiS={dangLive && !quyen.hienKetQua ? conLai : null}
-            dongMoSom={quyen.hienKetQua && dangLive ? `Phiên đang live: mở khoá sớm vì ${tenNguonNgan(nhan)}.` : null}
+            quanSat={report?.loai_phien === "quan_sat"}
+            dongMoSom={
+              quyen.hienKetQua && dangLive
+                ? nhan.kind === "mo_phong"
+                  ? `${CAU_MO_SOM_MO_PHONG} Số còn đổi tới hết phiên.`
+                  : `Phiên ${tenNguonNgan(nhan)} đang live: số còn đổi tới hết phiên.`
+                : null
+            }
           />
         </div>
 
@@ -271,30 +343,25 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
             <h2 id="ban-h-nhip" className="ban-the__tieu-de">
               Nhịp phòng
             </h2>
-            <p className="ban-phu">Mô tả 5 phút gần nhất so với chính phiên này, không phải kết luận.</p>
+            <p className="ban-phu">So 5 phút vừa qua với chính phiên này. Chỉ để theo dõi, chưa phải kết luận.</p>
             {pulse.last && pulse.viewersBand ? (
               <dl className="ban-nhip__ds">
                 <div>
                   <dt>Người xem</dt>
-                  <dd>
-                    {fmtNum(pulse.last.viewers, 0)}{" "}
-                    <span className="ban-phu">
-                      thường {fmtNum(pulse.viewersBand[0], 0)} đến {fmtNum(pulse.viewersBand[1], 0)}
-                    </span>
+                  <dd>{fmtNum(pulse.last.viewers, 0)}</dd>
+                  <dd className="ban-phu ban-nhip__dai">
+                    5 phút gần nhất · thường từ {fmtNum(pulse.viewersBand[0], 0)} đến {fmtNum(pulse.viewersBand[1], 0)}
                   </dd>
                 </div>
-                {quyen.toNen || quyen.hienKetQua ? (
-                  pulse.clickBand ? (
-                    <div>
-                      <dt>Tỷ lệ nhấp</dt>
-                      <dd>
-                        {fmtNum(pulse.last.clickRate, 2)}{" "}
-                        <span className="ban-phu">
-                          thường {fmtNum(pulse.clickBand[0], 2)} đến {fmtNum(pulse.clickBand[1], 2)}
-                        </span>
-                      </dd>
-                    </div>
-                  ) : null
+                {!quyen.khoaChuoi && pulse.clickBand ? (
+                  <div>
+                    <dt>Tỷ lệ nhấp</dt>
+                    <dd>{fmtFixed(pulse.last.clickRate, 2)}</dd>
+                    <dd className="ban-phu ban-nhip__dai">
+                      {TU.tyLeNhap.phu_de ?? "lượt nhấp hợp lệ / 1.000 giây·người xem"} · 5 phút gần nhất · thường từ{" "}
+                      {fmtFixed(pulse.clickBand[0], 2)} đến {fmtFixed(pulse.clickBand[1], 2)}
+                    </dd>
+                  </div>
                 ) : null}
               </dl>
             ) : null}
@@ -318,13 +385,17 @@ export function ExperimentDesk({ sessionId }: { sessionId: string }) {
         {phongDanDung ? (
           <div className="ban-phong">
             <p>
-              Phòng xem của phiên này mở ở địa chỉ <strong>/xem/&lt;mã phòng&gt;</strong>. Mã phòng và mã QR hiện ở bước cuối của
-              màn tạo phiên.
+              Phòng xem có địa chỉ <strong>/xem/&lt;mã phòng&gt;</strong>. Hôm nay mã phòng do nhóm gửi riêng; màn tạo phiên sẽ
+              hiện mã và mã QR.
             </p>
             <p className="ban-phu">Phòng không lưu thông tin cá nhân. Khách rút lui lúc nào cũng được.</p>
           </div>
         ) : (
-          <p>Phòng xem chỉ có ở phiên phòng dàn dựng. Phiên này không mở phòng xem: khách xem trên nền tảng hoặc dữ liệu do máy sinh.</p>
+          <p>
+            {nhan.kind === "mo_phong"
+              ? "Phiên này không có phòng xem: người xem do máy mô phỏng."
+              : "Phiên này không có phòng xem: khách xem trên nền tảng livestream."}
+          </p>
         )}
       </NganKeo>
 

@@ -33,7 +33,7 @@ export function ThanhYDinh({ binhLuan, dem, toiDa = 6, tieuDe = "Khách nói gì
   return (
     <KhungBieuDo
       tieuDe={tieuDe}
-      phuDe="Bình luận theo ý định, sắp từ nhiều tới ít"
+      phuDe="Bình luận chia theo ý định, xếp từ nhiều đến ít"
       nhan={nhan}
       moTa={moTaYDinh(dong)}
       bang={dong.length ? bangYDinh(dong) : null}

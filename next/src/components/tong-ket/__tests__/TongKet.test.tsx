@@ -5,6 +5,7 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BaoCaoSchema, type BaoCao, type Session } from "@/lib/livelift-api/types";
 import type { DuLieuPhien } from "@/lib/livelift-api/hooks";
+import { LOI_THUONG } from "@/lib/tu-ngu";
 
 const mo = vi.hoisted(() => ({ duLieu: null as unknown }));
 
@@ -75,11 +76,41 @@ describe("TongKet", () => {
       expect(container.querySelector(`[data-testid='${id}']`), id).not.toBeNull();
     }
     const nut = container.querySelector("[data-nut-chinh]");
-    expect(nut?.textContent).toBe("Lên lịch phiên tiếp");
+    expect(nut?.textContent).toBe("Về danh sách phiên");
     const chu = container.textContent ?? "";
     for (const cam of ["—", "KTC", "hoán vị", "khóa", "SIMULATED"]) expect(chu).not.toContain(cam);
     expect(chu).toContain("Điều chưa biết");
     expect(chu).toContain("Chi tiết cho người kiểm");
+  });
+
+  it("chưa đủ khối: ĐO THÊM với câu canon, biểu đồ chấm không có trung bình BẬT/TẮT", () => {
+    const thieu = {
+      ...DOI,
+      ket_qua_thi_nghiem: { ...DOI.ket_qua_thi_nghiem!, estimable: false, n_blocks: 3, n_on: 1, n_off: 2, estimate: null, ci_low: null, ci_high: null, p_value: null },
+    } as BaoCao;
+    const k = (index: number, nhanh: "ON" | "OFF", tyLe: number) => ({ index, nhanh, tu: index * 300, den: (index + 1) * 300, phoi: 1000, nhap: tyLe, tyLe, doDuoc: true, lyDo: null });
+    const khoiDo = [k(0, "ON", 1.44), k(1, "OFF", 0.6), k(2, "OFF", 0.78)];
+    mo.duLieu = duLieu(thieu, { khoiDo });
+    const { container } = render(<TongKet sessionId="s1" />);
+    expect(container.querySelector("[data-testid='verdict']")?.textContent).toContain("ĐO THÊM");
+    expect(container.querySelector("[data-chup='ket-luan']")?.textContent).toContain(LOI_THUONG.chuaDuKhoi);
+    const cham = container.querySelector("[data-testid='bd-cham']");
+    expect(cham?.textContent ?? "").not.toMatch(/trung bình/i);
+  });
+
+  it("MÔ PHỎNG đang live có kết luận: nói rõ kết quả hiện sớm và số còn đổi", () => {
+    mo.duLieu = duLieu(DOI, { dangLive: true, phien: { ...PHIEN, status: "live" } as Session });
+    const { container } = render(<TongKet sessionId="s1" />);
+    expect(container.querySelector("[data-testid='tong-ket-dang-live']")?.textContent).toContain("MÔ PHỎNG");
+  });
+
+  it("phiên quan sát: không có kết luận, không có ổ khoá", () => {
+    mo.duLieu = duLieu({ ...DOI, loai_phien: "quan_sat", ket_qua_thi_nghiem: null } as BaoCao, { khoa: true });
+    const { container } = render(<TongKet sessionId="s1" />);
+    const verdict = container.querySelector("[data-testid='verdict']");
+    expect(verdict?.getAttribute("data-kind")).toBe("quan_sat");
+    expect(verdict?.textContent).toBe("Không có kết luận");
+    expect(container.textContent).not.toContain("Đang khoá");
   });
 
   it("khoá §7: không có chữ ĐỔI / GIỮ / ĐO THÊM lớn và không có số ước lượng", () => {

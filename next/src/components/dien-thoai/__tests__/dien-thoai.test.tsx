@@ -231,9 +231,11 @@ describe("thẻ ghim, giỏ hàng, bình luận, số người xem", () => {
     expect(the.textContent).toContain("159.000 đ");
     fireEvent.click(screen.getByRole("button", { name: "Xem ngay" }));
     expect(xem).toHaveBeenCalledWith(ghim);
+    expect(xem).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Giỏ hàng, 0 món" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Mua (tiền ảo)" }));
     expect(mua).toHaveBeenCalledWith(ghim);
+    expect(mua).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("button", { name: "Giỏ hàng, 1 món" }));
     expect(gio).toHaveBeenCalledTimes(1);
     for (const g of gocXoay(khung().outerHTML)) expect(Math.abs(g)).toBeLessThanOrEqual(NGHIENG_TOI_DA);
@@ -242,9 +244,39 @@ describe("thẻ ghim, giỏ hàng, bình luận, số người xem", () => {
   it("khối TẮT (ghim null): không thẻ ghim; khoaNut: nút bị khoá", () => {
     const { rerender } = render(<DienThoaiLive ghim={null} />);
     expect(screen.queryByTestId("dien-thoai-ghim")).toBeNull();
-    rerender(<DienThoaiLive ghim={{ ten: "Túi tote canvas", gia: 89000 }} khoaNut />);
+    const xem = vi.fn();
+    const mua = vi.fn();
+    const gio = vi.fn();
+    rerender(<DienThoaiLive ghim={{ ten: "Túi tote canvas", gia: 89000 }} khoaNut onXemNgay={xem} onMua={mua} onGioHang={gio} />);
     expect(screen.getByRole("button", { name: "Xem ngay" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Mua (tiền ảo)" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Xem ngay" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mua (tiền ảo)" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Giỏ hàng/ }));
+    expect(xem).not.toHaveBeenCalled();
+    expect(mua).not.toHaveBeenCalled();
+    expect(gio).not.toHaveBeenCalled();
+  });
+
+  it("monCam=null (phòng xem): người dẫn vẽ tay giống hệt nhau khi có và khi không có thẻ ghim", () => {
+    const { rerender } = render(<DienThoaiLive ghim={null} monCam={null} />);
+    const tat = khung().querySelector(".dt-ve-tay")?.outerHTML;
+    expect(tat).toBeTruthy();
+    rerender(<DienThoaiLive ghim={{ ten: "Bình giữ nhiệt inox 750ml", gia: 159000 }} monCam={null} />);
+    expect(khung().querySelector(".dt-ve-tay")?.outerHTML).toBe(tat);
+    // mặc định (minh hoạ, landing): người dẫn cầm món đang ghim, nên hai trạng thái khác nhau
+    rerender(<DienThoaiLive ghim={null} />);
+    const macDinhTat = khung().querySelector(".dt-ve-tay")?.outerHTML;
+    rerender(<DienThoaiLive ghim={{ ten: "Bình giữ nhiệt inox 750ml", gia: 159000 }} />);
+    expect(khung().querySelector(".dt-ve-tay")?.outerHTML).not.toBe(macDinhTat);
+  });
+
+  it("dangLive=false: không có chip LIVE, hiện chữ ngoài giờ live, không tim bay", () => {
+    const { rerender } = render(<DienThoaiLive dangLive={false} />);
+    expect(screen.queryByText("LIVE")).toBeNull();
+    expect(screen.getByText("ĐÃ KẾT THÚC")).toBeInTheDocument();
+    rerender(<DienThoaiLive dangLive={false} chuNgoaiLive="CHƯA MỞ" />);
+    expect(screen.getByText("CHƯA MỞ")).toBeInTheDocument();
   });
 
   it("soTrongGio điều khiển từ ngoài", () => {
@@ -257,13 +289,13 @@ describe("thẻ ghim, giỏ hàng, bình luận, số người xem", () => {
     vi.useFakeTimers();
     const { rerender } = render(<DienThoaiLive binhLuan={BINH_LUAN} />);
     let dong = Array.from(khung().querySelectorAll(".dt-bl-dong")).map((x) => x.textContent);
-    expect(dong).toEqual(["Khách 3 Bình luận số 3", "Khách 4 Bình luận số 4", "Khách 5 Bình luận số 5", "Khách 6 Bình luận số 6"]);
+    expect(dong).toEqual(["Khách 3: Bình luận số 3", "Khách 4: Bình luận số 4", "Khách 5: Bình luận số 5", "Khách 6: Bình luận số 6"]);
     rerender(<DienThoaiLive binhLuan={BINH_LUAN} binhLuanTuChay />);
     act(() => {
       vi.advanceTimersByTime(2600);
     });
     dong = Array.from(khung().querySelectorAll(".dt-bl-dong")).map((x) => x.textContent);
-    expect(dong[0]).toBe("Khách 2 Bình luận số 2");
+    expect(dong[0]).toBe("Khách 2: Bình luận số 2");
   });
 
   it("LIVE và số người xem kiểu vi-VN", () => {

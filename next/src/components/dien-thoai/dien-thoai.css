@@ -105,6 +105,11 @@
   color: #ffffff;
   letter-spacing: 0.06em;
 }
+/* phiên chưa mở hoặc đã kết thúc: chip xám, không chấm nhấp nháy */
+.dt-live.is-ngoai {
+  background: rgba(20, 16, 14, 0.72);
+  letter-spacing: 0.02em;
+}
 .dt-live-cham {
   width: 8px;
   height: 8px;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { roomPulse, verdict, type EstimateState } from "../desk";
 import type { Tick } from "../types";
+import { KET_LUAN_THEO_MA, LOI_THUONG } from "@/lib/tu-ngu";
 
 /**
  * Ideas taken from Round-2 teams (15/10/2026), turned into tested behaviour:
@@ -18,15 +19,16 @@ describe("verdict — đổi / giữ / đo thêm (học từ AISC26-0080)", () =
   it("interval above 0 → change to LiveLift's pin strategy", () => {
     expect(verdict(est(0.2, 0.9)).kind).toBe("doi");
   });
-  it("interval below 0 → keep the old way, and say a negative effect is a real measurement", () => {
+  it("interval below 0 → keep the old way, with exactly the canon sentence (no extra sentence appended)", () => {
     const v = verdict(est(-0.9, -0.1));
     expect(v.kind).toBe("giu");
-    expect(v.detail).toMatch(/phép đo thật/);
+    expect(v.detail).toBe(KET_LUAN_THEO_MA.GIU.cau);
   });
   it("interval containing 0, or too few blocks → measure more, with the 90-minute rule", () => {
     expect(verdict(est(-0.2, 0.6)).kind).toBe("do_them");
     const few = verdict({ kind: "not_enough", nBlocks: 4, message: "x" });
     expect(few.kind).toBe("do_them");
+    expect(few.detail).toBe(LOI_THUONG.chuaDuKhoi);
     expect(few.detail).toMatch(/90 phút/);
   });
   it("locked or observational sessions never get a causal decision", () => {
@@ -66,6 +68,6 @@ describe("roomPulse — dải tham chiếu + cảnh báo nhiều tín hiệu (h�
 
   it("states that it is descriptive, never causal", () => {
     const normal: Array<[number, number]> = [[60, 3], [55, 3], [62, 4], [58, 3], [61, 3]];
-    expect(roomPulse(ticks([...normal, [20, 0], [18, 0]])).note).toMatch(/không phải kết luận nhân quả/);
+    expect(roomPulse(ticks([...normal, [20, 0], [18, 0]])).note).toMatch(/chỉ là mô tả, chưa nói được vì sao/);
   });
 });

@@ -183,6 +183,18 @@
   gap: 4px;
   min-width: 0;
 }
+/* phiên 90 phút: khối đầu và cuối 10 phút nên ô rộng gấp đôi; mọi ô có nền nhạt để thấy độ dài khối */
+.mh-dai.is-dau-cuoi-doi .mh-dai-hang {
+  grid-template-columns: repeat(18, minmax(0, 1fr));
+}
+.mh-dai.is-dau-cuoi-doi .mh-dai-o {
+  padding: 4px 0;
+  border-radius: 10px;
+  background: rgba(110, 99, 89, 0.08);
+}
+.mh-dai-o.is-doi {
+  grid-column: span 2;
+}
 .mh-dai-o .mh-xu {
   width: 100%;
   max-width: 48px;
@@ -232,6 +244,10 @@
   .mh-dai-hang {
     grid-template-columns: repeat(8, minmax(0, 1fr));
     row-gap: 10px;
+  }
+  /* hai hàng: khối 1 (đôi) + 2..8, rồi 9..15 + khối 16 (đôi) */
+  .mh-dai.is-dau-cuoi-doi .mh-dai-hang {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
   }
 }
 

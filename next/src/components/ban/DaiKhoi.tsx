@@ -24,7 +24,7 @@ export function DaiKhoi({ o }: { o: ODaiKhoi[] }) {
       </div>
       <ol
         className="ban-dai__ds"
-        aria-label={`Lịch ${o.length} khối: ${nBat} khối BẬT, ${nTat} khối TẮT`}
+        aria-label={`Lịch khối của phiên: tổng ${o.length}, BẬT ${nBat}, TẮT ${nTat}`}
         data-testid="ban-dai-khoi"
         data-nhieu={o.length > 24 ? "" : undefined}
       >

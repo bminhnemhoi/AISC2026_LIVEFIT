@@ -37,7 +37,9 @@ describe("hợp đồng /bao-cao với lõi Python", () => {
     if (s.kind !== "estimate") throw new Error("fixture must be estimable");
     const [cau1, cau2] = report.tom_tat_3_cau.map(c => c.text);
     expect(s.pText).not.toBeNull();
-    expect(cau2).toContain(s.pText as string);
+    // Kế hoạch mục 3 (soát đợt 2): p chỉ nằm ở "Chi tiết cho người kiểm"; câu 2 nói số lần bốc thăm lại.
+    expect(cau2).not.toContain(s.pText as string);
+    expect(cau2).toContain("1.000 lần");
     expect(cau1).toContain(fmtFixed(s.estimate, 3));
     expect(cau1).toContain(fmtFixed(s.ciLow, 3));
     expect(cau1).toContain(fmtFixed(s.ciHigh, 3));

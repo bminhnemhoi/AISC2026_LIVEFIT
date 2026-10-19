@@ -76,7 +76,7 @@ export function KhungBieuDo({ tieuDe, phuDe, nhan, moTa, bang, chuGiai, ghiChu, 
           {nhan ? <span className="bd-nhan">{nhan}</span> : null}
           {/* Một nhãn cố định; trạng thái nằm ở aria-pressed (đổi nhãn kèm aria-pressed làm trình đọc màn hình đọc lẫn). */}
           {bang ? (
-            <button type="button" className="bd-nut" aria-pressed={xemBang} aria-controls={maBang} onClick={() => setXemBang((v) => !v)}>
+            <button type="button" className="bd-nut" aria-pressed={xemBang} aria-controls={maBang} onClick={() => setXemBang((v) => !v)} data-an-khi-chup="">
               Xem dạng bảng
             </button>
           ) : null}

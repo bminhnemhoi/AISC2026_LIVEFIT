@@ -5,7 +5,7 @@ import { ThanhYDinh } from "@/components/bieu-do";
 import { Chip } from "@/components/nen";
 import { intentLabel } from "@/lib/livelift-api/desk";
 import type { Comment } from "@/lib/livelift-api/types";
-import { toneYDinh } from "./logic";
+import { docChoDaChe, toneYDinh } from "./logic";
 
 /** Ngăn phải: thanh ý định ở đầu, rồi bình luận mới nhất tô màu theo ý định. Bình luận đã che thông tin cá nhân. */
 export function NganBinhLuan({ binhLuan, toiDa = 40 }: { binhLuan: Comment[]; toiDa?: number }) {
@@ -26,7 +26,7 @@ export function NganBinhLuan({ binhLuan, toiDa = 40 }: { binhLuan: Comment[]; to
             return (
               <li key={c.comment_id} className="ban-ngan__dong" data-tone={toneYDinh(c.intent)}>
                 {ten ? <Chip tone={toneYDinh(c.intent)}>{ten}</Chip> : null}
-                <span className="ban-ngan__chu">{c.text}</span>
+                <span className="ban-ngan__chu">{docChoDaChe(c.text)}</span>
               </li>
             );
           })}

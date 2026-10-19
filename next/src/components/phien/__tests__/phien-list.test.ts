@@ -3,8 +3,21 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { isAllowed } from "@/lib/livelift-api/allowlist";
 import type { BaoCao, KetQua, Session } from "@/lib/livelift-api/types";
-import { CHO_CANON, TU, timLoiChu } from "@/lib/tu-ngu";
-import { demTheoNhan, groupSessions, ketLuanPhien, maNhanPhien, TEN_O_NHAN, thoiLuongVaKhoi } from "../PhienList";
+import { KET_LUAN_THEO_MA, LOI_THUONG, TU, timLoiChu } from "@/lib/tu-ngu";
+import {
+  caoTheoHang,
+  cauChipKetLuan,
+  conKhoaKhiLive,
+  demTheoNhan,
+  duocTaiLich,
+  groupSessions,
+  hangKetLuan,
+  ketLuanPhien,
+  maNhanPhien,
+  TEN_O_NHAN,
+  thoiLuongVaKhoi,
+  TONE_KET_LUAN,
+} from "../PhienList";
 
 function s(id: string, status: string, start: string | null, them: Partial<Session> = {}): Session {
   return {
@@ -54,6 +67,30 @@ describe("trang /phien: danh sách phiên", () => {
     expect(g[1].items.map(x => x.session_id)).toEqual(["c", "a"]);
   });
 
+  it("nhóm Đã xong xếp theo kết luận trước (ĐỔI, GIỮ, ĐO THÊM) rồi mới tới giờ; nhóm khác vẫn theo giờ", () => {
+    const hang: Record<string, number> = { a: 2, c: 0, d: 2, b: 0 };
+    const g = groupSessions(
+      [
+        s("a", "ended", "2026-10-15T10:00:00Z"),
+        s("c", "ended", "2026-10-14T08:00:00Z"),
+        s("d", "ended", "2026-10-13T08:00:00Z"),
+        s("b", "live", "2026-10-15T09:00:00Z"),
+      ],
+      x => hang[x.session_id],
+    );
+    expect(g[1].items.map(x => x.session_id)).toEqual(["c", "a", "d"]);
+    expect(hangKetLuan({ loai: "mo", ma: "DOI", thieuKhoi: false, somVi: null })).toBeLessThan(
+      hangKetLuan({ loai: "mo", ma: "GIU", thieuKhoi: false, somVi: null }),
+    );
+    expect(hangKetLuan({ loai: "mo", ma: "DO_THEM", thieuKhoi: false, somVi: null })).toBeLessThan(hangKetLuan({ loai: "khoa" }));
+  });
+
+  it("khung cuộn cắt đúng mép dưới một hàng, không cắt đôi nút", () => {
+    expect(caoTheoHang(500, [120, 240, 360, 480, 600])).toBe(481);
+    expect(caoTheoHang(300, [])).toBe(300);
+    expect(caoTheoHang(100, [120, 240])).toBe(100);
+  });
+
   it("chỉ gọi những đường proxy phía máy chủ cho phép", () => {
     expect(isAllowed("GET", "sessions")).toBe(true);
     expect(isAllowed("GET", "sessions/635571a0-8671-41d7-a056-38818bfba4ad/bao-cao")).toBe(true);
@@ -94,10 +131,27 @@ describe("nhãn nguồn của phiên", () => {
 describe("kết luận trên hàng: khoá §7", () => {
   const moDoi = baoCao({ khoa: false, estimable: true, estimate: 1.2, ci_low: 0.9, ci_high: 1.5 });
 
-  it("THẬT hoặc THỬ NỘI BỘ đang live: luôn khoá, kể cả khi máy chủ lỡ trả khoa=false", () => {
+  it("THẬT, THỬ NỘI BỘ hay DÀN DỰNG đang live: luôn khoá, kể cả khi máy chủ lỡ trả khoa=false (D-027)", () => {
     expect(ketLuanPhien(s("t", "live", null), moDoi)).toEqual({ loai: "khoa" });
+    expect(ketLuanPhien(s("d", "live", null, { platform: "lab" }), moDoi)).toEqual({ loai: "khoa" });
+    expect(conKhoaKhiLive(s("m", "live", null, MO_PHONG))).toBe(false);
     expect(ketLuanPhien(s("n", "live", null, THU_NOI_BO), moDoi)).toEqual({ loai: "khoa" });
     expect(ketLuanPhien(s("n", "live", null, THU_NOI_BO), undefined)).toEqual({ loai: "khoa" });
+  });
+
+  it("lịch BẬT/TẮT chỉ tải cho MÔ PHỎNG hoặc phiên đã xong; phiên còn khoá thì không", () => {
+    expect(duocTaiLich(s("m", "live", null, MO_PHONG))).toBe(true);
+    expect(duocTaiLich(s("x", "ended", null))).toBe(true);
+    expect(duocTaiLich(s("n", "live", null, THU_NOI_BO))).toBe(false);
+    expect(duocTaiLich(s("d", "live", null, { platform: "lab" }))).toBe(false);
+    expect(duocTaiLich(s("t", "planned", null))).toBe(false);
+  });
+
+  it("chip kết luận: câu rê chuột của phiên chưa đủ khối là câu ĐO THÊM khi chưa đủ khối; màu theo bảng chung", () => {
+    expect(cauChipKetLuan("DO_THEM", true)).toBe(LOI_THUONG.chuaDuKhoi);
+    expect(cauChipKetLuan("DO_THEM", true)).not.toMatch(/khoảng tin cậy/i);
+    expect(cauChipKetLuan("DO_THEM", false)).toBe(KET_LUAN_THEO_MA.DO_THEM.cau);
+    expect(TONE_KET_LUAN).toEqual({ DOI: "bat", GIU: "trung", DO_THEM: "vang" });
   });
 
   it("chỉ mở khi máy chủ nói rõ khoa=false; thiếu báo cáo hay lỗi mạng đều là khoá", () => {
@@ -128,9 +182,10 @@ describe("chữ trên trang", () => {
 
   it("tiêu đề và phụ đề lấy từ canon; không còn tên cũ", () => {
     expect(TU.danhSachPhien.chu).toBe("Các phiên live đang đo hiệu quả ghim");
-    expect(CHO_CANON.danhSachPhienPhuDe).toBe("Mỗi phiên chia khối 5 phút, máy tung đồng xu chọn khối nào ghim");
+    expect(LOI_THUONG.danhSachPhienPhuDe).toBe("Mỗi phiên chia khối 5 phút, máy tung đồng xu chọn khối nào ghim");
     expect(nguon).toContain("TU.danhSachPhien.chu");
-    expect(nguon).toContain("CHO_CANON.danhSachPhienPhuDe");
+    expect(nguon).toContain("LOI_THUONG.danhSachPhienPhuDe");
+    for (const cu of ["Gieo", "ước lượng", "Mở khoá sớm", "e.message"]) expect(nguon).not.toContain(cu);
     expect(nguon).not.toContain("Thí nghiệm có bốc thăm");
   });
 

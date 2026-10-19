@@ -1,6 +1,7 @@
 import { INTENT_DISPLAY } from "@/lib/livelift-api/desk";
 import type { Block, Comment, Tick } from "@/lib/livelift-api/types";
-import type { QuyenToNen } from "./khoa";
+import type { SourceLabel } from "@/lib/livelift-api/desk";
+import { choHienTyLeNhapTheoThoiGian, type QuyenToNen } from "./khoa";
 
 /**
  * Biến đổi dữ liệu API thành chuỗi để vẽ. Thuần, không React, không gọi mạng.
@@ -109,7 +110,13 @@ export interface KhoiDo {
  * thì không đo được, không phải bằng 0). Phiên đang live (không có `ketThucTs`): khối chưa tới (bắt đầu sau điểm đo
  * cuối) bị bỏ hẳn, không tính là "không đo được".
  */
-export function khoiTuTicks(khoi: Block[], ticks: Tick[], batDauTs: string | null | undefined, ketThucTs?: string | null): KhoiDo[] {
+export function khoiTuTicks(
+  khoi: Block[],
+  ticks: Tick[],
+  batDauTs: string | null | undefined,
+  ketThucTs?: string | null,
+  tuyChon: { boKhoiDangChay?: boolean } = {},
+): KhoiDo[] {
   if (!batDauTs) return [];
   const tho = diemTho(ticks, batDauTs);
   const rong = tho.length > 1 ? tho[1].t - tho[0].t : O_DO_S;
@@ -120,6 +127,8 @@ export function khoiTuTicks(khoi: Block[], ticks: Tick[], batDauTs: string | nul
   for (const b of [...khoi].sort((x, y) => x.start_offset_s - y.start_offset_s)) {
     if (b.is_washout || !b.assignment) continue;
     if (!ketThucTs && b.start_offset_s >= cuoiDo) continue;
+    // Phiên còn live: khối đang chạy chưa đủ để tính, bỏ hẳn (không ghi "không đo được").
+    if (!ketThucTs && tuyChon.boKhoiDangChay && b.end_offset_s > cuoiDo) continue;
     const dai = b.end_offset_s - b.start_offset_s;
     const tu = b.start_offset_s + Math.min(BO_DAU_KHOI_S, Math.max(dai - 30, 0));
     const den = Math.min(b.end_offset_s, hetPhien);
@@ -249,6 +258,9 @@ export interface TuyChonDuongNho {
   khoa: boolean;
   /** Quyền mở sớm của nguồn (`DuLieuPhien.toNen`). Thiếu thì coi như không được mở sớm. */
   toNen?: Pick<QuyenToNen, "cho"> | null;
+  /** Nhãn nguồn của phiên. Có thì luật mở sớm lấy từ `choHienTyLeNhapTheoThoiGian` (D-027), bỏ qua `toNen`. */
+  nguon?: Pick<SourceLabel, "kind" | "text"> | null;
+  dangLive?: boolean;
   /** Cửa sổ trượt (giây), mặc định 120: ngắn hơn một khối và không cắt theo ranh giới khối. */
   cuaSoS?: number;
   /** Lấy một điểm mỗi `buocS` giây (mặc định 60) cho đường nhỏ khỏi dày. */
@@ -258,8 +270,9 @@ export interface TuyChonDuongNho {
 /**
  * Chuỗi Tỷ lệ nhấp cho đường nhỏ của ô số, đã qua khoá §7.
  *
- * - Trả `null` (không có đường nào) khi `khoa` là true và nguồn không được mở sớm, tức phiên THẬT, CHẠY THỬ hay THỬ
- *   NỘI BỘ đang live: ô số khi đó chỉ được có đường nhỏ Người xem.
+ * - Trả `null` (không có đường nào) khi `khoa` là true và nguồn không được mở sớm (D-027: chỉ MÔ PHỎNG được), tức
+ *   phiên THẬT, CHẠY THỬ, THỬ NỘI BỘ hay DÀN DỰNG còn khoá: ô số khi đó chỉ được có đường nhỏ Người xem. Nên truyền
+ *   `nguon` và `dangLive` để dùng đúng luật của `choHienTyLeNhapTheoThoiGian`.
  * - Ngược lại trả tỷ lệ nhấp trượt trên `cuaSoS` giây gần nhất, mỗi `buocS` giây một điểm. Cửa sổ trượt không trùng
  *   ranh giới khối (khác `theoCuaSo(…, 300)`), nên đường nhỏ không thành chuỗi tỷ lệ từng khối.
  * - Không có giờ bắt đầu: mảng rỗng.
@@ -267,9 +280,11 @@ export interface TuyChonDuongNho {
 export function duongNhoTyLeNhap(
   ticks: Tick[],
   phien: { start_ts?: string | null } | null | undefined,
-  { khoa, toNen = null, cuaSoS = 120, buocS = 60 }: TuyChonDuongNho,
+  { khoa, toNen = null, nguon, dangLive = false, cuaSoS = 120, buocS = 60 }: TuyChonDuongNho,
 ): Array<number | null> | null {
-  if (khoa && toNen?.cho !== true) return null;
+  if (nguon !== undefined) {
+    if (!choHienTyLeNhapTheoThoiGian(nguon, dangLive, khoa)) return null;
+  } else if (khoa && toNen?.cho !== true) return null;
   const diem = chuoiThoiGian(ticks, phien?.start_ts, cuaSoS);
   if (!diem.length) return [];
   const buoc = Math.max(O_DO_S, buocS);

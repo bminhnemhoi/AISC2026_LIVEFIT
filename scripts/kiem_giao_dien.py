@@ -8,6 +8,11 @@ trang, rồi phân loại ở Python (phần phân loại là hàm thuần, có 
 Không tự bật máy chủ nào: dùng máy chủ dev chung (API :8000, Next :3130). Mặc định chỉ ĐỌC: không bấm đồng ý ở
 phòng xem, nên không ghi sự kiện nào vào phòng thử nội bộ.
 
+Phòng xem bên trong (sau màn đồng ý) đo bằng phòng GIẢ: tuyến ảo /xem-gia (không ghim) và /xem-gia/ghim (đang
+ghim). Trình duyệt mở /xem/<MA_PHONG_GIA>, mọi lời gọi /xem-api và /api/ll bị page.route chặn: lời gọi đúng mã giả
+được trả dữ liệu giả, lời gọi khác bị huỷ và báo ĐỎ (phong-gia-ro). Không yêu cầu nào tới lõi API; công cụ bấm
+[data-chup-bam=dong-y] rồi đo như tuyến khác.
+
 Chạy (Python của lõi có playwright):
 
     D:\\AISC2026\\livelift\\.venv\\Scripts\\python scripts\\kiem_giao_dien.py
@@ -68,7 +73,19 @@ TUYEN_MAC_DINH = (
     "/phien/{phien_live}/nguoi-dan",
     "/phien/{phien_doi}/tong-ket",
     "/xem/{ma_phong}",
+    "/xem-gia",
+    "/xem-gia/ghim",
 )
+MA_PHONG_GIA = "KIEMGIA0039"
+"""Mã phòng giả cho tuyến ảo /xem-gia: không phòng thật nào mang mã này (mã thật 8 ký tự)."""
+SAN_PHAM_GIA: tuple[dict[str, Any], ...] = (
+    {"product_id": "LAB-1", "name": "Áo thun cotton basic", "price_vnd": 129000.0, "image_url": None},
+    {"product_id": "LAB-2", "name": "Túi tote canvas", "price_vnd": 89000.0, "image_url": None},
+    {"product_id": "LAB-3", "name": "Bình giữ nhiệt inox 750ml", "price_vnd": 159000.0, "image_url": None},
+    {"product_id": "LAB-4", "name": "Set 3 kẹp tóc càng cua", "price_vnd": 39000.0, "image_url": None},
+)
+PHONG_GIA: dict[str, str | None] = {"/xem-gia": None, "/xem-gia/ghim": "LAB-3"}
+"""Tuyến ảo → mã món đang ghim của phòng giả (None: khối không ghim)."""
 MA_PHONG_MAC_DINH = "ijfCUXSD"
 """Phòng thử nội bộ gieo lúc 12:22 19/10 (đổi khi gieo lại: truyền --ma-phong hoặc LIVELIFT_MA_PHONG)."""
 
@@ -141,7 +158,21 @@ MIEN_TRU_CHU: tuple[tuple[str, str, str], ...] = (
         "nghĩa khác (bài hát, vướng mắc...), không phải tên khối",
     ),
     ("hóa", r"thanh\s+hóa", "địa danh giữ cách viết chính thức"),
+    (
+        "18 khối",
+        r"18\s+khối\s+(?:bật|tắt)",
+        "đếm khối BẬT/TẮT của một lịch (phiên 180 phút có 18 khối BẬT), không phải số cũ của phiên 90 phút",
+    ),
 )
+NEO_NGU_CANH: tuple[tuple[str, str, int, str], ...] = (
+    (
+        "18 khối",
+        r"90\s*phút",
+        60,
+        "số cũ chỉ sai khi nói về phiên 90 phút (đúng là 16 khối); phiên 180 phút có 34 khối, 18 BẬT",
+    ),
+)
+"""Mẫu chỉ bắt khi có cụm neo trong khoảng ± n ký tự quanh chỗ khớp (chữ khớp viết thường, neo, n, lý do)."""
 """Miễn trừ của chữ cấm (mỗi dòng một lý do). Ngoài bảng này còn ba luật miễn:
   * cụm nằm trong URL (LIVEFIT trong đường dẫn kho mã GitHub);
   * cụm canon ghi 'chỉ được đứng trong ngoặc' (burn-in, hiệu ứng lưu) nằm trong ngoặc đơn;
@@ -396,9 +427,12 @@ def tim_chu_cam(
 
 def _mien(lu: LuatChu, chu: str, s: int, e: int, khop: str) -> bool:
     """Chỗ khớp thuộc MIEN_TRU_CHU, nằm trong URL, hoặc trong ngoặc khi canon cho phép."""
-    k = khop.lower()
+    k = re.sub(r"\s+", " ", khop.lower())
     for tu, lanh, _ly_do in MIEN_TRU_CHU:
         if k == tu and _trong(re.compile(lanh, re.IGNORECASE), chu, s, e):
+            return True
+    for tu, neo, rong, _ly_do in NEO_NGU_CANH:
+        if k == tu and not re.search(neo, chu[max(0, s - rong) : e + rong], re.IGNORECASE):
             return True
     if any(m.start() <= s and e <= m.end() for m in URL_RE.finditer(chu)):
         return True
@@ -1103,6 +1137,60 @@ def gia_tri_cho_giu(api: str, ma_phong: str) -> tuple[dict[str, str], list[str]]
     return gia, canh_bao
 
 
+TIEU_DE_PHONG_GIA = "Phòng xem LiveLift (giả để kiểm)"
+
+
+def trang_thai_phong_gia(
+    ghim: str | None, bay_ms: int = 0, tieu_de: str = TIEU_DE_PHONG_GIA
+) -> dict[str, Any]:
+    """Thân GET /xem-api/<mã giả>/trang-thai: phòng đang mở, không video, ghim món `ghim` (None: không ghim)."""
+    mon = next((m for m in SAN_PHAM_GIA if m["product_id"] == ghim), None)
+    return {
+        "room": {
+            "title": tieu_de,
+            "status": "dang_mo",
+            "video_url": None,
+            "consent_version": "2026-10-15",
+            "source_label": "DÀN DỰNG",
+        },
+        "pinned": dict(mon) if mon else None,
+        "products": [dict(m) for m in SAN_PHAM_GIA],
+        "server_time_ms": bay_ms,
+        "poll_after_ms": 1500,
+        "source_code_url": "https://github.com/bminhnemhoi/AISC2026_LIVEFIT",
+    }
+
+
+def tra_loi_phong_gia(
+    url: str, phuong_thuc: str, ghim: str | None, bay_ms: int = 0, tieu_de: str = TIEU_DE_PHONG_GIA
+) -> tuple[int, str] | None:
+    """Trả lời giả cho một lời gọi bị chặn: (mã HTTP, thân JSON), hoặc None khi phải huỷ (lời gọi không mang mã
+    giả, hoặc lời gọi tới proxy /api/ll): khi đó công cụ huỷ yêu cầu và báo ĐỎ, không gì tới máy chủ."""
+    if MA_PHONG_GIA not in url or "/api/ll/" in url:
+        return None
+    if phuong_thuc.upper() == "GET":
+        return 200, json.dumps(trang_thai_phong_gia(ghim, bay_ms, tieu_de), ensure_ascii=False)
+    return 200, '{"ok":true,"status":"ok"}'
+
+
+def _vao_phong_gia(
+    trang: Any, ghim: str | None, ro: list[str], tieu_de: str = TIEU_DE_PHONG_GIA
+) -> None:
+    """Chặn mọi lời gọi tới máy chủ của phòng xem bằng page.route (trước khi mở trang)."""
+    import time  # noqa: PLC0415
+
+    def xu_ly(route: Any, request: Any) -> None:
+        tra = tra_loi_phong_gia(request.url, request.method, ghim, int(time.time() * 1000), tieu_de)
+        if tra is None:
+            ro.append(f"{request.method} {_duong(request.url)}")
+            route.abort()
+            return
+        route.fulfill(status=tra[0], content_type="application/json", body=tra[1])
+
+    trang.route("**/xem-api/**", xu_ly)
+    trang.route("**/api/ll/**", xu_ly)
+
+
 def kiem_mot(
     trinh: Any,
     base: str,
@@ -1138,9 +1226,14 @@ def kiem_mot(
         ),
     )
     phat: list[Phat] = []
+    gia = tuyen in PHONG_GIA
+    ro: list[str] = []
+    duong_mo = f"/xem/{MA_PHONG_GIA}" if gia else tuyen
+    if gia:
+        _vao_phong_gia(trang, PHONG_GIA[tuyen], ro)
     try:
         try:
-            dap = trang.goto(base.rstrip("/") + tuyen, wait_until="load", timeout=120_000)
+            dap = trang.goto(base.rstrip("/") + duong_mo, wait_until="load", timeout=120_000)
         except Exception as e:  # noqa: BLE001 - mọi lỗi mở trang đều là lỗi tuyến
             return [
                 Phat(DO, "tuyen-loi", tuyen, kh, f"không mở được: {str(e).splitlines()[0][:200]}")
@@ -1152,10 +1245,22 @@ def kiem_mot(
         except Exception:  # noqa: BLE001 - trang hỏi định kỳ thì không bao giờ rảnh mạng
             pass
         trang.evaluate("() => (document.fonts ? document.fonts.ready.then(() => true) : true)")
+        if gia:
+            try:
+                trang.wait_for_selector("[data-chup-bam='dong-y']", timeout=30_000)
+                trang.click("[data-chup-bam='dong-y']")
+                trang.wait_for_selector("[data-testid='xem-room']", timeout=15_000)
+                if PHONG_GIA[tuyen]:
+                    trang.wait_for_selector("[data-testid='dien-thoai-ghim']", timeout=15_000)
+            except Exception as e:  # noqa: BLE001 - không vào được phòng giả là lỗi tuyến
+                loi = str(e).splitlines()[0][:200]
+                phat.append(Phat(DO, "tuyen-loi", tuyen, kh, f"phòng giả không vào được: {loi}"))
         trang.wait_for_timeout(cho_ms)
         do = trang.evaluate(DO_JS)
         phat += phan_tich(do, tuyen, khung, nghiem=nghiem, them_chu_cam=them_chu_cam)
         phat += phan_loai_console(loi_js, console, tuyen, khung, dev=bool(do.get("dev")))
+        for r in sorted(set(ro)):
+            phat.append(Phat(DO, "phong-gia-ro", tuyen, kh, f"lời gọi ngoài mã giả đã bị huỷ: {r}"))
         if ra is not None:
             ra.mkdir(parents=True, exist_ok=True)
             goc_ten = f"{ten_tep(tuyen)}__{kh}"

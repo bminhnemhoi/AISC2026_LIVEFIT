@@ -16,6 +16,7 @@
 #                 doi_ms: 500                                          đợi thêm
 #               bộ chọn là CSS, hoặc cú pháp Playwright như "text=Tôi đồng ý và vào phòng"
 #   cho_ms      đợi thêm trước khi chụp (số đếm lên 800 ms, đồng xu lật 600 ms)
+#   ghim_gia    mã món phòng giả đang ghim khi chạy với --phong-gia (page.route, không chạm máy chủ)
 #   ghi_chu     vì sao, đơn vị nào gắn data-chup
 #
 # Tên data-chup các đơn vị đợt 2 cần gắn (một phần tử mỗi tên trên trang):
@@ -55,7 +56,8 @@ canh:
       - cho: ["[data-testid='xem-room']"]
       - cho: ["[data-chup='the-ghim']", "[data-testid='dien-thoai-ghim']", "[data-testid='xem-pinned']"]
         trong_ms: 20000
-    ghi_chu: "Phòng xem khi khối BẬT có thẻ ghim (thẻ ghim của DienThoaiLive là [data-testid=dien-thoai-ghim]). Khối đang TẮT thì bước chờ hết giờ: chạy lại khi tới khối BẬT. Cần phòng riêng của một phiên dry_run (--ma-phong); chup_next hỏi API và chặn phòng của phiên được tính hoặc phòng thử nội bộ."
+    ghim_gia: LAB-3
+    ghi_chu: "Với --phong-gia: phòng giả đang ghim LAB-3, không phụ thuộc khối hiện tại. Phòng xem khi khối BẬT có thẻ ghim (thẻ ghim của DienThoaiLive là [data-testid=dien-thoai-ghim]). Khối đang TẮT thì bước chờ hết giờ: chạy lại khi tới khối BẬT. Cần phòng riêng của một phiên dry_run (--ma-phong); chup_next hỏi API và chặn phòng của phiên được tính hoặc phòng thử nội bộ."
 
   - ten: xem-dong-y
     slide: ["M3"]
@@ -139,7 +141,11 @@ canh:
     khung: [1600, 1000]
     dsf: 2
     cho_ms: 1500
-    ghi_chu: "Màn đầu landing: câu hỏi, câu định vị, nút, điện thoại thẳng (art.tsx gắn MINH HOẠ), dải 16 khối."
+    buoc:
+      - cho: ["[data-minh-hoa='dai-dong-xu'] .mh-dai-o:nth-child(16):not([data-mat='chua'])"]
+        trong_ms: 8000
+        doi_ms: 800
+    ghi_chu: "Màn đầu landing: câu hỏi, câu định vị, nút, điện thoại thẳng (art.tsx gắn MINH HOẠ), dải 16 khối. Chờ đủ 16 đồng xu đã lật (có chuyển động thì ≈ 3,5 s) rồi đợi đồng xu cuối lật xong."
 
   - ten: gioi-thieu-dai-khoi
     slide: ["M4"]
@@ -148,4 +154,8 @@ canh:
     khung: [1600, 1000]
     dsf: 2
     cho_ms: 1500
-    ghi_chu: "Dải 16 khối có đồng xu (U8 gắn data-chup='dai-khoi'); dùng khi trang M4 cần cắt riêng."
+    buoc:
+      - cho: ["[data-minh-hoa='dai-dong-xu'] .mh-dai-o:nth-child(16):not([data-mat='chua'])"]
+        trong_ms: 8000
+        doi_ms: 800
+    ghi_chu: "Dải 16 khối có đồng xu (U8 gắn data-chup='dai-khoi'); dùng khi trang M4 cần cắt riêng. Chờ đủ 16 đồng xu đã lật."

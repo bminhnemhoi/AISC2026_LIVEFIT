@@ -205,8 +205,8 @@ export function TrangGioiThieu(): React.ReactElement {
         {/* ---------- ba màn ---------- */}
         <XuatHien className="tc-muc" data-co-nhan>
           <section aria-labelledby="ba-man">
-            <TieuDeMuc id="ba-man" nho="Trong bản demo">
-              Ba màn người bán dùng
+            <TieuDeMuc id="ba-man" nho="Người bán và người xem">
+              Ba màn trong bản demo
             </TieuDeMuc>
             <ul className="tc-ba-man">
               {BA_MAN.map((m) => (

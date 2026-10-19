@@ -66,7 +66,7 @@ caveat prints, and the final analysis re-runs the gate offline at full depth.
 """
 
 ICS_FROZEN_NOTE = (
-    "Tiền đăng ký §7: cổng mẫu số cũng bị khóa cho tới ngày mở, vì nó kiểm định "
+    "Tiền đăng ký §7: cổng mẫu số cũng bị khoá cho tới ngày mở, vì nó kiểm định "
     "trên MỘT đại lượng hậu can thiệp (viewer-giây), nên đọc nó sớm vẫn là nhìn "
     "trộm tác động của can thiệp"
 )
@@ -88,12 +88,12 @@ def _results_freeze_reason(now: datetime) -> str | None:
     except ValueError:
         return (
             "Tiền đăng ký §7: cấu hình RESULTS_FREEZE_UNTIL không hợp lệ "
-            f"('{raw}', cần dạng YYYY-MM-DD) nên ước lượng hiệu ứng bị khóa "
+            f"('{raw}', cần dạng YYYY-MM-DD) nên ước lượng hiệu ứng bị khoá "
             "cho đến khi cấu hình được sửa; chỉ hiển thị số liệu vận hành"
         )
     if now.date() < freeze:
         return (
-            f"Tiền đăng ký §7: ước lượng hiệu ứng bị khóa đến {freeze.isoformat()}; "
+            f"Tiền đăng ký §7: ước lượng hiệu ứng bị khoá đến {freeze.isoformat()}; "
             "chỉ hiển thị số liệu vận hành"
         )
     return None
@@ -756,7 +756,7 @@ MIN_BAO_CAO_BLOCKS = 4
 
 BAO_CAO_FREEZE_NOTE = (
     "Chỉ số vận hành (số khối, số bình luận, khoảnh khắc) vẫn hiển thị; "
-    "ước lượng hiệu ứng bị khóa theo tiền đăng ký §7."
+    "ước lượng hiệu ứng bị khoá theo tiền đăng ký §7."
 )
 
 
@@ -836,7 +836,7 @@ def _ly_do_ktc_khong_xac_dinh(res: Any) -> str | None:
         chi_tiet = "ước lượng hoặc p-value không phải số hữu hạn"
     return (
         f"Không công bố ước lượng: khoảng tin cậy 95% không xác định được ({chi_tiet}). "
-        "Tuyên bố thiếu, không trả số."
+        "Máy không đưa ra con số."
     )
 
 
@@ -1085,8 +1085,8 @@ def _bao_cao_ket_qua(
             n_on=n_on,
             n_off=n_off,
             message=(
-                f"Chưa đủ khối đo được để ước lượng ({len(frame)} khối, cần ≥ "
-                f"{MIN_BAO_CAO_BLOCKS}): tuyên bố thiếu, không trả số."
+                f"Chưa đủ khối đo được (có {len(frame)}, cần ít nhất "
+                f"{MIN_BAO_CAO_BLOCKS}); máy không đưa ra con số."
             ),
         )
 
@@ -1101,7 +1101,7 @@ def _bao_cao_ket_qua(
             n_off=n_off,
             message=(
                 "Chỉ số chính (lượt nhấp HỢP LỆ qua link đo) đang THIẾU nguồn: "
-                f"{clicks.detail}. THIẾU không phải 0: không ước lượng, không trả số."
+                f"{clicks.detail}. THIẾU không phải 0: máy không đưa ra con số."
             ),
         )
 

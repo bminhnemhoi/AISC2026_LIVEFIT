@@ -47,7 +47,7 @@ export function TuXemDenMua({ ticks, don, coNguonDon, tenDon = "Đơn", tieuDe =
   return (
     <KhungBieuDo
       tieuDe={tieuDe}
-      phuDe="Ba bước đo bằng ba đơn vị khác nhau; giữa hai bước là tỷ lệ chuyển"
+      phuDe="Thời gian xem, rồi lượt nhấp, rồi đơn; giữa hai bước là tỷ lệ chuyển"
       nhan={nhan}
       moTa={moTaPheu(p, coNguonDon)}
       bang={bangPheu(pheu)}
@@ -77,6 +77,7 @@ export function TuXemDenMua({ ticks, don, coNguonDon, tenDon = "Đơn", tieuDe =
                 <MuiTen />
                 <span>{pheu.noi[i].ten}</span>
                 <strong>{pheu.noi[i].giaTri ?? "chưa tính được"}</strong>
+                <small className="bd-pheu-noi-don-vi">{pheu.noi[i].donVi}</small>
               </li>
             ) : null}
           </Fragment>

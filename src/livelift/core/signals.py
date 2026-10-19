@@ -179,7 +179,7 @@ def assess(
             SignalState(
                 "schedule",
                 "missing",
-                "video ngoài — không có ngẫu nhiên hóa (không thể can thiệp ngược thời gian)",
+                "video ngoài: không có ngẫu nhiên hoá (không thể can thiệp ngược thời gian)",
             )
         )
     else:
@@ -196,20 +196,20 @@ def assess(
             SignalState(
                 "ticks",
                 "missing",
-                f"{n_ticks} điểm đo chỉ có NHỊP BÌNH LUẬN, không điểm nào có số người xem — "
+                f"{n_ticks} điểm đo chỉ có NHỊP BÌNH LUẬN, không điểm nào có số người xem; "
                 "video đã kết thúc không còn lộ số người xem đồng thời; "
                 "số 0 trong cột người xem là chỗ trống, KHÔNG phải phép đo",
             )
         )
     elif effective_coverage < 0.8:
         detail = (
-            f"telemetry chỉ phủ {tick_coverage_share:.0%} thời gian phát — "
+            f"telemetry chỉ phủ {tick_coverage_share:.0%} thời gian phát; "
             "các khoảng trống bị loại khỏi phân tích"
         )
         if viewer_share < 1.0:
             detail = (
                 f"chỉ {n_ticks_with_viewers}/{n_ticks} điểm đo có số người xem "
-                f"(phủ {tick_coverage_share:.0%} thời gian phát) — "
+                f"(phủ {tick_coverage_share:.0%} thời gian phát); "
                 "các khoảng trống bị loại khỏi phân tích"
             )
         signals.append(SignalState("ticks", "degraded", detail))
@@ -236,7 +236,7 @@ def assess(
             "ok" if n_orders > 0 else "missing",
             f"{n_orders} đơn ghi nhận"
             if n_orders
-            else "chưa ghi nhận đơn — không đối soát được doanh thu",
+            else "chưa ghi nhận đơn, nên không đối soát được doanh thu",
         )
     )
     signals.append(_reactions_state(n_reactions, platform, analysis_only))
@@ -248,7 +248,7 @@ def assess(
         missing = [n for n in needs if by[n].status == "missing"]
         degraded = [n for n in needs if by[n].status == "degraded"]
         if missing:
-            reason = "thiếu " + ", ".join(missing) + (f" — {extra_reason}" if extra_reason else "")
+            reason = "thiếu " + ", ".join(missing) + (f": {extra_reason}" if extra_reason else "")
             caps.append(Capability(name, "missing", reason))
         elif degraded:
             caps.append(Capability(name, "degraded", "tín hiệu suy giảm: " + ", ".join(degraded)))
@@ -281,7 +281,7 @@ traffic, the handful of surviving clicks is a thin numerator and the reader
 should be told before they read an effect off it.
 """
 
-CLICKS_VIDEO_NGOAI_GOC = "video ngoài — buổi phát đã xong, không đi qua link đo nào của phiên này"
+CLICKS_VIDEO_NGOAI_GOC = "video ngoài: buổi phát đã xong, không đi qua link đo nào của phiên này"
 """Structural reason an ``analysis_only`` session has no click signal.
 
 Never "chưa tạo link đo": that wording tells the seller to go create one,
@@ -317,7 +317,7 @@ def _clicks_state(
     n_invalid = max(0, n_raw - n_valid)
     secondary = (
         f"số thô: {n_raw} lượt nhấp đã ghi, trong đó {n_invalid} bị gắn cờ KHÔNG hợp lệ "
-        "(bot/prefetch/bấm dồn — GIVT-lite). Đây là số phụ bắt buộc báo cáo kèm "
+        "(bot/prefetch/bấm dồn, GIVT-lite). Đây là số phụ bắt buộc báo cáo kèm "
         "(tiền đăng ký §4.1), KHÔNG phải tử số của biến kết quả chính"
         if n_raw
         else None
@@ -331,7 +331,7 @@ def _clicks_state(
         return SignalState(
             "clicks",
             "missing",
-            f"{CLICKS_VIDEO_NGOAI_GOC} — {n_raw} lượt bấm đã ghi là bấm vào link gắn "
+            f"{CLICKS_VIDEO_NGOAI_GOC}; {n_raw} lượt bấm đã ghi là bấm vào link gắn "
             "vào phiên phân tích SAU buổi phát, không phải khán giả của video",
             secondary,
         )
@@ -342,18 +342,18 @@ def _clicks_state(
             return SignalState(
                 "clicks",
                 "missing",
-                "chưa ghi nhận lượt bấm nào qua link đo — nhấp sản phẩm không quan sát được",
+                "chưa ghi nhận lượt bấm nào qua link đo, nên nhấp sản phẩm không quan sát được",
             )
         if n_shortlinks <= 0:
             return SignalState(
                 "clicks",
                 "missing",
-                "chưa tạo link đo cho phiên này — nhấp sản phẩm không quan sát được",
+                "chưa tạo link đo cho phiên này, nên nhấp sản phẩm không quan sát được",
             )
         return SignalState(
             "clicks",
             "degraded",
-            f"đã tạo {n_shortlinks} link đo, chưa ai bấm — số 0 này là số đo thật, nhưng "
+            f"đã tạo {n_shortlinks} link đo, chưa ai bấm; số 0 này là số đo thật, nhưng "
             "chưa có lượt bấm thì chưa so được khối BẬT với khối TẮT. Đã lên sóng mà vẫn 0 "
             "thì kiểm tra link đo đã dán vào bình luận ghim chưa",
         )
@@ -361,7 +361,7 @@ def _clicks_state(
         return SignalState(
             "clicks",
             "missing",
-            f"0 lượt nhấp HỢP LỆ trên {n_raw} lượt đã ghi — bộ lọc GIVT-lite gắn cờ toàn bộ "
+            f"0 lượt nhấp HỢP LỆ trên {n_raw} lượt đã ghi: bộ lọc GIVT-lite gắn cờ toàn bộ "
             "(tiền đăng ký §4.1), nên biến kết quả chính không có tử số nào. "
             "Link đo đang nhận traffic tự động, không phải người xem",
             secondary,
@@ -371,7 +371,7 @@ def _clicks_state(
         return SignalState(
             "clicks",
             "degraded",
-            f"{n_valid} lượt nhấp HỢP LỆ trên {n_raw} lượt đã ghi — "
+            f"{n_valid} lượt nhấp HỢP LỆ trên {n_raw} lượt đã ghi; "
             f"{invalid_share:.0%} bị gắn cờ không hợp lệ, phần còn lại là một tử số mỏng",
             secondary,
         )
@@ -395,22 +395,22 @@ def _reactions_state(n_reactions: int, platform: str | None, analysis_only: bool
             "reactions",
             "ok",
             f"{n_reactions} sự kiện Super Chat/quà/hội viên "
-            "(tim/like KHÔNG nằm trong nguồn chat — vắng mặt là thiếu nguồn, không phải 0)",
+            "(tim/like KHÔNG nằm trong nguồn chat; vắng mặt là thiếu nguồn, không phải 0)",
         )
     if platform == "replay" or analysis_only:
         detail = (
-            "chat replay của buổi này không chứa sự kiện Super Chat/quà/hội viên nào — "
+            "chat replay của buổi này không chứa sự kiện Super Chat/quà/hội viên nào, "
             "và YouTube không lưu tim/like vào chat replay; ô trống là THIẾU nguồn, "
             "không phải phép đo bằng 0"
         )
     elif platform == "youtube":
         detail = (
             "đường thu YouTube trực tiếp chưa bơm sự kiện tim/quà/Super Chat "
-            "(parser đã có, vòng ingest chưa nối) — hiển thị THIẾU, không hiển thị 0"
+            "(parser đã có, vòng ingest chưa nối); hiển thị THIẾU, không hiển thị 0"
         )
     elif platform == "tiktok":
         detail = (
-            "nguồn TikTok đang không hoạt động — chưa thu được tim/quà; "
+            "nguồn TikTok đang không hoạt động: chưa thu được tim/quà; "
             "schema dùng chung đã sẵn sàng khi nguồn hồi phục"
         )
     else:

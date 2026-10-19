@@ -1,5 +1,37 @@
 import { describe, expect, it } from "vitest";
-import { HEARTBEAT_MS, SEND_ATTEMPTS, XEM_API, consentKey, forgetViewerEverywhere, getViewerId, newEventId, postEvent, storedViewerId, withdrawNote } from "../XemRoom";
+import {
+  HEARTBEAT_MS,
+  SEND_ATTEMPTS,
+  XEM_API,
+  consentKey,
+  forgetViewerEverywhere,
+  getViewerId,
+  laVideoNguoiDanAI,
+  newEventId,
+  nhanPhong,
+  postEvent,
+  storedViewerId,
+  withdrawNote,
+} from "../XemRoom";
+
+describe("nhãn phòng và nhãn người dẫn AI (soát đợt 2)", () => {
+  it("nhanPhong: có cờ dry_run thì chỉ theo cờ; máy chủ cũ không gửi cờ thì đọc tên phòng", () => {
+    expect(nhanPhong({ title: "Phòng giám khảo 22/10", source_label: "DÀN DỰNG", dry_run: true })).toEqual(["DAN_DUNG", "THU_NOI_BO"]);
+    expect(nhanPhong({ title: "Thử nội bộ · 20/10", source_label: "DÀN DỰNG", dry_run: false })).toEqual(["DAN_DUNG"]);
+    expect(nhanPhong({ title: "Thử nội bộ · 20/10", source_label: "DÀN DỰNG" })).toEqual(["DAN_DUNG", "THU_NOI_BO"]);
+    expect(nhanPhong({ title: "Phòng thử", source_label: "chữ lạ" })).toEqual(["DAN_DUNG"]);
+  });
+
+  it("laVideoNguoiDanAI: chỉ tệp người dẫn AI chuẩn, không YouTube hay mp4 khác", () => {
+    expect(laVideoNguoiDanAI("/xem/nguoi-dan-ai.mp4")).toBe(true);
+    expect(laVideoNguoiDanAI("/xem/nguoi-dan-ai.mp4?v=2")).toBe(true);
+    expect(laVideoNguoiDanAI("https://phong.example/xem/nguoi-dan-ai.mp4")).toBe(true);
+    expect(laVideoNguoiDanAI("https://www.youtube.com/watch?v=aqz-KE-bpKQ")).toBe(false);
+    expect(laVideoNguoiDanAI("/xem/nguoi-dan.mp4")).toBe(false);
+    expect(laVideoNguoiDanAI(null)).toBe(false);
+    expect(laVideoNguoiDanAI("")).toBe(false);
+  });
+});
 
 /** A fetch double that answers from a script: a number is an HTTP status, "drop" is a reset connection. */
 function scriptedFetch(script: Array<number | "drop">): { fetchImpl: typeof fetch; bodies: string[] } {

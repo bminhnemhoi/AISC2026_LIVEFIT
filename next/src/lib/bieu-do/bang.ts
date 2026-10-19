@@ -27,28 +27,53 @@ export function nhanhTai(dai: readonly DaiKhoi[], t: number): DaiKhoi | null {
   return dai.find((d) => t >= d.tu && t < d.den) ?? null;
 }
 
+/** Ô đo của đường thời gian (giây), để lấy tâm của cửa sổ trượt. */
+const O_DO_BANG_S = 30;
+
 /**
- * Đường thời gian: mỗi `buocS` giây một dòng (mặc định 5 phút), lấy đúng điểm đang vẽ ở mốc đó. Cột "Khối" chỉ có khi
- * biểu đồ được phép tô nền theo khối.
+ * Mốc dùng để gán nhánh cho một điểm của đường Tỷ lệ nhấp: tâm của cửa sổ trượt `cuaSoS` giây kết thúc ở cuối ô đo
+ * `t`. Số ở mốc `t` phần lớn thuộc khối chứa tâm này, không phải khối chứa `t` (soát đợt 2, VÀNG 2).
  */
-export function bangDuongThoiGian(diem: DiemThoiGian[], dai: readonly DaiKhoi[] | null, buocS = 300): BangDuLieu {
-  const coKhoi = !!dai && dai.length > 0;
+export function tamCuaSo(t: number, cuaSoS: number): number {
+  return t + O_DO_BANG_S - cuaSoS / 2;
+}
+
+export interface TuyChonBangDuong {
+  /** Mỗi `buocS` giây một dòng (mặc định 5 phút). */
+  buocS?: number;
+  /** Cửa sổ trượt của Tỷ lệ nhấp (giây), để gán nhánh theo tâm cửa sổ. */
+  cuaSoS?: number;
+  /** False khi khoá §7 (D-027): bảng chỉ có Người xem, không có cột Tỷ lệ nhấp. */
+  coTyLeNhap?: boolean;
+}
+
+/**
+ * Đường thời gian: mỗi `buocS` giây một dòng (mặc định 5 phút), lấy điểm CUỐI của mỗi 5 phút (cửa sổ trượt khi đó nằm
+ * trọn trong 5 phút đó). Cột "Khối" chỉ có khi biểu đồ được phép tô nền theo khối, và ghi nhánh của khối chứa tâm cửa
+ * sổ. Khi `coTyLeNhap` là false, bảng không có cột Tỷ lệ nhấp.
+ */
+export function bangDuongThoiGian(diem: DiemThoiGian[], dai: readonly DaiKhoi[] | null, tuyChon: TuyChonBangDuong | number = {}): BangDuLieu {
+  const { buocS = 300, cuaSoS = 120, coTyLeNhap = true } = typeof tuyChon === "number" ? { buocS: tuyChon } : tuyChon;
+  const coKhoi = coTyLeNhap && !!dai && dai.length > 0;
   const hang: string[][] = [];
-  let moiNhat = -Infinity;
   diem.forEach((d, i) => {
-    const cuoi = i === diem.length - 1;
-    if (d.t - moiNhat < buocS - 1e-6 && !cuoi) return;
-    moiNhat = d.t;
-    const dong = [moc(d.t), soGon(d.nguoiXem), d.tyLeNhap == null ? "chưa tính được" : soGon(d.tyLeNhap, 2)];
+    const sau = diem[i + 1];
+    // Lấy điểm cuối của mỗi nhóm `buocS` giây (và điểm cuối cùng).
+    if (sau && Math.floor(sau.t / buocS) === Math.floor(d.t / buocS)) return;
+    const dong = [moc(d.t + O_DO_BANG_S), soGon(d.nguoiXem)];
+    if (coTyLeNhap) dong.push(d.tyLeNhap == null ? "chưa tính được" : soGon(d.tyLeNhap, 2));
     if (coKhoi) {
-      const k = nhanhTai(dai, d.t);
+      const k = nhanhTai(dai, tamCuaSo(d.t, cuaSoS));
       dong.push(k ? `${k.index + 1} · ${tenNhanh(k.nhanh)}` : "");
     }
     hang.push(dong);
   });
-  const cot = ["Thời điểm", "Người xem", "Tỷ lệ nhấp"];
+  const cot = coTyLeNhap ? ["Thời điểm", "Người xem", "Tỷ lệ nhấp"] : ["Thời điểm", "Người xem"];
   if (coKhoi) cot.push("Khối");
-  return { tieuDe: `Người xem và Tỷ lệ nhấp, mỗi ${Math.round(buocS / 60)} phút một dòng`, cot, hang };
+  const tieuDe = coTyLeNhap
+    ? `Người xem và Tỷ lệ nhấp, mỗi ${Math.round(buocS / 60)} phút một dòng; Tỷ lệ nhấp tính trên ${Math.round(cuaSoS / 60)} phút trước mốc`
+    : `Người xem, mỗi ${Math.round(buocS / 60)} phút một dòng`;
+  return { tieuDe, cot, hang };
 }
 
 export function bangThuoc(uocLuong: number, thap: number, cao: number, vung: VungKetLuan): BangDuLieu {
@@ -59,7 +84,8 @@ export function bangThuoc(uocLuong: number, thap: number, cao: number, vung: Vun
   };
 }
 
-export function bangCham(khoi: KhoiDo[], tb: TrungBinhNhanh): BangDuLieu {
+/** `anTrungBinh`: chưa đủ khối để so, bảng không có hai dòng trung bình. */
+export function bangCham(khoi: KhoiDo[], tb: TrungBinhNhanh, anTrungBinh = false): BangDuLieu {
   const hang = khoi.map((k) => [
     String(k.index + 1),
     tenNhanh(k.nhanh),
@@ -67,8 +93,10 @@ export function bangCham(khoi: KhoiDo[], tb: TrungBinhNhanh): BangDuLieu {
     k.tyLe == null ? "không đo được" : soGon(k.tyLe, 2),
     k.lyDo ?? "",
   ]);
-  hang.push(["", "BẬT trung bình", "", tb.bat == null ? "chưa có" : soGon(tb.bat, 2), `${tb.nBat} khối`]);
-  hang.push(["", "TẮT trung bình", "", tb.tat == null ? "chưa có" : soGon(tb.tat, 2), `${tb.nTat} khối`]);
+  if (!anTrungBinh) {
+    hang.push(["", "BẬT trung bình", "", tb.bat == null ? "chưa có" : soGon(tb.bat, 2), `${tb.nBat} khối`]);
+    hang.push(["", "TẮT trung bình", "", tb.tat == null ? "chưa có" : soGon(tb.tat, 2), `${tb.nTat} khối`]);
+  }
   return { tieuDe: "Tỷ lệ nhấp của từng khối", cot: ["Khối", "Nhánh", "Thời gian", "Tỷ lệ nhấp", "Ghi chú"], hang };
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { PHU_DE_KHOI } from "@/lib/tu-ngu";
 import { useGiamChuyenDong } from "./chuyen-dong";
 import { LICH_MINH_HOA, MatXu, TEN_MAT, demLich, type MatKhoi, type MatXuKieu } from "./mat-xu";
 import "./minh-hoa.css";
@@ -46,15 +47,21 @@ export interface DaiDongXuProps {
   nhan?: string | null;
   /** hiện chú thích B/T theo canon (mặc định true) */
   chuThich?: boolean;
+  /**
+   * khối đầu và khối cuối dài gấp đôi (10 phút), như phiên 90 phút = 16 khối của canon (so.yaml phien_90_khoi).
+   * Mặc định true khi lịch có đúng 16 khối.
+   */
+  dauCuoiGapDoi?: boolean;
   onXong?: () => void;
   className?: string;
 }
 
 /**
- * Dải 16 khối (landing): mỗi khối một đồng xu, lật lần lượt cho tới hết lịch. Đánh số khối 1..n; chú thích theo canon:
- * "BẬT: ghim món theo lịch · TẮT: đội làm như thường". Giảm chuyển động thì hiện ngay cả lịch.
+ * Dải 16 khối (landing): mỗi khối một đồng xu, lật lần lượt cho tới hết lịch. Đánh số khối 1..n; chú thích đọc từ
+ * phụ đề khối của canon (PHU_DE_KHOI). Ô của khối đầu và cuối rộng gấp đôi (khối 10 phút). Giảm chuyển động thì hiện
+ * ngay cả lịch.
  */
-export function DaiDongXu({ lich = LICH_MINH_HOA, buocMs = 180, phat = true, choKhiThay = true, nutTungLai = false, nhan = "MINH HOẠ", chuThich = true, onXong, className }: DaiDongXuProps) {
+export function DaiDongXu({ lich = LICH_MINH_HOA, buocMs = 180, phat = true, choKhiThay = true, nutTungLai = false, nhan = "MINH HOẠ", chuThich = true, dauCuoiGapDoi, onXong, className }: DaiDongXuProps) {
   const giam = useGiamChuyenDong();
   const goc = useRef<HTMLDivElement>(null);
   const [thay, setThay] = useState(!choKhiThay);
@@ -105,13 +112,18 @@ export function DaiDongXu({ lich = LICH_MINH_HOA, buocMs = 180, phat = true, cho
 
   const dem = demLich(lich);
   const xong = daLat >= lich.length;
+  const doi = (dauCuoiGapDoi ?? lich.length === 16) && lich.length >= 3;
+  const nhanHang = doi
+    ? `${lich.length} khối: khối đầu và cuối 10 phút, các khối còn lại 5 phút; mỗi khối một lần tung đồng xu`
+    : `${lich.length} khối 5 phút, mỗi khối một lần tung đồng xu`;
   return (
-    <div ref={goc} className={`mh-dai${className ? ` ${className}` : ""}`} data-minh-hoa="dai-dong-xu">
-      <ol className="mh-dai-hang" aria-label={`${lich.length} khối 5 phút, mỗi khối một lần tung đồng xu`}>
+    <div ref={goc} className={`mh-dai${doi ? " is-dau-cuoi-doi" : ""}${className ? ` ${className}` : ""}`} data-minh-hoa="dai-dong-xu">
+      <ol className="mh-dai-hang" aria-label={nhanHang}>
         {lich.map((m, i) => {
           const mat: MatXuKieu = i < daLat ? m : "chua";
+          const laDoi = doi && (i === 0 || i === lich.length - 1);
           return (
-            <li key={i} className="mh-dai-o" data-mat={mat}>
+            <li key={i} className={laDoi ? "mh-dai-o is-doi" : "mh-dai-o"} data-mat={mat}>
               <DongXu mat={mat} nho title={`Khối ${i + 1}: ${mat === "chua" ? "chưa tung" : TEN_MAT[mat]}`} />
               <span className="mh-dai-so" aria-hidden="true">{i + 1}</span>
             </li>
@@ -124,9 +136,9 @@ export function DaiDongXu({ lich = LICH_MINH_HOA, buocMs = 180, phat = true, cho
         </p>
         {chuThich && (
           <p className="mh-dai-chu-thich">
-            <span className="mh-o-mau is-bat" aria-hidden="true" />BẬT: ghim món theo lịch
+            <span className="mh-o-mau is-bat" aria-hidden="true" />BẬT: {PHU_DE_KHOI.bat}
             <span className="mh-cham" aria-hidden="true">·</span>
-            <span className="mh-o-mau is-tat" aria-hidden="true" />TẮT: đội làm như thường
+            <span className="mh-o-mau is-tat" aria-hidden="true" />TẮT: {PHU_DE_KHOI.tat}
           </p>
         )}
         {nhan && <span className="mh-chip mh-chip-nguon">{nhan}</span>}

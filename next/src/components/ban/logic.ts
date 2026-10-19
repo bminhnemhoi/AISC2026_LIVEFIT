@@ -28,6 +28,11 @@ export function tenNguonNgan(nhan: Pick<SourceLabel, "kind" | "text">): string {
 export interface QuyenSoSanh {
   /** Được tô nền BẬT/TẮT lên đường thời gian. */
   toNen: boolean;
+  /**
+   * D-027: giấu mọi chuỗi Tỷ lệ nhấp theo thời gian (đường, đường nhỏ, bảng, ô nhắc, dải của Nhịp phòng) và mọi ước
+   * lượng. Chỉ còn người xem và tổng lượt nhấp hợp lệ cả phiên. Bật khi còn khoá và nguồn không phải MÔ PHỎNG.
+   */
+  khoaChuoi: boolean;
   /** Được hiện ước lượng, thước khoảng tin cậy và kết luận. Chỉ khi máy chủ trả khoa=false. */
   hienKetQua: boolean;
   /** Dòng giải thích đặt dưới biểu đồ; null khi không cần. */
@@ -36,8 +41,9 @@ export interface QuyenSoSanh {
 
 /**
  * Khoá §7 của bàn thí nghiệm, lớp ngoài cùng. Kết quả chỉ hiện khi máy chủ nói rõ khoa=false.
- * Tô nền theo khối: MÔ PHỎNG và DÀN DỰNG được mở sớm (có dòng giải thích); THẬT, THỬ NỘI BỘ và CHẠY THỬ thì không,
- * cho tới khi máy chủ mở khoá. `toNenLib` là quyền của lib/bieu-do (quyenToNenKhoi): bàn chỉ được hẹp lại, không nới ra.
+ * D-027: chỉ MÔ PHỎNG (máy sinh) được mở sớm. THẬT, THỬ NỘI BỘ, CHẠY THỬ và DÀN DỰNG (có người bấm) còn khoá thì
+ * không tô nền, không hiện chuỗi Tỷ lệ nhấp theo thời gian, không ước lượng. `toNenLib` là quyền của lib/bieu-do
+ * (quyenToNenKhoi): bàn chỉ được hẹp lại, không nới ra.
  */
 export function quyenSoSanh(
   nhan: Pick<SourceLabel, "kind" | "text">,
@@ -46,20 +52,24 @@ export function quyenSoSanh(
   toNenLib: { cho: boolean; dong: string | null },
 ): QuyenSoSanh {
   const ten = tenNguonNgan(nhan);
-  const nguonMoSom = !laThuNoiBo(nhan) && (nhan.kind === "mo_phong" || nhan.kind === "dan_dung");
+  const nguonMoSom = !laThuNoiBo(nhan) && nhan.kind === "mo_phong";
   if (!nguonMoSom && khoa) {
     return {
       toNen: false,
       hienKetQua: false,
+      khoaChuoi: true,
       dong: dangLive
-        ? `Phiên ${ten} đang live: không tô nền theo khối tới khi hết phiên, để không ai nhìn trộm kết quả giữa chừng.`
-        : null,
+        ? `Phiên ${ten} đang live: biểu đồ chưa tô màu BẬT/TẮT và chưa hiện Tỷ lệ nhấp theo thời gian tới khi hết phiên, để không ai nhìn trộm kết quả giữa chừng.`
+        : "Máy chủ chưa mở kết quả: biểu đồ chưa tô màu BẬT/TẮT và chưa hiện Tỷ lệ nhấp theo thời gian.",
     };
   }
+  const toNen = toNenLib.cho;
   return {
-    toNen: toNenLib.cho,
+    toNen,
     hienKetQua: !khoa,
-    dong: toNenLib.cho ? toNenLib.dong : null,
+    khoaChuoi: false,
+    // Câu mở sớm của MÔ PHỎNG lấy từ lib/bieu-do (quyenToNenKhoi), một chỗ cho mọi màn.
+    dong: toNen && khoa ? toNenLib.dong : null,
   };
 }
 
@@ -83,6 +93,8 @@ export interface BayGio {
   ghimDienThoai: { ten: string; gia?: number } | null;
   /** Ở khối TẮT mà món của khối trước vẫn còn ghim (D-012). */
   conTuKhoiTruoc: boolean;
+  /** Phòng xem (lab) ở khối TẮT: khách không thấy thẻ ghim nào (xem.py chỉ hiện món ghim trong khối hiện tại). */
+  khachKhongThayGhim: boolean;
 }
 
 /** Trạng thái thẻ "Bây giờ" từ phiên, trạng thái người vận hành và lịch khối. */
@@ -91,7 +103,8 @@ export function trangThaiBayGio(
   state: Pick<OperatorState, "current_block" | "pinned_product" | "elapsed_s"> | null,
   khoi: Pick<Block, "block_index" | "start_offset_s" | "end_offset_s" | "is_washout" | "assignment">[],
 ): BayGio {
-  const tongKhoi = khoi.filter((b) => !b.is_washout && b.assignment).length;
+  const khoiDo = khoi.filter((b) => !b.is_washout && b.assignment).sort((a, b) => a.block_index - b.block_index);
+  const tongKhoi = khoiDo.length;
   const ghim = state?.pinned_product ?? null;
   const coBan = {
     soKhoi: null,
@@ -103,6 +116,7 @@ export function trangThaiBayGio(
     hienNut: false,
     ghimDienThoai: null,
     conTuKhoiTruoc: false,
+    khachKhongThayGhim: false,
   } satisfies Omit<BayGio, "loai">;
   if (phien.status === "ended" || phien.status === "cancelled") return { ...coBan, loai: "ket_thuc" };
   if (phien.status !== "live") return { ...coBan, loai: "chua_phat" };
@@ -112,14 +126,25 @@ export function trangThaiBayGio(
   const dai = b ? Math.max(1, b.end_offset_s - b.start_offset_s) : 300;
   const conGiay = Math.max(0, cb.seconds_remaining);
   const phanCon = Math.min(1, Math.max(0, conGiay / dai));
-  const chung = { ...coBan, soKhoi: cb.index + 1, conGiay, phanCon, hienNut: true };
+  // Thứ tự đếm trong các khối đo (bỏ khoảng chuyển), cùng mẫu số với tongKhoi: không bao giờ ra "Khối 18/16".
+  const thuTu = khoiDo.findIndex((k) => k.block_index === cb.index);
+  const chung = { ...coBan, soKhoi: thuTu >= 0 ? thuTu + 1 : null, conGiay, phanCon, hienNut: true };
+  const phongDanDung = phien.platform === "lab";
   if (cb.is_washout || !cb.assignment) {
     return { ...chung, loai: "troi", lyDoKhoaNut: "Khoảng chuyển giữa hai khối: chưa ghim." };
   }
   if (cb.assignment === "OFF") {
-    return { ...chung, loai: "tat", lyDoKhoaNut: "Khối TẮT: đội làm như thường lệ.", conTuKhoiTruoc: !!ghim };
+    // Phòng xem chỉ hiện món ghim trong đúng khối đã ghim: ở khối TẮT khách không thấy thẻ ghim nào.
+    if (phongDanDung) return { ...chung, loai: "tat", lyDoKhoaNut: "Khối TẮT: đội làm như thường lệ.", khachKhongThayGhim: true };
+    return {
+      ...chung,
+      loai: "tat",
+      lyDoKhoaNut: "Khối TẮT: đội làm như thường lệ.",
+      conTuKhoiTruoc: !!ghim,
+      // Nền tảng thật không tự gỡ ghim ở khối TẮT (D-012): khách vẫn thấy món còn từ khối trước.
+      ghimDienThoai: ghim ? { ten: ghim.name, gia: ghim.price } : null,
+    };
   }
-  const phongDanDung = phien.platform === "lab";
   return {
     ...chung,
     loai: "bat",
@@ -149,12 +174,28 @@ export function laCauHoi(c: Pick<Comment, "intent" | "text">): boolean {
   return (!!c.intent && Y_DINH_HOI.has(c.intent)) || c.text.includes("?");
 }
 
-/** N câu hỏi mới nhất của khách (mới nhất trước), cho màn người dẫn. */
+/** Chỗ máy đã che thông tin cá nhân ("[ĐỊA CHỈ]") đọc thành lời thường "(đã che địa chỉ)". */
+export function docChoDaChe(text: string): string {
+  return text.replace(/\[([^\]]{1,24})\]/g, (_m, x: string) => `(đã che ${x.toLocaleLowerCase("vi-VN")})`);
+}
+
+/** Chữ đã chuẩn hoá để so trùng: bỏ khoảng trắng thừa, chữ thường, bỏ dấu câu ở cuối. */
+export function chuanHoaCauHoi(text: string): string {
+  return text.normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ").replace(/[\s?!.…]+$/u, "");
+}
+
+/** N câu hỏi mới nhất của khách (mới nhất trước), cho màn người dẫn. Câu trùng chữ chỉ giữ bản mới nhất. */
 export function cauHoiMoiNhat<T extends Pick<Comment, "intent" | "text" | "ts">>(binhLuan: readonly T[], n = 3): T[] {
-  return [...binhLuan]
-    .filter(laCauHoi)
-    .sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0))
-    .slice(0, n);
+  const daCo = new Set<string>();
+  const ra: T[] = [];
+  for (const c of [...binhLuan].filter(laCauHoi).sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0))) {
+    const khoa = chuanHoaCauHoi(c.text);
+    if (!khoa || daCo.has(khoa)) continue;
+    daCo.add(khoa);
+    ra.push(c);
+    if (ra.length >= n) break;
+  }
+  return ra;
 }
 
 export type ToneYDinh = "dam" | "tim" | "vang" | "trung";

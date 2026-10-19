@@ -60,7 +60,7 @@ describe("trang giới thiệu: chữ", () => {
     expect(chu).not.toMatch(/\bQR\b/);
   });
 
-  it("luồng chính không có chữ tiếng Anh (chân trang giữ tên track của cuộc thi)", () => {
+  it("luồng chính không có chữ tiếng Anh (chân trang giữ tên hạng mục của cuộc thi)", () => {
     const { getByTestId } = veTrang();
     // "livestream" nằm trong câu định vị nguyên văn; "LiveRoomSim" nằm trong câu nghĩa canon của nhãn MÔ PHỎNG.
     const tu = tuTiengAnh(chuCua(getByTestId("home-flow"))).filter((t) => !/^(livestream|LiveRoomSim)$/i.test(t));
@@ -105,6 +105,18 @@ describe("trang giới thiệu: hợp đồng DOM", () => {
     expect(that.textContent).toContain("phiên với người bán thật");
     expect(that.textContent).toContain("phỏng vấn");
     expect(that.textContent).toContain("20/10/2026");
+    // chip THẬT không đứng cạnh một vế giả thuyết
+    expect(SU_THAT.filter((s) => s.maNhan === "THAT").every((s) => !/giả thuyết/i.test(s.chu))).toBe(true);
+  });
+
+  it("chữ thường thay chữ trong ngành; chân trang không có chữ tiếng Anh thừa", () => {
+    const { container } = veTrang();
+    const chu = chuCua(container);
+    for (const cu of ["nửa đời", "lệch về phía 0", "track", "Lấy mã phòng", "chốt một trong ba chữ", "Ba màn người bán dùng"]) {
+      expect(chu).not.toContain(cu);
+    }
+    expect(chu).toContain("sau 300 giây còn một nửa");
+    expect(chu).toContain("khối đầu và cuối 10 phút");
   });
 
   it("không phần tử nào nghiêng quá 2°", () => {

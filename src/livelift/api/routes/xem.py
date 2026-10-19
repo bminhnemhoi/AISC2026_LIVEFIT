@@ -111,6 +111,9 @@ class XemPhong(BaseModel):
     video_url: str | None = None
     consent_version: str
     source_label: str = SOURCE_LABEL
+    # Phòng của buổi chạy thử (phiên dry_run, chip THỬ NỘI BỘ). Cờ cố định cả
+    # phiên, không đổi theo khối, nên không lộ nhánh BẬT/TẮT.
+    dry_run: bool = False
 
 
 class XemTrangThai(BaseModel):
@@ -315,6 +318,7 @@ def trang_thai(code: str, response: Response, store: StoreDep) -> XemTrangThai:
             status=_status(session),
             video_url=room.get("video_url"),
             consent_version=room.get("consent_version", ""),
+            dry_run=bool(session.get("dry_run")),
         ),
         pinned=pinned,
         products=products,

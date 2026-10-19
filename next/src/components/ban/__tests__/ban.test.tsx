@@ -3,8 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { KET_LUAN_THEO_MA, timLoiChu } from "@/lib/tu-ngu";
-import { verdict, type EstimateState } from "@/lib/livelift-api/desk";
+import { KET_LUAN_THEO_MA, LOI_THUONG, timLoiChu } from "@/lib/tu-ngu";
+import { roomPulse, verdict, type EstimateState } from "@/lib/livelift-api/desk";
+import type { Tick } from "@/lib/livelift-api/types";
 import { duongNhoTyLeNhap } from "@/lib/bieu-do";
 import { chuCua, tuTiengAnh } from "@/components/minh-hoa/__tests__/kiem-chu";
 import {
@@ -54,13 +55,42 @@ describe("trangThaiBayGio: thẻ Bây giờ", () => {
     expect(b.tongKhoi).toBe(3);
   });
 
-  it("khối TẮT: nút khoá với câu 'đội làm như thường lệ', điện thoại không có thẻ ghim, món cũ ghi là còn từ khối trước", () => {
+  it("khối TẮT trên nền tảng: nút khoá, món cũ còn ghim (D-012) nên điện thoại vẫn hiện món, ghi là còn từ khối trước", () => {
     const b = trangThaiBayGio({ status: "live", platform: "sim" }, trangThai(1, "OFF"), KHOI);
     expect(b.loai).toBe("tat");
     expect(b.ghimDuoc).toBe(false);
     expect(b.lyDoKhoaNut).toBe("Khối TẮT: đội làm như thường lệ.");
-    expect(b.ghimDienThoai).toBeNull();
+    expect(b.ghimDienThoai).toEqual({ ten: "Áo thun cotton", gia: 129000 });
     expect(b.conTuKhoiTruoc).toBe(true);
+    expect(b.khachKhongThayGhim).toBe(false);
+  });
+
+  it("khối TẮT ở phòng xem: khách không thấy thẻ ghim nào, không ghi 'còn từ khối trước'", () => {
+    const b = trangThaiBayGio({ status: "live", platform: "lab" }, trangThai(1, "OFF"), KHOI);
+    expect(b.loai).toBe("tat");
+    expect(b.conTuKhoiTruoc).toBe(false);
+    expect(b.ghimDienThoai).toBeNull();
+    expect(b.khachKhongThayGhim).toBe(true);
+    render(<TheBayGio bayGio={b} sessionId="s1" monGhim={{ ten: "Bình giữ nhiệt" }} dangGhim={false} onGhim={() => undefined} thongBao={null} />);
+    expect(screen.getByTestId("lab-off-khong-ghim")).toHaveTextContent("Phòng xem: khối TẮT không hiện thẻ ghim cho khách.");
+    expect(screen.queryByTestId("off-block-carryover")).toBeNull();
+    expect(screen.queryByText("Bình giữ nhiệt")).toBeNull();
+  });
+
+  it("số khối đếm trong các khối đo, bỏ khoảng chuyển: không bao giờ vượt tổng", () => {
+    const coChuyen = [
+      KHOI[0],
+      { block_index: 1, start_offset_s: 300, end_offset_s: 360, is_washout: true, assignment: null },
+      { ...KHOI[1], block_index: 2 },
+      { ...KHOI[2], block_index: 3 },
+    ];
+    const b = trangThaiBayGio(
+      { status: "live", platform: "sim" },
+      { elapsed_s: 1000, current_block: { index: 3, phase: "experiment", assignment: "ON", is_washout: false, seconds_remaining: 60 }, pinned_product: null },
+      coChuyen,
+    );
+    expect(b.tongKhoi).toBe(3);
+    expect(b.soKhoi).toBe(3);
   });
 
   it("phòng dàn dựng: khối BẬT không ghim tay, máy tự ghim", () => {
@@ -78,10 +108,10 @@ describe("trangThaiBayGio: thẻ Bây giờ", () => {
 });
 
 describe("quyenSoSanh: khoá §7 của bàn", () => {
-  it("THẬT đang live và còn khoá: không tô nền, không hiện kết quả, có câu giải thích", () => {
+  it("THẬT đang live và còn khoá: không tô nền, không chuỗi Tỷ lệ nhấp, không kết quả, có câu giải thích", () => {
     const q = quyenSoSanh(THAT, true, true, LIB_KHONG);
-    expect(q).toMatchObject({ toNen: false, hienKetQua: false });
-    expect(q.dong).toMatch(/không tô nền theo khối/);
+    expect(q).toMatchObject({ toNen: false, hienKetQua: false, khoaChuoi: true });
+    expect(q.dong).toMatch(/chưa tô màu BẬT\/TẮT và chưa hiện Tỷ lệ nhấp theo thời gian/);
   });
 
   it("THỬ NỘI BỘ đang live: khoá như phiên thật, kể cả khi lib cho tô nền DÀN DỰNG", () => {
@@ -91,12 +121,32 @@ describe("quyenSoSanh: khoá §7 của bàn", () => {
     expect(q.dong).toMatch(/THỬ NỘI BỘ đang live/);
   });
 
-  it("MÔ PHỎNG và DÀN DỰNG được mở sớm kèm dòng giải thích; kết quả chỉ hiện khi máy chủ mở khoá", () => {
-    const moPhong = quyenSoSanh(MO_PHONG, true, false, { cho: true, dong: "mở khoá sớm vì MÔ PHỎNG" });
-    expect(moPhong).toEqual({ toNen: true, hienKetQua: true, dong: "mở khoá sớm vì MÔ PHỎNG" });
+  it("D-027: chỉ MÔ PHỎNG được mở sớm; DÀN DỰNG có người bấm khoá như phiên thật, kể cả khi lib lỡ cho", () => {
+    const moPhongSom = quyenSoSanh(MO_PHONG, true, true, { cho: true, dong: "câu mở sớm" });
+    expect(moPhongSom).toEqual({ toNen: true, hienKetQua: false, khoaChuoi: false, dong: "câu mở sớm" });
+    const moPhongMo = quyenSoSanh(MO_PHONG, true, false, { cho: true, dong: null });
+    expect(moPhongMo).toEqual({ toNen: true, hienKetQua: true, khoaChuoi: false, dong: null });
     const danDungKhoa = quyenSoSanh(DAN_DUNG, true, true, LIB_CHO);
-    expect(danDungKhoa.toNen).toBe(true);
-    expect(danDungKhoa.hienKetQua).toBe(false);
+    expect(danDungKhoa).toMatchObject({ toNen: false, hienKetQua: false, khoaChuoi: true });
+    expect(quyenSoSanh(DAN_DUNG, false, true, LIB_CHO).khoaChuoi).toBe(true);
+    expect(quyenSoSanh(DAN_DUNG, false, false, { cho: true, dong: null })).toMatchObject({ khoaChuoi: false, hienKetQua: true });
+  });
+
+  it("D-027: Nhịp phòng khi khoá không tính gì từ lượt nhấp theo cửa sổ", () => {
+    const ticks: Tick[] = [];
+    const moiCuaSo: Array<[number, number]> = [[60, 3], [55, 3], [62, 4], [58, 3], [61, 3], [20, 0], [18, 0]];
+    moiCuaSo.forEach(([v, c], w) => {
+      for (let i = 0; i < 10; i++) {
+        ticks.push({ ts_bucket: new Date((w * 10 + i) * 30000).toISOString(), viewers: v, comment_rate: 0, click_count: c });
+      }
+    });
+    const p = roomPulse(ticks, { chiNguoiXem: true });
+    expect(p.clickBand).toBeNull();
+    expect(p.windows.every((w) => w.clickRate === 0)).toBe(true);
+    expect(p.last?.clickRate).toBe(0);
+    expect(p.alert).toBe(true);
+    expect(p.note).toMatch(/^Người xem dưới dải bình thường/);
+    expect(p.note).not.toMatch(/lượt nhấp/);
   });
 
   it("đường nhỏ Tỷ lệ nhấp: không có trên THỬ NỘI BỘ hay THẬT đang live khi còn khoá", () => {
@@ -147,6 +197,17 @@ describe("hàm nhỏ", () => {
     expect(cauHoiMoiNhat(bl).map((c) => c.text)).toEqual(["màu đỏ còn không", "ship mấy ngày", "có size L không?"]);
   });
 
+  it("cauHoiMoiNhat: câu trùng chữ (khác hoa thường, khoảng trắng, dấu hỏi) chỉ còn bản mới nhất", () => {
+    const bl = [
+      { text: "ship về [ĐỊA CHỈ] bao lâu tới", intent: "van_chuyen", ts: "2026-10-19T05:00:01Z" },
+      { text: "Ship về  [ĐỊA CHỈ] bao lâu tới?", intent: "van_chuyen", ts: "2026-10-19T05:00:02Z" },
+      { text: "ship về [ĐỊA CHỈ] bao lâu tới ", intent: "van_chuyen", ts: "2026-10-19T05:00:03Z" },
+      { text: "giá bao nhiêu", intent: "hoi_gia", ts: "2026-10-19T05:00:00Z" },
+    ];
+    const ra = cauHoiMoiNhat(bl);
+    expect(ra.map((c) => c.ts)).toEqual(["2026-10-19T05:00:03Z", "2026-10-19T05:00:00Z"]);
+  });
+
   it("daiKhoiBan: qua / nay / tới và loại khối", () => {
     const d = daiKhoiBan(KHOI, 400);
     expect(d.map((x) => `${x.loai}:${x.trangThai}`)).toEqual(["bat:qua", "tat:nay", "bat:toi"]);
@@ -166,8 +227,9 @@ describe("hàm nhỏ", () => {
       crossesZero: lo <= 0 && hi >= 0,
     });
     expect(verdict(est(0.2, 0.9))).toMatchObject({ label: KET_LUAN_THEO_MA.DOI.nhan_thuoc, detail: KET_LUAN_THEO_MA.DOI.cau });
-    expect(verdict(est(-0.9, -0.1)).detail).toContain(KET_LUAN_THEO_MA.GIU.cau);
+    expect(verdict(est(-0.9, -0.1)).detail).toBe(KET_LUAN_THEO_MA.GIU.cau);
     expect(verdict(est(-0.2, 0.6)).detail).toBe(KET_LUAN_THEO_MA.DO_THEM.cau);
+    expect(verdict({ kind: "not_enough", nBlocks: 3, message: "x" })).toMatchObject({ kind: "do_them", detail: LOI_THUONG.chuaDuKhoi });
   });
 });
 
@@ -217,8 +279,21 @@ describe("TheDoiDau: hàng 3", () => {
     expect(el.querySelector("[data-ket-luan]")).toBeNull();
     expect(el.textContent).not.toMatch(/0,5|0,1|0,9/);
     expect(el.textContent).toContain("Đoán theo số liệu cũ");
-    expect(el.textContent).toContain("Ghim món này, khách có bấm nhiều hơn không?");
+    expect(el.textContent).toContain("Ghim món này, khách có bấm mua nhiều hơn không?");
     kiemChu(el);
+  });
+
+  it("chưa đủ khối: ĐO THÊM kèm đúng câu LOI_THUONG.chuaDuKhoi", () => {
+    render(
+      <TheDoiDau goiY={goiY} hienKetQua thuoc={{ lyDo: "Cần thêm khối đo được để vẽ khoảng tin cậy." }} ketLuan="DO_THEM" cauKetLuan={LOI_THUONG.chuaDuKhoi} nhanNguon="MO_PHONG" />,
+    );
+    expect(screen.getByTestId("ban-cau-chua-du-khoi")).toHaveTextContent(LOI_THUONG.chuaDuKhoi);
+  });
+
+  it("phiên quan sát: không ổ khoá, không hứa so BẬT với TẮT", () => {
+    render(<TheDoiDau goiY={goiY} hienKetQua={false} thuoc={{}} ketLuan={null} nhanNguon="THAT" quanSat />);
+    expect(screen.getByTestId("ban-quan-sat")).toHaveTextContent("Phiên quan sát: không bốc thăm nên không so BẬT với TẮT");
+    expect(screen.queryByTestId("ban-ket-qua-khoa")).toBeNull();
   });
 
   it("khi mở: chữ kết luận canon và thước khoảng tin cậy", () => {
@@ -230,14 +305,24 @@ describe("TheDoiDau: hàng 3", () => {
   });
 });
 
+const apiGia = vi.hoisted(() => ({
+  session: vi.fn(async () => ({ session_id: "s1", platform: "sim", mode: "auto", status: "live", planned_duration_min: 90, dry_run: false, is_demo: true })),
+  schedule: vi.fn(async () => []),
+  sessions: vi.fn(async () => [
+    { session_id: "s0", platform: "lab", mode: "auto", status: "live", planned_duration_min: 90, dry_run: false, is_demo: false },
+    { session_id: "s1", platform: "sim", mode: "auto", status: "live", planned_duration_min: 90, dry_run: false, is_demo: true },
+  ]),
+  comments: vi.fn(async () => [
+    { comment_id: "c1", ts: "2026-10-19T05:00:01Z", text: "giá bao nhiêu vậy shop", intent: "hoi_gia", pii_kinds: [] },
+    { comment_id: "c2", ts: "2026-10-19T05:00:02Z", text: "đẹp quá", intent: "cam_on_khen", pii_kinds: [] },
+    { comment_id: "c3", ts: "2026-10-19T05:00:03Z", text: "ship về [ĐỊA CHỈ] bao lâu tới", intent: "van_chuyen", pii_kinds: ["dia_chi"] },
+    { comment_id: "c4", ts: "2026-10-19T05:00:04Z", text: "ship về [ĐỊA CHỈ] bao lâu tới", intent: "van_chuyen", pii_kinds: ["dia_chi"] },
+    { comment_id: "c5", ts: "2026-10-19T05:00:05Z", text: "Ship về [ĐỊA CHỈ] bao lâu tới?", intent: "van_chuyen", pii_kinds: ["dia_chi"] },
+  ]),
+}));
+
 vi.mock("@/lib/livelift-api/client", () => ({
-  api: {
-    session: vi.fn(async () => ({ session_id: "s1", platform: "sim", mode: "auto", status: "live", planned_duration_min: 90, dry_run: false, is_demo: true })),
-    comments: vi.fn(async () => [
-      { comment_id: "c1", ts: "2026-10-19T05:00:01Z", text: "giá bao nhiêu vậy shop", intent: "hoi_gia", pii_kinds: [] },
-      { comment_id: "c2", ts: "2026-10-19T05:00:02Z", text: "đẹp quá", intent: "cam_on_khen", pii_kinds: [] },
-    ]),
-  },
+  api: apiGia,
   useHostView: () => ({ state: { pinned_product: "Áo thun cotton", price: 129000, stock: 10, elapsed_s: 75 }, error: null }),
 }));
 
@@ -252,7 +337,23 @@ describe("HostView: màn người dẫn", () => {
     await waitFor(() => expect(khung.textContent).toContain("giá bao nhiêu vậy shop"));
     expect(khung.textContent).not.toContain("đẹp quá");
     expect(khung.textContent).not.toMatch(/BẬT|TẮT|Khối \d|khối B|khối T/);
+    expect(khung.textContent).toContain("Khách đang hỏi");
+    expect(screen.getByTestId("nguoi-dan-nguon-hoi")).toHaveTextContent("Lấy từ bình luận của khách");
+    // câu trùng chỉ còn một, chỗ đã che đọc thành lời thường
+    const cau = screen.getByTestId("nguoi-dan-cau-hoi").querySelectorAll("li");
+    expect([...cau].map((li) => li.textContent)).toEqual(["Ship về (đã che địa chỉ) bao lâu tới?", "giá bao nhiêu vậy shop"]);
+    expect(khung.textContent).toContain("còn 10 trong kho");
     kiemChu(khung, false);
+  });
+
+  it("không gọi bản ghi phiên hay lịch (có lịch BẬT/TẮT đã niêm phong): nhãn nguồn lấy từ danh sách phiên", async () => {
+    const { HostView } = await import("@/components/phien/HostView");
+    apiGia.session.mockClear();
+    apiGia.schedule.mockClear();
+    render(<HostView sessionId="s1" />);
+    await waitFor(() => expect(apiGia.sessions).toHaveBeenCalled());
+    expect(apiGia.session).not.toHaveBeenCalled();
+    expect(apiGia.schedule).not.toHaveBeenCalled();
   });
 });
 

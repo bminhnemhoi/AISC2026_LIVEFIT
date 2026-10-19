@@ -283,3 +283,62 @@ def test_canh_dang_ghim_cho_ca_the_ghim_cua_dien_thoai():
     ds = {c.ten: c for c in cn.nap_cau_hinh(cn.CAU_HINH_MAC_DINH)}
     cho = [s for b in ds["xem-dang-ghim"].buoc for s in b.get("cho", [])]
     assert "[data-testid='dien-thoai-ghim']" in cho
+
+
+# ------------------------------- soát đợt 2: bảng trạng thái, cờ dry_run, phòng giả, dải đồng xu
+def test_trang_thai_phong_khop_loi():
+    # lõi (routes/xem.py): chua_mo ← planned, scheduled; da_dong ← ended, cancelled
+    ky_vong = {
+        "dang_mo": {"live"},
+        "da_dong": {"ended", "cancelled"},
+        "chua_mo": {"planned", "scheduled"},
+    }
+    assert ky_vong == cn.TRANG_THAI_PHONG
+    ds = [
+        _phien("p1", "Phòng hẹn", dry_run=True, status="planned"),
+        _phien("p2", "Phòng hẹn", dry_run=False, status="ended"),
+    ]
+    p = cn.xac_dinh_phong("Ma", _trang_thai("Phòng hẹn", "chua_mo"), ds)
+    assert (p.xac_dinh, p.an_toan, p.phien) == (True, True, ("p1",))
+    ds = [
+        _phien("c1", "Phòng huỷ", dry_run=False, status="cancelled"),
+        _phien("c2", "Phòng huỷ", dry_run=True, status="live"),
+    ]
+    p = cn.xac_dinh_phong("Ma", _trang_thai("Phòng huỷ", "da_dong"), ds)
+    assert (p.an_toan, p.phien) == (False, ("c1",))
+
+
+def test_co_dry_run_cua_phong_duoc_uu_tien():
+    ds = [
+        _phien("a1", "Phòng chung", dry_run=True),
+        _phien("a2", "Phòng chung", dry_run=False),
+    ]
+    tt = _trang_thai("Phòng chung")
+    tt["room"]["dry_run"] = True
+    p = cn.xac_dinh_phong("Ma", tt, ds)
+    assert (p.xac_dinh, p.an_toan, p.phien) == (True, True, ("a1",))
+    tt["room"]["dry_run"] = False
+    p = cn.xac_dinh_phong("Ma", tt, ds)
+    assert (p.xac_dinh, p.an_toan, p.phien) == (True, False, ("a2",))
+    # phòng báo dry_run mà tiêu đề không khớp phiên nào: vẫn an toàn (cờ của chính phòng)
+    tt = _trang_thai("Tên lạ")
+    tt["room"]["dry_run"] = True
+    assert cn.xac_dinh_phong("Ma", tt, ds).an_toan
+
+
+def test_phong_gia_cho_canh_dang_ghim():
+    ds = {c.ten: c for c in cn.nap_cau_hinh(cn.CAU_HINH_MAC_DINH)}
+    ghim = ds["xem-dang-ghim"]
+    assert ghim.ghim_gia == "LAB-3"
+    assert cn.dung_phong_gia(ghim, True)
+    assert not cn.dung_phong_gia(ghim, False)
+    assert not cn.dung_phong_gia(ds["gioi-thieu"], True)
+    assert cn.tuyen_phong_gia(ghim) == f"/xem/{cn.kg.MA_PHONG_GIA}"
+    assert all(c.ghim_gia is None for t, c in ds.items() if t != "xem-dang-ghim")
+
+
+def test_canh_dai_khoi_cho_du_16_dong_xu():
+    ds = {c.ten: c for c in cn.nap_cau_hinh(cn.CAU_HINH_MAC_DINH)}
+    for ten in ("gioi-thieu", "gioi-thieu-dai-khoi"):
+        cho = [s for b in ds[ten].buoc for s in b.get("cho", [])]
+        assert any("nth-child(16)" in s and "data-mat='chua'" in s for s in cho), ten

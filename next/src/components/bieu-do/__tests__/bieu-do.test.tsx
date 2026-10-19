@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { dongRungGop, dongRungTuBaoCao } from "@/lib/bieu-do/rung";
 import { khoiTuTicks, type KhoiDo } from "@/lib/bieu-do/chuoi";
-import { chanUocLuongKhiKhoa } from "@/lib/bieu-do/khoa";
+import { CAU_MO_SOM_MO_PHONG, chanUocLuongKhiKhoa } from "@/lib/bieu-do/khoa";
 import { ExperimentSummarySchema } from "@/lib/livelift-api/gop";
 import { sourceLabel } from "@/lib/livelift-api/desk";
 import { BaoCaoSchema, BlockSchema, CommentSchema, SessionSchema, TickSchema } from "@/lib/livelift-api/types";
@@ -46,8 +46,35 @@ describe("khoá §7: không vẽ thước hay chấm khi khoa=true", () => {
     // Chỉ còn đúng một hình: biểu tượng ổ khoá.
     expect(container.querySelectorAll("svg")).toHaveLength(1);
     expect(container.querySelector("line, [data-testid^='bd-thuoc-']:not([data-testid='bd-thuoc-khoa'])")).toBeNull();
-    expect(container.textContent).not.toMatch(/\d/);
+    // Tiêu đề có "95%" (tên của khoảng tin cậy); ngoài nó không có số nào.
+    expect((container.textContent ?? "").replace(/95%/g, "")).not.toMatch(/\d/);
     expect(screen.queryByRole("button", { name: /bảng/ })).toBeNull();
+  });
+
+  it("thước: nhãn ước lượng gần 0 né vạch 0 (soát đợt 2 ĐỎ 4), có viền nền", () => {
+    render(<ThuocKhoangTinCay khoa={false} uocLuong={0.165} thap={-0.3} cao={1.6} />);
+    const nhan = screen.getByTestId("bd-thuoc-nhan-uoc");
+    const vach = screen.getByTestId("bd-vach-0");
+    expect(nhan.textContent).toBe("+0,165");
+    expect(nhan.getAttribute("data-neo")).toBe("start");
+    expect(Number(nhan.getAttribute("x"))).toBeGreaterThan(Number(vach.getAttribute("x1")));
+    expect(nhan.getAttribute("class")).toContain("bd-chu-vien");
+    // Ước lượng âm gần 0: nhãn nằm bên trái vạch.
+    render(<ThuocKhoangTinCay khoa={false} uocLuong={-0.1} thap={-1.6} cao={0.3} />);
+    const am = screen.getAllByTestId("bd-thuoc-nhan-uoc")[1];
+    expect(am.getAttribute("data-neo")).toBe("end");
+    // Ước lượng xa 0: canh giữa tại điểm.
+    render(<ThuocKhoangTinCay khoa={false} uocLuong={1.22} thap={0.93} cao={1.5} />);
+    expect(screen.getAllByTestId("bd-thuoc-nhan-uoc")[2].getAttribute("data-neo")).toBe("middle");
+  });
+
+  it("thước: tiêu đề có 95%, anVung ẩn danh sách ba vùng, nút bảng ẩn khi chụp", () => {
+    render(<ThuocKhoangTinCay khoa={false} uocLuong={1.22} thap={0.93} cao={1.5} anVung />);
+    expect(screen.getByText("Khoảng tin cậy 95% của chênh lệch")).toBeInTheDocument();
+    expect(screen.queryByTestId("bd-thuoc-vung")).toBeNull();
+    expect(screen.getByRole("button", { name: "Xem dạng bảng" }).hasAttribute("data-an-khi-chup")).toBe(true);
+    // Phụ đề có bản ngắn cho khung hẹp.
+    expect(document.querySelector(".bd-phu-de-ngan")?.textContent).toMatch(/^Đo lại/);
   });
 
   it("chấm khoá: không chấm nào, kể cả khi lỡ truyền khoiDo", () => {
@@ -134,6 +161,20 @@ describe("chấm theo khối khi đã mở", () => {
     expect(screen.getByText(/1 khối không đo được/)).toBeInTheDocument();
   });
 
+  it("chưa đủ khối (anTrungBinh): không đường, không chữ trung bình ở chú giải, câu mô tả và bảng (soát đợt 2 VÀNG 1, 52)", () => {
+    const k = khoiTuTicks(chuaDu.khoi, chuaDu.ticks, chuaDu.phien.start_ts, chuaDu.phien.end_ts);
+    expect(k.length).toBeGreaterThan(0);
+    render(<ChamTheoKhoi khoa={false} khoiDo={k} anTrungBinh />);
+    expect(screen.queryByTestId("bd-tb-bat")).toBeNull();
+    expect(screen.queryByTestId("bd-tb-tat")).toBeNull();
+    const khung = screen.getByTestId("bd-cham");
+    expect(screen.getByRole("img").getAttribute("aria-label")).not.toMatch(/trung bình/i);
+    expect(khung.querySelector(".bd-chu-giai")?.textContent).not.toMatch(/trung bình/);
+    expect(screen.getByText(/Chưa đủ khối để so BẬT với TẮT/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Xem dạng bảng" }));
+    expect(screen.getByRole("table").textContent).not.toMatch(/trung bình/);
+  });
+
   it("nút xem dạng bảng đổi qua lại, bảng có đủ khối", () => {
     render(<ChamTheoKhoi khoa={false} khoiDo={khoiDoi1} />);
     const nut = screen.getByRole("button", { name: "Xem dạng bảng" });
@@ -159,9 +200,49 @@ describe("đường thời gian", () => {
   it("phiên THẬT đang live: một màu, không tô nền theo khối, kể cả khi lỡ truyền toNenKhoi", () => {
     render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi nguon={nguonThat} dangLive thoiLuongS={5400} />);
     expect(screen.queryByTestId("bd-dai-khoi")).toBeNull();
-    expect(screen.getByTestId("bd-dong-to-nen").textContent).toContain("không tô nền theo khối");
+    expect(screen.getByTestId("bd-dong-to-nen").textContent).toContain("chưa tô màu BẬT/TẮT");
     expect(screen.queryByText(/BẬT: ghim món theo lịch/)).toBeNull();
     expect(screen.getByRole("img").getAttribute("aria-label")).not.toContain("Nền tô theo khối");
+  });
+
+  // D-027: phiên có người bấm còn khoá thì không có chuỗi Tỷ lệ nhấp theo thời gian ở đâu cả.
+  const nguonKhoa = [
+    { ten: "THẬT", nguon: { kind: "that" as const, text: "THẬT" } },
+    { ten: "THỬ NỘI BỘ", nguon: sourceLabel({ platform: "lab", is_demo: false, dry_run: true }) },
+    { ten: "DÀN DỰNG", nguon: sourceLabel({ platform: "lab", is_demo: false, dry_run: false }) },
+  ];
+  for (const { ten, nguon } of nguonKhoa) {
+    it(`khoá §7 (D-027): ${ten} đang live có điểm đo thì chỉ có Người xem`, () => {
+      const { container } = render(
+        <DuongThoiGian ticks={doi1.ticks} batDauTs={doi1.phien.start_ts} khoi={doi1.khoi} toNenKhoi nguon={nguon} dangLive khoa />,
+      );
+      expect(container.querySelector('[data-testid="bd-duong-ty-le-nhap"]')).toBeNull();
+      expect(container.querySelector('[data-testid="bd-duong-nguoi-xem"]')).not.toBeNull();
+      expect(screen.queryByTestId("bd-dai-khoi")).toBeNull();
+      expect(screen.getByText("Người xem theo thời gian")).toBeInTheDocument();
+      const aria = screen.getByRole("img").getAttribute("aria-label") ?? "";
+      expect(aria).not.toContain("Tỷ lệ nhấp gần nhất");
+      // Ô nhắc chỉ có người xem.
+      const vung = container.querySelector('rect[fill="transparent"]') as SVGRectElement;
+      fireEvent.pointerMove(vung, { clientX: 300, clientY: 50 });
+      expect(container.querySelector(".bd-nhac")?.textContent).not.toMatch(/tỷ lệ nhấp/i);
+      // Bảng thay ảnh không có cột Tỷ lệ nhấp, không cột Khối.
+      fireEvent.click(screen.getByRole("button", { name: "Xem dạng bảng" }));
+      expect(within(screen.getByRole("table")).getAllByRole("columnheader").map((c) => c.textContent)).toEqual(["Thời điểm", "Người xem"]);
+      expect(screen.getByTestId("bd-dong-to-nen").textContent).toContain(`${ten} đang live`);
+    });
+  }
+
+  it("khoá §7: hết phiên mà máy chủ còn khoá thì vẫn chỉ có Người xem; mở rồi thì có đủ", () => {
+    const nguon = sourceLabel({ platform: "lab", is_demo: false, dry_run: true });
+    const { container, unmount } = render(<DuongThoiGian ticks={doi1.ticks} batDauTs={doi1.phien.start_ts} khoi={doi1.khoi} toNenKhoi nguon={nguon} khoa />);
+    expect(container.querySelector('[data-testid="bd-duong-ty-le-nhap"]')).toBeNull();
+    expect(screen.getByTestId("bd-dong-to-nen").textContent).toContain("chưa mở");
+    unmount();
+    const mo = render(<DuongThoiGian ticks={doi1.ticks} batDauTs={doi1.phien.start_ts} khoi={doi1.khoi} toNenKhoi nguon={nguon} khoa={false} />);
+    expect(mo.container.querySelector('[data-testid="bd-duong-ty-le-nhap"]')).not.toBeNull();
+    expect(screen.getByTestId("bd-dai-khoi")).toBeInTheDocument();
+    expect(screen.queryByTestId("bd-dong-to-nen")).toBeNull();
   });
 
   it("lỡ truyền toNenKhoi mà quên nguon: không tô nền, không tự ghi dòng mở khoá (soát đợt 1 mục 3)", () => {
@@ -204,23 +285,25 @@ describe("đường thời gian", () => {
     const { container } = render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi nguon={nguon} dangLive thoiLuongS={5400} />);
     const dai = screen.getByTestId("bd-dai-khoi");
     expect(dai.querySelectorAll('[data-nhanh="ON"]').length + dai.querySelectorAll('[data-nhanh="OFF"]').length).toBe(16);
-    expect(screen.getByTestId("bd-dong-to-nen").textContent).toBe("mở khoá sớm vì MÔ PHỎNG");
+    expect(screen.getByTestId("bd-dong-to-nen").textContent).toBe(CAU_MO_SOM_MO_PHONG);
+    expect(container.querySelector('[data-testid="bd-duong-ty-le-nhap"]')).not.toBeNull();
     expect(screen.getByText(/BẬT: ghim món theo lịch/)).toBeInTheDocument();
     expect(container.querySelector('[data-testid="bd-duong-nguoi-xem"]')?.getAttribute("d")).toMatch(/^M/);
     expect(screen.getByRole("img").getAttribute("aria-label")).toContain("Nền tô theo khối");
   });
 
-  it("phòng DÀN DỰNG được tô nền, có nhãn nguồn", () => {
+  it("phòng DÀN DỰNG đang live: khoá như THỬ NỘI BỘ (D-027), vẫn có nhãn nguồn", () => {
     const nguon = sourceLabel({ platform: "lab", is_demo: false, dry_run: false });
     expect(nguon.text).toBe("DÀN DỰNG");
-    render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi nguon={nguon} dangLive />);
-    expect(screen.getByTestId("bd-dai-khoi")).toBeInTheDocument();
-    expect(screen.getByTestId("bd-dong-to-nen").textContent).toBe("mở khoá sớm vì DÀN DỰNG");
+    const { container } = render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi nguon={nguon} dangLive />);
+    expect(screen.queryByTestId("bd-dai-khoi")).toBeNull();
+    expect(container.querySelector('[data-testid="bd-duong-ty-le-nhap"]')).toBeNull();
+    expect(screen.getByTestId("bd-dong-to-nen").textContent).toContain("DÀN DỰNG đang live");
     expect(screen.getByText("DÀN DỰNG")).toBeInTheDocument();
   });
 
   it("câu mô tả thay ảnh và bảng 5 phút", () => {
-    render(<DuongThoiGian ticks={doi1.ticks} batDauTs={doi1.phien.start_ts} />);
+    render(<DuongThoiGian ticks={doi1.ticks} batDauTs={doi1.phien.start_ts} khoa={false} />);
     const nhan = screen.getByRole("img").getAttribute("aria-label") ?? "";
     expect(nhan).toMatch(/^Đường thời gian 1 giờ 30 phút: người xem từ 1 tới/);
     fireEvent.click(screen.getByRole("button", { name: "Xem dạng bảng" }));
@@ -236,7 +319,7 @@ describe("đường thời gian", () => {
   });
 
   it("rê chuột hiện ô nhắc có cả hai chuỗi", () => {
-    const { container } = render(<DuongThoiGian ticks={doi1.ticks} batDauTs={doi1.phien.start_ts} />);
+    const { container } = render(<DuongThoiGian ticks={doi1.ticks} batDauTs={doi1.phien.start_ts} khoa={false} />);
     const vung = container.querySelector('rect[fill="transparent"]') as SVGRectElement;
     fireEvent.pointerMove(vung, { clientX: 300, clientY: 50 });
     const nhac = container.querySelector(".bd-nhac");
@@ -287,6 +370,9 @@ describe("thanh ý định, từ xem đến mua, đường nhỏ", () => {
     expect(don.textContent).toContain("Chưa có nguồn đơn");
     expect(don.querySelector(".bd-pheu-so")).toBeNull();
     expect(container.querySelector('[data-buoc="nhap"] .bd-pheu-so')?.textContent).toBe("294");
+    // Ô đầu là thời gian xem (phút·người xem), không phải số người; nối có đơn vị đầy đủ (soát đợt 2 VÀNG 21, 36, 37).
+    expect(container.querySelector('[data-buoc="xem"]')?.textContent).toContain("Thời gian xem");
+    expect(container.querySelector('.bd-pheu-noi-don-vi')?.textContent).toBe("lượt nhấp hợp lệ / 1.000 giây·người xem");
     kiemChu(screen.getByTestId("bd-pheu"));
   });
 

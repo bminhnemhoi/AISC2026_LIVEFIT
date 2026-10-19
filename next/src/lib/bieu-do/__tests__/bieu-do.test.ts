@@ -63,6 +63,9 @@ import {
   pheuTuXemDenMua,
   phanTram,
   quyenToNenKhoi,
+  CAU_MO_SOM_MO_PHONG,
+  choHienTyLeNhapTheoThoiGian,
+  NGUON_DUOC_TO_NEN,
   soDau,
   soGon,
   soNguyen,
@@ -299,6 +302,11 @@ describe("tỷ lệ nhấp từng khối khớp ước lượng của máy chủ
     const cuoi = (live.ticks.length - 1) * 30 + 30;
     expect(k.every((x) => x.tu < cuoi)).toBe(true);
     expect(k.length).toBeLessThan(live.khoi.length);
+    // Bỏ cả khối đang chạy khi được yêu cầu (soát đợt 2 VÀNG 5): mọi khối còn lại đã chạy hết.
+    const daXong = khoiTuTicks(live.khoi, live.ticks, live.phien.start_ts, null, { boKhoiDangChay: true });
+    expect(daXong.length).toBeLessThanOrEqual(k.length);
+    const ketThuc = new Map(live.khoi.map((b) => [b.block_index, b.end_offset_s]));
+    expect(daXong.every((x) => (ketThuc.get(x.index) ?? Infinity) <= cuoi)).toBe(true);
   });
 
   it("dải khối sắp theo thời gian, khối khởi động là WASH", () => {
@@ -353,19 +361,46 @@ describe("khoá §7 phía giao diện", () => {
     expect(chanUocLuongKhiKhoa(doi1.baoCao)).toBe(doi1.baoCao);
   });
 
-  it("tô nền khối: MÔ PHỎNG và DÀN DỰNG được (mở khoá sớm), THẬT và THỬ NỘI BỘ đang live thì không", () => {
-    expect(quyenToNenKhoi({ kind: "mo_phong", text: "MÔ PHỎNG" }, true)).toEqual({ cho: true, dong: "mở khoá sớm vì MÔ PHỎNG" });
-    expect(quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG" }, true)).toEqual({ cho: true, dong: "mở khoá sớm vì DÀN DỰNG" });
+  it("tô nền khối (D-027): chỉ MÔ PHỎNG mở sớm; THẬT, CHẠY THỬ, THỬ NỘI BỘ, DÀN DỰNG chờ máy chủ mở", () => {
+    expect(quyenToNenKhoi({ kind: "mo_phong", text: "MÔ PHỎNG" }, true)).toEqual({ cho: true, dong: CAU_MO_SOM_MO_PHONG });
+    // MÔ PHỎNG đã xong: không còn là "sớm", không nói gì.
+    expect(quyenToNenKhoi({ kind: "mo_phong", text: "MÔ PHỎNG" }, false)).toEqual({ cho: true, dong: null });
+    const danDung = quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG" }, true);
+    expect(danDung.cho).toBe(false);
+    expect(danDung.dong).toContain("DÀN DỰNG đang live");
     const thuNoiBo = quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, true);
     expect(thuNoiBo.cho).toBe(false);
     expect(thuNoiBo.dong).toContain("THỬ NỘI BỘ đang live");
-    expect(thuNoiBo.dong).not.toMatch(/mở khoá sớm/);
-    expect(quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, false).cho).toBe(true);
+    // THỬ NỘI BỘ đã hết live mà máy chủ còn khoá: vẫn khoá, câu dùng tên THỬ NỘI BỘ (soát đợt 2 VÀNG 3).
+    const thuNoiBoXong = quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, false);
+    expect(thuNoiBoXong.cho).toBe(false);
+    expect(thuNoiBoXong.dong).toContain("THỬ NỘI BỘ chưa mở");
+    expect(quyenToNenKhoi({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, false, false)).toEqual({ cho: true, dong: null });
     const that = quyenToNenKhoi({ kind: "that", text: "THẬT" }, true);
     expect(that.cho).toBe(false);
-    expect(that.dong).toContain("không tô nền theo khối");
+    expect(that.dong).toContain("chưa tô màu BẬT/TẮT");
     expect(quyenToNenKhoi({ kind: "chay_thu", text: "CHẠY THỬ" }, true).cho).toBe(false);
-    expect(quyenToNenKhoi({ kind: "that", text: "THẬT" }, false)).toEqual({ cho: false, dong: null });
+    // THẬT đã xong và máy chủ đã mở: được tô nền (soát đợt 2 VÀNG 51).
+    expect(quyenToNenKhoi({ kind: "that", text: "THẬT" }, false, false)).toEqual({ cho: true, dong: null });
+    for (const q of [quyenToNenKhoi({ kind: "mo_phong", text: "MÔ PHỎNG" }, true), danDung, thuNoiBo, thuNoiBoXong, that]) {
+      expect(q.dong ?? "").not.toMatch(/mở khoá sớm/);
+    }
+  });
+
+  it("choHienTyLeNhapTheoThoiGian: hàm chung cho mọi màn (D-027)", () => {
+    const moPhong = { kind: "mo_phong" as const, text: "MÔ PHỎNG" };
+    expect(choHienTyLeNhapTheoThoiGian(moPhong, true, true)).toBe(true);
+    expect(choHienTyLeNhapTheoThoiGian({ kind: "dan_dung", text: "DÀN DỰNG" }, true, true)).toBe(false);
+    expect(choHienTyLeNhapTheoThoiGian({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, true, true)).toBe(false);
+    expect(choHienTyLeNhapTheoThoiGian({ kind: "dan_dung", text: "DÀN DỰNG · THỬ NỘI BỘ" }, false, true)).toBe(false);
+    expect(choHienTyLeNhapTheoThoiGian({ kind: "that", text: "THẬT" }, true, true)).toBe(false);
+    expect(choHienTyLeNhapTheoThoiGian({ kind: "that", text: "THẬT" }, false, false)).toBe(true);
+    expect(choHienTyLeNhapTheoThoiGian(null, false, true)).toBe(false);
+    expect(choHienTyLeNhapTheoThoiGian(null, false, false)).toBe(true);
+    expect(NGUON_DUOC_TO_NEN.has("dan_dung")).toBe(false);
+    // Đường nhỏ theo cùng luật khi truyền nguồn.
+    expect(duongNhoTyLeNhap(live.ticks, live.phien, { khoa: true, nguon: { kind: "dan_dung", text: "DÀN DỰNG" }, dangLive: true })).toBeNull();
+    expect(duongNhoTyLeNhap(live.ticks, live.phien, { khoa: true, nguon: moPhong, dangLive: true })).not.toBeNull();
   });
 });
 
@@ -522,10 +557,21 @@ describe("bảng thay biểu đồ", () => {
     const c = chuoiThoiGian(doi1.ticks, doi1.phien.start_ts);
     const b = bangDuongThoiGian(c, null);
     expect(b.cot).toEqual(["Thời điểm", "Người xem", "Tỷ lệ nhấp"]);
-    expect(b.hang.length).toBe(19); // 0, 5, ..., 85 phút và điểm cuối
-    const k = bangDuongThoiGian(c, daiKhoi(doi1.khoi));
+    expect(b.hang.length).toBe(18); // điểm cuối của mỗi 5 phút: 05:00, 10:00, ..., 90:00
+    expect(b.hang[0][0]).toBe("05:00");
+    const dai = daiKhoi(doi1.khoi);
+    const k = bangDuongThoiGian(c, dai);
     expect(k.cot).toContain("Khối");
     expect(k.hang[0][3]).toBe("1 · BẬT");
+    // Nhánh ghi theo tâm cửa sổ 2 phút (phần lớn số thuộc khối đó), không theo khối của mốc (soát đợt 2 VÀNG 2).
+    for (const h of k.hang) {
+      const [mm, ss] = h[0].split(":").map(Number);
+      const tCuoi = mm * 60 + ss;
+      const kh = dai.find((d) => tCuoi - 60 >= d.tu && tCuoi - 60 < d.den);
+      if (kh) expect(h[3]).toBe(`${kh.index + 1} · ${kh.nhanh === "ON" ? "BẬT" : kh.nhanh === "OFF" ? "TẮT" : "Khởi động"}`);
+    }
+    // Khoá: không cột Tỷ lệ nhấp, không cột Khối.
+    expect(bangDuongThoiGian(c, dai, { coTyLeNhap: false }).cot).toEqual(["Thời điểm", "Người xem"]);
   });
 
   it("các bảng khác có đủ dòng và chữ sạch", () => {

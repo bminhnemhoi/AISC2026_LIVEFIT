@@ -28,11 +28,19 @@ export interface ChamTheoKhoiProps {
   cao?: number;
   dangTai?: boolean;
   muc?: MucTieuDe;
+  /**
+   * Không vẽ, không ghi trung bình BẬT/TẮT (đường, nhãn, chú giải, câu mô tả, bảng): khi báo cáo ghi chưa ước lượng
+   * được (estimable=false). Tự bật khi một nhánh có dưới 2 khối đo được.
+   */
+  anTrungBinh?: boolean;
 }
+
+/** Câu thay cho trung bình khi chưa đủ khối. */
+export const CAU_CHUA_DU_KHOI_CHAM = "Chưa đủ khối để so BẬT với TẮT: chỉ vẽ từng khối.";
 
 const DEM = { trai: 44, phai: 132, phaiHep: 16, tren: 16, duoi: 28 };
 
-export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp từng khối", cao = 240, dangTai, muc }: ChamTheoKhoiProps) {
+export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp từng khối", cao = 240, dangTai, muc, anTrungBinh = false }: ChamTheoKhoiProps) {
   const [refVe, rong] = useBeRong<HTMLDivElement>();
   const [tro, setTro] = useState<number | null>(null);
   const maSoc = useMaSvg("bd-soc-cham");
@@ -43,10 +51,11 @@ export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp t�
   }
 
   const tb = trungBinhNhanh(khoi);
+  const anTb = anTrungBinh || tb.nBat < 2 || tb.nTat < 2;
   const phuDe = `${TY_LE_NHAP} (${TY_LE_NHAP_DAY_DU}) của mỗi khối, đã bỏ 60 giây đầu khối`;
   if (khoi.length === 0) {
     return (
-      <KhungBieuDo tieuDe={tieuDe} phuDe={phuDe} nhan={nhan} moTa={moTaCham(khoi, tb)} dangTai={dangTai} muc={muc} testId="bd-cham">
+      <KhungBieuDo tieuDe={tieuDe} phuDe={phuDe} nhan={nhan} moTa={moTaCham(khoi, tb, anTb)} dangTai={dangTai} muc={muc} testId="bd-cham">
         <OTrong>Chưa có khối BẬT hay TẮT nào để vẽ.</OTrong>
       </KhungBieuDo>
     );
@@ -55,7 +64,7 @@ export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp t�
   const W = Math.max(280, rong);
   const H = Math.max(160, cao);
   // Màn hẹp: nhãn trung bình chuyển xuống chú giải, nhường bề ngang cho chấm.
-  const hep = W < 480;
+  const hep = W < 480 || anTb;
   const veW = W - DEM.trai - (hep ? DEM.phaiHep : DEM.phai);
   const day = H - DEM.duoi;
   const tru = vachTu0(Math.max(0.5, ...khoi.map((k) => k.tyLe ?? 0)), 3);
@@ -64,8 +73,8 @@ export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp t�
   const xI = (i: number): number => DEM.trai + buoc * (i + 0.5);
   const nhanMoi = Math.max(1, Math.ceil(khoi.length / Math.max(2, Math.floor(veW / 44))));
 
-  const yBat = tb.bat == null ? null : y(tb.bat);
-  const yTat = tb.tat == null ? null : y(tb.tat);
+  const yBat = anTb || tb.bat == null ? null : y(tb.bat);
+  const yTat = anTb || tb.tat == null ? null : y(tb.tat);
   // Hai nhãn trung bình quá sát nhau thì đẩy ra hai phía cho khỏi đè (chỉ hai nhãn, không cần đường dẫn).
   let yNhanBat = yBat;
   let yNhanTat = yTat;
@@ -77,15 +86,18 @@ export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp t�
   }
 
   const k = tro != null ? khoi[tro] : null;
-  const ghiChu = tb.nBo > 0 ? `${tb.nBo} khối không đo được (quá ít người xem hoặc không phát), không vẽ; xem bảng.` : "Chấm là mô tả từng khối; kết luận lấy từ phân tích đã đăng ký trước.";
+  const cauBo = tb.nBo > 0 ? `${tb.nBo} khối không đo được (quá ít người xem hoặc không phát), không vẽ; xem bảng.` : null;
+  const ghiChu = anTb
+    ? `${CAU_CHUA_DU_KHOI_CHAM}${cauBo ? ` ${cauBo}` : ""}`
+    : (cauBo ?? "Mỗi chấm là một khối. Kết luận tính theo cách đã chốt trước giờ live.");
 
   return (
     <KhungBieuDo
       tieuDe={tieuDe}
       phuDe={phuDe}
       nhan={nhan}
-      moTa={moTaCham(khoi, tb)}
-      bang={bangCham(khoi, tb)}
+      moTa={moTaCham(khoi, tb, anTb)}
+      bang={bangCham(khoi, tb, anTb)}
       dangTai={dangTai}
       muc={muc}
       testId="bd-cham"
@@ -94,12 +106,12 @@ export function ChamTheoKhoi({ khoa, khoiDo, nhan, tieuDe = "Tỷ lệ nhấp t�
           <li>
             <i className="bd-mau-cham" style={{ background: BIEN.bat }} aria-hidden="true" />
             {PHU_DE_BAT}
-            {tb.bat != null ? `, trung bình ${soGon(tb.bat, 2)}` : ""}
+            {!anTb && tb.bat != null ? <span className="bd-lien">{`, trung bình ${soGon(tb.bat, 2)}`}</span> : null}
           </li>
           <li>
             <i className="bd-mau-cham bd-cham-tat" aria-hidden="true" />
             {PHU_DE_TAT}
-            {tb.tat != null ? `, trung bình ${soGon(tb.tat, 2)}` : ""}
+            {!anTb && tb.tat != null ? <span className="bd-lien">{`, trung bình ${soGon(tb.tat, 2)}`}</span> : null}
           </li>
         </ul>
       }

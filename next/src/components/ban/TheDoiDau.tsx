@@ -5,7 +5,8 @@ import { ThuocKhoangTinCay } from "@/components/bieu-do";
 import { Chip, NhanNguon, type MaNhan } from "@/components/nen";
 import type { ThuocKhoangTinCayProps } from "@/components/bieu-do/ThuocKhoangTinCay";
 import { mmss } from "@/lib/livelift-api/desk";
-import { CHO_CANON, KET_LUAN_THEO_MA, type MaKetLuan } from "@/lib/tu-ngu";
+import { CAU_HOI_LON } from "@/components/trang-chu/noi-dung";
+import { KET_LUAN_THEO_MA, LOI_THUONG, type MaKetLuan } from "@/lib/tu-ngu";
 
 const hoaDau = (chu: string): string => chu.charAt(0).toUpperCase() + chu.slice(1);
 
@@ -57,13 +58,17 @@ export interface TheDoiDauProps {
   hienKetQua: boolean;
   /** Số cho thước, chỉ đọc khi hienKetQua. */
   thuoc: Pick<ThuocKhoangTinCayProps, "uocLuong" | "thap" | "cao" | "lyDo">;
-  /** Mã kết luận khi đã có ước lượng. */
+  /** Mã kết luận khi đã có ước lượng (hoặc ĐO THÊM khi chưa đủ khối). */
   ketLuan: MaKetLuan | null;
+  /** Câu đi kèm kết luận khi không có thước (chưa đủ khối: LOI_THUONG.chuaDuKhoi). */
+  cauKetLuan?: string | null;
   nhanNguon: MaNhan;
   /** Dòng giải thích khi mở sớm (MÔ PHỎNG, DÀN DỰNG). */
   dongMoSom?: string | null;
   /** Giây còn lại tới hết phiên (khi đang khoá và đang live); null thì không hiện. */
   conLaiS?: number | null;
+  /** Phiên quan sát (không bốc thăm): không có ổ khoá, không hứa so BẬT với TẮT. */
+  quanSat?: boolean;
 }
 
 /**
@@ -71,20 +76,31 @@ export interface TheDoiDauProps {
  * Trái: đoán theo số liệu cũ (tương quan) kèm nhãn rủi ro. Phải: LiveLift bốc thăm; khoá tới hết phiên trừ khi
  * máy chủ đã mở khoá.
  */
-export function TheDoiDau({ goiY, ghiChuGoiY, hienKetQua, thuoc, ketLuan, nhanNguon, dongMoSom, conLaiS }: TheDoiDauProps) {
+export function TheDoiDau({
+  goiY,
+  ghiChuGoiY,
+  hienKetQua,
+  thuoc,
+  ketLuan,
+  cauKetLuan,
+  nhanNguon,
+  dongMoSom,
+  conLaiS,
+  quanSat = false,
+}: TheDoiDauProps) {
   const kl = ketLuan ? KET_LUAN_THEO_MA[ketLuan] : null;
   return (
     <section className="ban-the ban-doi-dau" aria-labelledby="ban-h-doi-dau" data-chup="the-doi-dau">
       <div className="ban-doi-dau__dau">
         <p className="ban-phu">Hai cách trả lời cùng một câu hỏi</p>
         <h2 id="ban-h-doi-dau" className="ban-doi-dau__cau-hoi">
-          Ghim món này, khách có bấm nhiều hơn không?
+          {CAU_HOI_LON}
         </h2>
       </div>
       <div className="ban-doi-dau__hai">
         <div className="ban-doi-dau__ben" data-ben="tuong-quan">
           <p className="ban-doi-dau__ten">
-            {hoaDau(CHO_CANON.tuongQuan)} <span className="ban-phu">(tương quan)</span>
+            {hoaDau(LOI_THUONG.tuongQuan)} <span className="ban-phu">(tương quan)</span>
           </p>
           {goiY ? (
             <>
@@ -96,8 +112,8 @@ export function TheDoiDau({ goiY, ghiChuGoiY, hienKetQua, thuoc, ketLuan, nhanNg
           )}
           <HinhNhamLan />
           <p className="ban-doi-dau__cach">
-            Cách này nhìn số cũ: lúc ghim thì khách nhấp nhiều hơn. Nhưng lúc ghim cũng hay là lúc đông khách, nên không tách được
-            nhờ ghim hay nhờ giờ.
+            Cách này nhìn số cũ: lúc ghim thì khách nhấp nhiều hơn. Nhưng lúc ghim cũng hay là lúc đông khách, nên không biết
+            khách nhấp vì ghim hay vì đông người.
           </p>
           <div className="ban-doi-dau__nhan">
             <Chip tone="vang">Dễ nhầm</Chip>
@@ -109,14 +125,24 @@ export function TheDoiDau({ goiY, ghiChuGoiY, hienKetQua, thuoc, ketLuan, nhanNg
             <p className="ban-doi-dau__ten">LiveLift bốc thăm</p>
             {hienKetQua ? <NhanNguon ma={nhanNguon} canh="phai" /> : null}
           </div>
-          {hienKetQua ? (
+          {quanSat ? (
+            <div className="ban-doi-dau__khoa" data-testid="ban-quan-sat">
+              <p className="ban-doi-dau__goi-y">Phiên quan sát: không bốc thăm nên không so BẬT với TẮT</p>
+              <p className="ban-phu">Lần sau chạy phiên có bốc thăm BẬT/TẮT để biết ghim có làm khách bấm mua nhiều hơn không.</p>
+            </div>
+          ) : hienKetQua ? (
             <>
               {kl ? (
                 <p className="ban-doi-dau__ket-luan" data-ket-luan={kl.id}>
                   {kl.chu}
                 </p>
               ) : null}
-              <ThuocKhoangTinCay khoa={false} {...thuoc} gon muc={3} tieuDe="Khoảng tin cậy của chênh lệch BẬT trừ TẮT" />
+              {cauKetLuan ? (
+                <p className="ban-doi-dau__cach" data-testid="ban-cau-chua-du-khoi">
+                  {cauKetLuan}
+                </p>
+              ) : null}
+              <ThuocKhoangTinCay khoa={false} {...thuoc} gon muc={3} tieuDe="Khoảng tin cậy 95% của chênh lệch BẬT trừ TẮT" />
               {dongMoSom ? <p className="ban-phu">{dongMoSom}</p> : null}
             </>
           ) : (
