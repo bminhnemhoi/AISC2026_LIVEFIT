@@ -3962,6 +3962,11 @@
   font-weight: var(--w-semibold, 600);
   letter-spacing: -0.025em;
 }
+.ld .wordmark-text {
+  font-weight: var(--w-strong);
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
 .ld .wordmark-i {
   position: relative;
   display: inline-block;
@@ -4308,7 +4313,8 @@
   --brand-kraft: #8f7a58;
   --brand-note: #3b332d;
 }
-.ld .brand { display: block; width: 100%; height: auto; overflow: visible; }
+/* Component sizes must win even when client navigation loads this shared sheet last. */
+.ld :where(.brand) { display: block; width: 100%; height: auto; overflow: visible; }
 .ld .bf-ink { fill: var(--ink); }
 .ld .bs-ink { stroke: var(--ink); }
 .ld .bf-paper { fill: var(--paper); }

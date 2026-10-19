@@ -9,6 +9,7 @@ import { IconClose, IconKeyboard, IconMoon, IconRoute, IconSun } from "./icons";
 import { useDeskPrefs, type DeskLang, type DeskPrefs } from "./prefs";
 import { Sheet } from "./Sheet";
 import { SimTag } from "./ui";
+import { LogoMark, WordmarkText } from "./LogoMark";
 import "./calm.css";
 
 /**
@@ -138,21 +139,6 @@ function JourneyPanel({ c, stage, setStage, onClose, onDesk }: { c: DeskCopy; st
   );
 }
 
-/** The LiveLift mark, the team's logo redrawn flat: an L with a fold, a growth bar, a lift arrow and live-signal arcs. Same
- * geometry as docs/brand/logo (build_logo.py). Colours come from the theme tokens. */
-function LogoMark() {
-  return (
-    <svg className="logo-mark" viewBox="270 190 780 780" width="36" height="36" aria-hidden="true" focusable="false">
-      <path className="logo-ink" d="M530 248 V812 H430 C350 812 310 770 310 700 V440 C310 415 322 402 342 390 Z" />
-      <path className="logo-ink" d="M310 760 C310 900 380 962 480 962 H975 L905 848 H520 C400 848 330 815 310 760 Z" />
-      <path className="logo-acc" d="M700 342 V780 H570 V398 Z" />
-      <path className="logo-acc" d="M520 815 C660 805 800 725 810 553 L733 553 L855 425 L975 553 L912 553 C905 700 800 815 640 818 Z" />
-      <path className="logo-arc" d="M815 228 C910 230 985 300 1000 410" />
-      <path className="logo-arc" d="M818 312 C870 315 915 350 922 405" />
-    </svg>
-  );
-}
-
 function Nav({ screen, c }: { screen: DeskScreen; c: DeskCopy }) {
   const live = useCurrentLive();
   const deskHref = live ? `/desk/${encodeURIComponent(live.id)}` : null;
@@ -255,7 +241,7 @@ export function Shell({ screen, children, headerStatus, headerEnd, dockStart, do
         data-presenter={presenter ? "1" : "0"} lang={lang} data-testid="livedesk-frame" data-screen={screen}>
         <header className="hdr">
           <div className="hdr-brand">
-            <Link href="/" className="wordmark" aria-label={`LiveLift, ${c.home}`}><LogoMark />{/* L3: one weight; the dot of the i in "Lift" is a small upward wedge (the link's label carries the name) */}<span>Live<span className="wordmark-lift">L<span className="wordmark-i">ı</span>ft</span></span></Link>
+            <Link href="/home" className="wordmark" aria-label={`LiveLift, ${c.home}`}><LogoMark /><WordmarkText /></Link>
           </div>
           <Nav screen={screen} c={c} />
           <div className="hdr-spacer" />

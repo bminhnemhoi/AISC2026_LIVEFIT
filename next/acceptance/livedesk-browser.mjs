@@ -69,7 +69,7 @@ async function journey(browser, runtime, viewport, run, axePath, report, output,
     report.checks.push({ label, state, status: 'PASS' });
   };
   try {
-    await page.goto(runtime.origin + '/');
+    await page.goto(runtime.origin + '/home');
     await id('home-flow').waitFor();
     // Vietnamese is the default, before anything is stored.
     await page.waitForFunction(() => document.querySelector('[data-testid="livedesk-frame"]')?.getAttribute('lang') === 'vi');
