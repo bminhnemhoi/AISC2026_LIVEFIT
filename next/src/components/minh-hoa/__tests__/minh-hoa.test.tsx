@@ -231,7 +231,7 @@ describe("đồng xu", () => {
     });
     expect(o().filter((x) => x.getAttribute("data-mat") !== "chua")).toHaveLength(16);
     expect(container.textContent).toContain("8 khối BẬT · 8 khối TẮT");
-    expect(container.textContent).toContain("BẬT: LiveLift ghim");
+    expect(container.textContent).toContain("BẬT: ghim món theo lịch");
     expect(container.textContent).toContain("TẮT: đội làm như thường");
     expect(xong).toHaveBeenCalledTimes(1);
   });

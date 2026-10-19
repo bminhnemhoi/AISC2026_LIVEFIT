@@ -160,7 +160,7 @@ describe("đường thời gian", () => {
     render(<DuongThoiGian ticks={live.ticks} batDauTs={live.phien.start_ts} khoi={live.khoi} toNenKhoi nguon={nguonThat} dangLive thoiLuongS={5400} />);
     expect(screen.queryByTestId("bd-dai-khoi")).toBeNull();
     expect(screen.getByTestId("bd-dong-to-nen").textContent).toContain("không tô nền theo khối");
-    expect(screen.queryByText(/BẬT: LiveLift ghim/)).toBeNull();
+    expect(screen.queryByText(/BẬT: ghim món theo lịch/)).toBeNull();
     expect(screen.getByRole("img").getAttribute("aria-label")).not.toContain("Nền tô theo khối");
   });
 
@@ -169,7 +169,7 @@ describe("đường thời gian", () => {
     expect(screen.queryByTestId("bd-dai-khoi")).toBeNull();
     expect(screen.queryByTestId("bd-dong-to-nen")).toBeNull();
     expect(screen.queryByText(/mở khoá sớm/)).toBeNull();
-    expect(screen.queryByText(/BẬT: LiveLift ghim/)).toBeNull();
+    expect(screen.queryByText(/BẬT: ghim món theo lịch/)).toBeNull();
   });
 
   it("phòng THỬ NỘI BỘ đang live: không tô nền theo khối, nói vì sao", () => {
@@ -205,7 +205,7 @@ describe("đường thời gian", () => {
     const dai = screen.getByTestId("bd-dai-khoi");
     expect(dai.querySelectorAll('[data-nhanh="ON"]').length + dai.querySelectorAll('[data-nhanh="OFF"]').length).toBe(16);
     expect(screen.getByTestId("bd-dong-to-nen").textContent).toBe("mở khoá sớm vì MÔ PHỎNG");
-    expect(screen.getByText(/BẬT: LiveLift ghim/)).toBeInTheDocument();
+    expect(screen.getByText(/BẬT: ghim món theo lịch/)).toBeInTheDocument();
     expect(container.querySelector('[data-testid="bd-duong-nguoi-xem"]')?.getAttribute("d")).toMatch(/^M/);
     expect(screen.getByRole("img").getAttribute("aria-label")).toContain("Nền tô theo khối");
   });

@@ -6,7 +6,7 @@
 #
 # Lập 19/10/2026 từ kiểm toán đồng bộ cùng ngày (36 chỗ lệch).
 
-phien_ban: "2026-10-19b"  # bản 3.1: giao diện 2.0, người dẫn AI (D-022)
+phien_ban: "2026-10-19c"  # bản 3.1: giao diện 2.0, người dẫn AI (D-022)
 
 thuat_ngu:
   - dung: "LiveLift"
@@ -19,7 +19,7 @@ thuat_ngu:
 
   - dung: "khối, khối BẬT, khối TẮT"
     cam: ["lát", "bucket", "khúc"]
-    phu_de: "mỗi khối 5 phút, máy tung đồng xu chọn khối nào ghim; BẬT: LiveLift ghim · TẮT: đội làm như thường"
+    phu_de: "mỗi khối 5 phút, máy tung đồng xu chọn khối nào ghim; BẬT: ghim món theo lịch · TẮT: đội làm như thường"
 
   - dung: "bốc thăm"
     cam: ["random"]
@@ -45,10 +45,11 @@ thuat_ngu:
   - dung: "khoảng tin cậy 95% (KTC 95%)"
     cam: []
     ghi_chu: "Trên giao diện viết đủ chữ; KTC chỉ dùng trong slide phương pháp và tài liệu."
-    phu_de: "đo lại nhiều lần thì khoảng 95/100 dải như vậy chứa hiệu quả thật"
+    phu_de: "đo lại 100 lần thì chừng 95 lần dải như vậy chứa hiệu quả thật"
 
   - dung: "kiểm định ngẫu nhiên hoá"
     cam: ["kiểm định hoán vị"]
+    phu_de: "bốc thăm lại lịch nhiều lần để xem chênh lệch đo được có lớn bất thường không"
 
   - dung: "lượt nhấp hợp lệ / 1.000 giây·người xem"
     ngan: "Tỷ lệ nhấp"
@@ -93,6 +94,7 @@ thuat_ngu:
   - dung: "Ghim món của khối này"
     nghia: "nút ghim ở khối BẬT; máy chọn trong nhóm gợi ý, món có thể khác thẻ gợi ý"
     cam: ["Ghim theo gợi ý"]
+    phu_de: "máy chọn trong nhóm gợi ý; món có thể khác thẻ gợi ý"
 
   - dung: "người dẫn AI"
     nghia: "video người dẫn do AI tạo (khuôn mặt và giọng tổng hợp), luôn kèm nhãn NGƯỜI DẪN AI (D-015)"
@@ -162,6 +164,15 @@ ket_luan:
     chu: "ĐO THÊM"
     nhan_thuoc: "ĐO THÊM rồi gộp"
     cau: "Khoảng tin cậy còn chứa 0: chưa đủ bằng chứng theo hướng nào, nên chạy thêm phiên rồi gộp lại."
+
+loi_thuong:
+  # Lời thường trên giao diện (kế hoạch bản 3.1 mục 3); không phải thuật ngữ, không có chữ cấm đi kèm
+  danh_sach_phien_phu_de: "Mỗi phiên chia khối 5 phút, máy tung đồng xu chọn khối nào ghim"
+  tuong_quan: "đoán theo số liệu cũ"
+  lam_mu_mot_phan: "người dẫn không thấy lịch"
+  pheu: "Từ xem đến mua"
+  chi_tiet_nguoi_kiem: "Chi tiết cho người kiểm"
+  chua_du_khoi: "Mới đo được vài khối, chưa đủ để so khối BẬT với khối TẮT. Chạy phiên từ 90 phút trở lên rồi gộp lại."
 
 nhan_cong_bo:
   # Nhãn công bố: không phải nhãn nguồn của số, mà là lời báo cho người xem (D-015, D-022, D-023)

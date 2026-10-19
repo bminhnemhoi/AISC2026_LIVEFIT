@@ -52,7 +52,7 @@ export interface DaiDongXuProps {
 
 /**
  * Dải 16 khối (landing): mỗi khối một đồng xu, lật lần lượt cho tới hết lịch. Đánh số khối 1..n; chú thích theo canon:
- * "BẬT: LiveLift ghim · TẮT: đội làm như thường". Giảm chuyển động thì hiện ngay cả lịch.
+ * "BẬT: ghim món theo lịch · TẮT: đội làm như thường". Giảm chuyển động thì hiện ngay cả lịch.
  */
 export function DaiDongXu({ lich = LICH_MINH_HOA, buocMs = 180, phat = true, choKhiThay = true, nutTungLai = false, nhan = "MINH HOẠ", chuThich = true, onXong, className }: DaiDongXuProps) {
   const giam = useGiamChuyenDong();
@@ -124,7 +124,7 @@ export function DaiDongXu({ lich = LICH_MINH_HOA, buocMs = 180, phat = true, cho
         </p>
         {chuThich && (
           <p className="mh-dai-chu-thich">
-            <span className="mh-o-mau is-bat" aria-hidden="true" />BẬT: LiveLift ghim
+            <span className="mh-o-mau is-bat" aria-hidden="true" />BẬT: ghim món theo lịch
             <span className="mh-cham" aria-hidden="true">·</span>
             <span className="mh-o-mau is-tat" aria-hidden="true" />TẮT: đội làm như thường
           </p>

@@ -8,7 +8,7 @@
  * nên bỏ qua đúng tệp này. Dấu gạch dài viết bằng mã \u2014 để tệp nguồn không chứa ký tự đó.
  */
 
-export const PHIEN_BAN_CANON = "2026-10-19b";
+export const PHIEN_BAN_CANON = "2026-10-19c";
 
 export interface ThuatNgu {
   /** Cách viết đúng (canon). */
@@ -34,7 +34,7 @@ export const THUAT_NGU: readonly ThuatNgu[] = [
   {
     dung: "khối, khối BẬT, khối TẮT",
     cam: ["lát", "bucket", "khúc"],
-    phu_de: "mỗi khối 5 phút, máy tung đồng xu chọn khối nào ghim; BẬT: LiveLift ghim · TẮT: đội làm như thường",
+    phu_de: "mỗi khối 5 phút, máy tung đồng xu chọn khối nào ghim; BẬT: ghim món theo lịch · TẮT: đội làm như thường",
   },
   { dung: "bốc thăm", cam: ["random"] },
   {
@@ -50,9 +50,13 @@ export const THUAT_NGU: readonly ThuatNgu[] = [
     dung: "khoảng tin cậy 95% (KTC 95%)",
     cam: [],
     ghi_chu: "Trên giao diện viết đủ chữ; KTC chỉ dùng trong slide phương pháp và tài liệu.",
-    phu_de: "đo lại nhiều lần thì khoảng 95/100 dải như vậy chứa hiệu quả thật",
+    phu_de: "đo lại 100 lần thì chừng 95 lần dải như vậy chứa hiệu quả thật",
   },
-  { dung: "kiểm định ngẫu nhiên hoá", cam: ["kiểm định hoán vị"] },
+  {
+    dung: "kiểm định ngẫu nhiên hoá",
+    cam: ["kiểm định hoán vị"],
+    phu_de: "bốc thăm lại lịch nhiều lần để xem chênh lệch đo được có lớn bất thường không",
+  },
   {
     dung: "lượt nhấp hợp lệ / 1.000 giây·người xem",
     ngan: "Tỷ lệ nhấp",
@@ -100,6 +104,7 @@ export const THUAT_NGU: readonly ThuatNgu[] = [
     dung: "Ghim món của khối này",
     nghia: "nút ghim ở khối BẬT; máy chọn trong nhóm gợi ý, món có thể khác thẻ gợi ý",
     cam: ["Ghim theo gợi ý"],
+    phu_de: "máy chọn trong nhóm gợi ý; món có thể khác thẻ gợi ý",
   },
   {
     dung: "người dẫn AI",
@@ -341,17 +346,19 @@ export const PHU_DE_KHOI = ((): { chung: string; bat: string; tat: string } => {
   return Object.freeze({ chung, bat: bat.slice("BẬT: ".length), tat: tat.slice("TẮT: ".length) });
 })();
 
-/**
- * Lời thường kế hoạch bản 3.1 (mục 3) đã chốt nhưng CHƯA có trong thuat-ngu.yaml.
- * Đợt ghép phải chép các dòng này vào yaml; khi đó test sẽ đòi chuyển sang TU.
- */
-export const CHO_CANON = Object.freeze({
+/** Lời thường trên giao diện, chép từng chữ từ khoá loi_thuong của thuat-ngu.yaml (test so khớp). */
+export const LOI_THUONG = Object.freeze({
   danhSachPhienPhuDe: "Mỗi phiên chia khối 5 phút, máy tung đồng xu chọn khối nào ghim",
   tuongQuan: "đoán theo số liệu cũ",
   lamMuMotPhan: "người dẫn không thấy lịch",
   pheu: "Từ xem đến mua",
   chiTietNguoiKiem: "Chi tiết cho người kiểm",
+  chuaDuKhoi:
+    "Mới đo được vài khối, chưa đủ để so khối BẬT với khối TẮT. Chạy phiên từ 90 phút trở lên rồi gộp lại.",
 });
+
+/** @deprecated Tên cũ của LOI_THUONG (các cụm này nay đã vào canon). Dùng LOI_THUONG. */
+export const CHO_CANON = LOI_THUONG;
 
 /* ---------- kiểm chữ ---------- */
 

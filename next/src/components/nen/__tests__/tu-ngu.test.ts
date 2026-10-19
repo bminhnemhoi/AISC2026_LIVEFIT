@@ -6,6 +6,7 @@ import {
   CAU_GHIM,
   CHINH_TA,
   CHO_CANON,
+  LOI_THUONG,
   MA_NHAN_CONG_BO,
   MA_NHAN_NGUON,
   NHAN_CONG_BO,
@@ -39,6 +40,7 @@ interface CanonYaml {
   nhan_nguon: Array<{ id: string; hien_thi: string; nghia: string }>;
   nhan_cong_bo: Array<{ id: string; hien_thi: string; nghia: string }>;
   ket_luan: Array<{ id: string; chu: string; nhan_thuoc: string; cau: string }>;
+  loi_thuong: Record<string, string>;
   tu_cam: Array<{ mau: string; ly_do: string }>;
   quy_tac_khac: string[];
   chinh_ta: { dung: string[]; cam: string[] };
@@ -114,7 +116,7 @@ describe("lối tắt TU và phụ đề", () => {
   it("phụ đề khối tách được ba phần", () => {
     expect(PHU_DE_KHOI).toEqual({
       chung: "mỗi khối 5 phút, máy tung đồng xu chọn khối nào ghim",
-      bat: "LiveLift ghim",
+      bat: "ghim món theo lịch",
       tat: "đội làm như thường",
     });
   });
@@ -130,13 +132,12 @@ describe("lối tắt TU và phụ đề", () => {
     expect(() => theoCanon("bàn trợ live")).toThrow(/không thấy/);
   });
 
-  it("lời chờ canon: chưa có trong yaml và tự nó sạch chữ cấm", () => {
-    const tatCaChu = JSON.stringify(canon);
-    for (const chu of Object.values(CHO_CANON)) {
-      expect(timLoiChu(chu, { thuatNgu: true })).toEqual([]);
-      // Khi đã vào yaml thì chuyển sang TU và xoá khỏi CHO_CANON.
-      expect(tatCaChu.includes(chu), `"${chu}" đã có trong yaml: chuyển sang TU`).toBe(false);
-    }
+  it("lời thường: khớp từng chữ khoá loi_thuong của yaml và sạch chữ cấm", () => {
+    const camel = (k: string) => k.replace(/_([a-z])/g, (_m, c: string) => c.toUpperCase());
+    const tuYaml = Object.fromEntries(Object.entries(canon.loi_thuong).map(([k, v]) => [camel(k), v]));
+    expect({ ...LOI_THUONG }).toEqual(tuYaml);
+    expect(CHO_CANON).toBe(LOI_THUONG);
+    for (const chu of Object.values(LOI_THUONG)) expect(timLoiChu(chu, { thuatNgu: true })).toEqual([]);
   });
 });
 
