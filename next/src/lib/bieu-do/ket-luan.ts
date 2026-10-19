@@ -22,7 +22,7 @@ export const KET_LUAN: Readonly<Record<VungKetLuan, MoTaVung>> = {
   do_them: {
     chu: "ĐO THÊM",
     cau: "Khoảng còn chạm vạch 0: chưa đủ bằng chứng theo hướng nào, cần đo thêm phiên.",
-    nhanThuoc: "ĐO THÊM khi chạm 0",
+    nhanThuoc: "ĐO THÊM khi khoảng chạm vạch 0",
   },
   doi: {
     chu: "ĐỔI",

@@ -105,7 +105,8 @@ export interface KhoiDo {
 
 /**
  * Tỷ lệ nhấp của từng khối BẬT/TẮT, mô tả, theo luật của máy chủ. `ketThucTs`: lúc phiên thật sự dừng (khối chưa phát
- * thì không đo được, không phải bằng 0).
+ * thì không đo được, không phải bằng 0). Phiên đang live (không có `ketThucTs`): khối chưa tới (bắt đầu sau điểm đo
+ * cuối) bị bỏ hẳn, không tính là "không đo được".
  */
 export function khoiTuTicks(khoi: Block[], ticks: Tick[], batDauTs: string | null | undefined, ketThucTs?: string | null): KhoiDo[] {
   if (!batDauTs) return [];
@@ -117,6 +118,7 @@ export function khoiTuTicks(khoi: Block[], ticks: Tick[], batDauTs: string | nul
   const out: KhoiDo[] = [];
   for (const b of [...khoi].sort((x, y) => x.start_offset_s - y.start_offset_s)) {
     if (b.is_washout || !b.assignment) continue;
+    if (!ketThucTs && b.start_offset_s >= cuoiDo) continue;
     const dai = b.end_offset_s - b.start_offset_s;
     const tu = b.start_offset_s + Math.min(BO_DAU_KHOI_S, Math.max(dai - 30, 0));
     const den = Math.min(b.end_offset_s, hetPhien);
@@ -201,6 +203,41 @@ export function yDinhSapXep(dem: Record<string, number>, toiDa = 6): DongYDinh[]
   const out = giu.map(([k, n]) => ({ nhan: k, ten: INTENT_DISPLAY[k] ?? k, so: n, tyLe: n / tong }));
   if (khac > 0) out.push({ nhan: "khac", ten: INTENT_DISPLAY.khac, so: khac, tyLe: khac / tong });
   return out;
+}
+
+export interface CuaSo {
+  /** Giây đầu cửa sổ, từ đầu phiên. */
+  tu: number;
+  /** Người xem trung bình trong cửa sổ. */
+  nguoiXem: number;
+  /** Lượt nhấp hợp lệ trong cửa sổ. */
+  nhap: number;
+  /** Tỷ lệ nhấp trong cửa sổ; null khi mẫu số dưới 60 giây·người xem. */
+  tyLeNhap: number | null;
+}
+
+/**
+ * Gộp điểm đo theo cửa sổ `buocS` giây (mặc định 5 phút), cho đường nhỏ của ô số. Mô tả, không dính tới bốc thăm:
+ * cửa sổ cắt theo đồng hồ, không theo khối.
+ */
+export function theoCuaSo(ticks: Tick[], batDauTs: string | null | undefined, buocS = 300): CuaSo[] {
+  if (!batDauTs || buocS <= 0) return [];
+  const tho = diemTho(ticks, batDauTs);
+  const nhom = new Map<number, { tong: number; n: number; nhap: number }>();
+  for (const d of tho) {
+    const k = Math.floor(d.t / buocS);
+    const g = nhom.get(k) ?? { tong: 0, n: 0, nhap: 0 };
+    g.tong += d.nguoiXem;
+    g.n += 1;
+    g.nhap += d.nhap;
+    nhom.set(k, g);
+  }
+  return [...nhom.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([k, g]) => {
+      const phoi = g.tong * O_DO_S;
+      return { tu: k * buocS, nguoiXem: g.tong / g.n, nhap: g.nhap, tyLeNhap: phoi >= PHOI_TOI_THIEU ? (g.nhap / phoi) * 1000 : null };
+    });
 }
 
 /** Đỉnh người xem cùng lúc trong các điểm đo. */

@@ -148,6 +148,21 @@ nhan_nguon:
     hien_thi: "MÀN MẪU"
     nghia: "ảnh giao diện chạy bằng dữ liệu mẫu"
 
+ket_luan:
+  # Một bộ câu duy nhất cho ĐỔI / GIỮ / ĐO THÊM: thước khoảng tin cậy, CoChe, bàn thí nghiệm, tổng kết đọc từ đây (D-022)
+  - id: DOI
+    chu: "ĐỔI"
+    nhan_thuoc: "ĐỔI sang cách ghim của LiveLift"
+    cau: "Cả khoảng tin cậy nằm trên 0: ghim theo lịch của LiveLift tạo thêm lượt nhấp so với cách làm thường lệ, nên đổi sang."
+  - id: GIU
+    chu: "GIỮ"
+    nhan_thuoc: "GIỮ cách làm cũ"
+    cau: "Cả khoảng tin cậy nằm dưới 0: cách ghim của LiveLift kém hơn cách làm thường lệ, nên giữ cách cũ."
+  - id: DO_THEM
+    chu: "ĐO THÊM"
+    nhan_thuoc: "ĐO THÊM rồi gộp"
+    cau: "Khoảng tin cậy còn chứa 0: chưa đủ bằng chứng theo hướng nào, nên chạy thêm phiên rồi gộp lại."
+
 nhan_cong_bo:
   # Nhãn công bố: không phải nhãn nguồn của số, mà là lời báo cho người xem (D-015, D-022, D-023)
   - id: NGUOI_DAN_AI

@@ -236,16 +236,17 @@
 }
 
 /* ---------- điện thoại bấm link: gợn, +1, ngón tay ---------- */
+/* ba lần chạm rồi dừng (4,8 giây, dưới ngưỡng 5 giây của WCAG 2.2.2) */
 .mh-bam-link .mh-gon {
   transform-box: fill-box;
   transform-origin: center;
-  animation: mh-gon 1600ms ease-out infinite;
+  animation: mh-gon 1600ms ease-out 3;
 }
 .mh-bam-link .mh-cong-mot {
-  animation: mh-cong-mot 1600ms ease-out infinite;
+  animation: mh-cong-mot 1600ms ease-out 3;
 }
 .mh-bam-link .mh-ngon-tay {
-  animation: mh-cham 1600ms ease-in-out infinite;
+  animation: mh-cham 1600ms ease-in-out 3;
 }
 @keyframes mh-gon {
   0%, 18% { transform: scale(0.4); opacity: 0; }
@@ -260,6 +261,17 @@
 @keyframes mh-cham {
   0%, 100% { transform: translate(4px, 8px); }
   20% { transform: translate(0, 0); }
+}
+
+/* ---------- điện thoại trong khối BẬT: thẻ ghim hiện ra (chỉ khi cha có lớp mh-dong) ---------- */
+/* chạy một lần (dưới 5 giây, WCAG 2.2.2); khung đầu và khung cuối đều thấy thẻ, nên ảnh chụp nào cũng có thẻ ghim */
+.mh-dong .mh-the-ghim {
+  animation: mh-the-ghim 3200ms ease-in-out 600ms 1 both;
+}
+@keyframes mh-the-ghim {
+  0%, 20% { transform: translateY(0); opacity: 1; }
+  32%, 48% { transform: translateY(8px); opacity: 0; }
+  64%, 100% { transform: translateY(0); opacity: 1; }
 }
 
 /* ---------- trạng thái trống ---------- */
@@ -305,6 +317,7 @@
   .mh-bam-link .mh-ngon-tay {
     animation: none;
   }
+  .mh-dong .mh-the-ghim { animation: none; }
   .mh-bam-link .mh-gon { opacity: 0.6; transform: scale(1.4); }
   .mh-nut { transition: none; }
 }
@@ -312,6 +325,7 @@
 [data-motion="reduce"] .mh-xu-vao,
 [data-motion="reduce"] .mh-bam-link .mh-gon,
 [data-motion="reduce"] .mh-bam-link .mh-cong-mot,
-[data-motion="reduce"] .mh-bam-link .mh-ngon-tay {
+[data-motion="reduce"] .mh-bam-link .mh-ngon-tay,
+[data-motion="reduce"] .mh-dong .mh-the-ghim {
   animation: none;
 }

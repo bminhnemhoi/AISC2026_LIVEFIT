@@ -1,0 +1,150 @@
+# Cảnh chụp cho K8 (kế hoạch bản 3.1 mục 7): slide 01, 13, 14, M1–M3, thêm M4 = landing.
+# Sửa danh sách ở đây, không sửa chup_next.py. Mỗi cảnh ra AISC26_Vong2/deck18/anh-moi/<ten>.png
+# (KHÔNG BAO GIỜ ghi vào deck18/anh/: ảnh K7 đã nộp giữ nguyên; deck đổi đường dẫn khi dựng K8).
+#
+# Khoá của một cảnh:
+#   ten         tên tệp (không đuôi); trùng tên ảnh cũ trong deck18/anh/ khi cảnh thay ảnh đó
+#   slide       mã trang dùng ảnh (lọc bằng --canh 13 hoặc --canh M4)
+#   tuyen       đường dẫn trên Next; chỗ giữ {phien_live} {phien_doi} {phien_do_them} {phien_chua_du}
+#               {phien_lab} lấy từ GET /sessions; {ma_phong} chỉ lấy từ --ma-phong (phòng riêng để chụp)
+#   phan_tu     tên trong [data-chup="..."]; bỏ trống = chụp khung nhìn; "toan-trang" = cả trang
+#   khung       [rộng, cao] theo px CSS;  dsf: device scale factor (ảnh ra = khung × dsf)
+#   dien_thoai  true: giả lập điện thoại (is_mobile, cảm ứng)
+#   buoc        thao tác trước khi chụp, theo thứ tự:
+#                 bam: "<bộ chọn>" hoặc [bộ chọn 1, bộ chọn 2, ...]   bấm cái đầu tiên đang hiện
+#                 cho: "<bộ chọn>" hoặc danh sách; trong_ms: 15000     chờ cái đầu tiên hiện ra
+#                 doi_ms: 500                                          đợi thêm
+#               bộ chọn là CSS, hoặc cú pháp Playwright như "text=Tôi đồng ý và vào phòng"
+#   cho_ms      đợi thêm trước khi chụp (số đếm lên 800 ms, đồng xu lật 600 ms)
+#   ghi_chu     vì sao, đơn vị nào gắn data-chup
+#
+# Tên data-chup các đơn vị đợt 2 cần gắn (một phần tử mỗi tên trên trang):
+#   U6 /phien                      danh-sach
+#   U4 /phien/[id]                 the-doi-dau (hàng 3: hai câu trả lời cho cùng một câu hỏi)
+#   U4 /phien/[id]/nguoi-dan       nguoi-dan
+#   U5 /phien/[id]/tong-ket        ket-luan (thẻ kết luận + thước khoảng tin cậy)
+#   U7 /xem/[code]                 data-chup-bam="dong-y" trên nút đồng ý (bộ chọn chữ là đường lui)
+#   U8 /gioi-thieu                 hero, dai-khoi (dải 16 khối có đồng xu)
+# Phần tử không muốn vào ảnh (nút dev, thông báo tạm): gắn data-an-khi-chup (ẩn, giữ chỗ) hoặc
+# data-an-khi-chup="bo" (bỏ hẳn khỏi bố cục).
+
+mac_dinh:
+  khung: [1600, 1000]
+  dsf: 2
+  cho_ms: 1200
+
+canh:
+  # ---------------------------------------------------------------- slide 01, 14, M1
+  - ten: ban-thi-nghiem
+    slide: ["01", "14", "M1"]
+    tuyen: /phien/{phien_live}
+    khung: [1600, 1000]
+    dsf: 2
+    ghi_chu: "Cả khung nhìn bàn thí nghiệm của phiên đang phát (MÔ PHỎNG). Ảnh K7 3200×2000, giữ cỡ để khung laptop của deck không đổi."
+
+  # ---------------------------------------------------------------- slide 01, 14, M3 (điện thoại)
+  - ten: xem-dang-ghim
+    slide: ["01", "14", "M3"]
+    tuyen: /xem/{ma_phong}
+    khung: [390, 844]
+    dsf: 3
+    dien_thoai: true
+    buoc:
+      - bam: ["[data-chup-bam='dong-y']", "[data-testid='xem-consent'] button.ph-btn-primary", "text=Tôi đồng ý và vào phòng"]
+      - cho: ["[data-testid='xem-room']"]
+      - cho: ["[data-chup='the-ghim']", "[data-testid='xem-pinned']"]
+        trong_ms: 20000
+    ghi_chu: "Phòng xem khi khối BẬT có thẻ ghim. Khối đang TẮT thì bước chờ hết giờ: chạy lại khi tới khối BẬT. Cần phòng riêng (--ma-phong), không dùng phòng thử nội bộ."
+
+  - ten: xem-dong-y
+    slide: ["M3"]
+    tuyen: /xem/{ma_phong}
+    khung: [390, 844]
+    dsf: 3
+    dien_thoai: true
+    buoc:
+      - cho: ["[data-testid='xem-consent']", "text=Tôi đồng ý và vào phòng"]
+    ghi_chu: "Màn đồng ý trước khi vào phòng (chưa đồng ý thì không ghi gì)."
+
+  - ten: xem-rut-lui
+    slide: ["M3"]
+    tuyen: /xem/{ma_phong}
+    khung: [390, 844]
+    dsf: 3
+    dien_thoai: true
+    buoc:
+      - bam: ["[data-chup-bam='dong-y']", "[data-testid='xem-consent'] button.ph-btn-primary", "text=Tôi đồng ý và vào phòng"]
+      - cho: ["[data-testid='xem-room']"]
+      - bam: ["[data-chup-bam='rut-lui']", "text=Rút lui khỏi nghiên cứu"]
+      - bam: ["[data-chup-bam='xac-nhan-rut-lui']", "text=Xác nhận rút lui"]
+      - cho: ["[data-testid='xem-withdrawn']", "text=Bạn đã rút lui"]
+    ghi_chu: "Rút lui thật trên phòng riêng: xoá dữ liệu của chính người xem vừa tạo trong lượt chụp."
+
+  # ---------------------------------------------------------------- slide 14, M3
+  - ten: nguoi-dan
+    slide: ["14", "M3"]
+    tuyen: /phien/{phien_live}/nguoi-dan
+    phan_tu: nguoi-dan
+    khung: [1280, 720]
+    dsf: 2
+    ghi_chu: "Màn người dẫn kiểu máy nhắc chữ (U4 gắn data-chup='nguoi-dan'). Không bao giờ hiện BẬT/TẮT."
+
+  # ---------------------------------------------------------------- slide 13
+  - ten: danh-sach
+    slide: ["13"]
+    tuyen: /phien
+    phan_tu: danh-sach
+    khung: [1280, 800]
+    dsf: 2
+    ghi_chu: "Danh sách phiên theo giao diện mới (U6 gắn data-chup='danh-sach'). Ảnh K7 2400×1379."
+
+  - ten: the-doi-dau
+    slide: ["13"]
+    tuyen: /phien/{phien_live}
+    phan_tu: the-doi-dau
+    khung: [1600, 1000]
+    dsf: 2
+    ghi_chu: "Hàng 3 bàn thí nghiệm: hai câu trả lời cho cùng một câu hỏi (U4)."
+
+  # ---------------------------------------------------------------- slide 13, M2
+  - ten: tong-ket-doi
+    slide: ["13", "M2"]
+    tuyen: /phien/{phien_doi}/tong-ket
+    phan_tu: ket-luan
+    khung: [1280, 800]
+    dsf: 2
+    ghi_chu: "Thẻ kết luận ĐỔI và thước khoảng tin cậy (U5 gắn data-chup='ket-luan')."
+
+  - ten: tong-ket-do-them
+    slide: ["M2"]
+    tuyen: /phien/{phien_do_them}/tong-ket
+    phan_tu: ket-luan
+    khung: [1280, 800]
+    dsf: 2
+    ghi_chu: "Thẻ kết luận ĐO THÊM."
+
+  - ten: tong-ket-chua-du
+    slide: ["M2"]
+    tuyen: /phien/{phien_chua_du}/tong-ket
+    phan_tu: ket-luan
+    khung: [1280, 800]
+    dsf: 2
+    ghi_chu: "Phiên mới vài khối: không trả số, chỉ báo ĐO THÊM."
+
+  # ---------------------------------------------------------------- M4 = landing
+  - ten: gioi-thieu
+    slide: ["M4"]
+    tuyen: /gioi-thieu
+    khung: [1600, 1000]
+    dsf: 2
+    cho_ms: 1500
+    ghi_chu: "Màn đầu landing: câu hỏi, câu định vị, nút, điện thoại thẳng (art.tsx gắn MINH HOẠ), dải 16 khối."
+
+  - ten: gioi-thieu-dai-khoi
+    slide: ["M4"]
+    tuyen: /gioi-thieu
+    phan_tu: dai-khoi
+    khung: [1600, 1000]
+    dsf: 2
+    cho_ms: 1500
+    ghi_chu: "Dải 16 khối có đồng xu (U8 gắn data-chup='dai-khoi'); dùng khi trang M4 cần cắt riêng."

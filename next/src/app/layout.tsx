@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
 import { connection } from "next/server";
 import { LiveAnnouncer } from "@/components/ui/LiveAnnouncer";
@@ -11,15 +11,13 @@ const rubik = Rubik({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "LiveLift — Livestream Commerce Operational Desk",
-  description:
-    "Operational decision, evidence, replay, and learning workspace for livestream commerce.",
-};
+/** Câu định vị dùng nguyên văn (docs/canon). */
+const CAU_DINH_VI =
+  "LiveLift giúp người bán livestream tự đo xem việc ghim một sản phẩm có thật sự làm khách bấm mua nhiều hơn, bằng cách bốc thăm bật/tắt theo từng khối 5 phút thay vì đoán theo tương quan.";
 
-export const viewport: Viewport = {
-  themeColor: "#090B0F",
-  colorScheme: "dark",
+export const metadata: Metadata = {
+  title: { default: "LiveLift · Đo hiệu quả ghim sản phẩm khi livestream", template: "%s · LiveLift" },
+  description: CAU_DINH_VI,
 };
 
 export default async function RootLayout({
@@ -34,13 +32,15 @@ export default async function RootLayout({
   await connection();
 
   return (
-    <html lang="en" className="dark">
-      <body className={`${rubik.variable} min-h-screen bg-[#090B0F] text-[#F5F7FC] antialiased`}>
+    // Không đặt lớp "dark" hay themeColor: trang cũ vẫn tối nhờ globals.css (body dùng --bg-canvas), Live Desk (.ld)
+    // tự đặt nền và giao diện; trang có khung 2.0 (components/nen) tự đổi body sang nền kem.
+    <html lang="vi">
+      <body className={`${rubik.variable} min-h-screen antialiased`}>
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-[8px] focus:bg-[#DFFF00] focus:px-4 focus:py-2 focus:font-medium focus:text-[#111407]"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-[8px] focus:bg-[#2a2522] focus:px-4 focus:py-3 focus:font-medium focus:text-[#fff9f2] focus:outline-2 focus:outline-offset-2 focus:outline-[#f6f3ee]"
         >
-          Skip to main content
+          Bỏ qua, tới nội dung chính
         </a>
         {children}
         <LiveAnnouncer />

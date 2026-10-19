@@ -5,7 +5,7 @@ export { Goc, NhanDan, NET, NET_MANH, chuNhat, tron, socChuNhat, socTron, type H
 export { AoThun, TuiTote, BinhGiuNhiet, KepToc, BO_HANG, timMon, boDau, HinhMon, type MaMon, type MonHang } from "./hang";
 export { MatXu, LICH_MINH_HOA, TEN_MAT, demLich, type MatKhoi, type MatXuKieu } from "./mat-xu";
 export { DongXu, DaiDongXu, type DaiDongXuProps } from "./dong-xu";
-export { LichNiemPhong, DienThoaiBamLink, CanCan, GioHang, NguoiDanVeTay, HinhTrong, TrangThaiTrong } from "./hinh";
+export { LichNiemPhong, DienThoaiBamLink, DienThoaiKhoi, CanCan, GioHang, NguoiDanVeTay, HinhTrong, TrangThaiTrong } from "./hinh";
 export { NHIP, useGiamChuyenDong, muonGiamChuyenDong } from "./chuyen-dong";
 export { StartArt, RecapArt, LegacyArt, StepArt, UnknownSticker, EmptyArt } from "./art";
 export * as Brand from "./brand";

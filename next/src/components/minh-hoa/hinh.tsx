@@ -102,6 +102,61 @@ export function DienThoaiBamLink({ mon = "ao-thun", ...p }: HinhProps & { mon?: 
   );
 }
 
+/* ---------- điện thoại trong một khối BẬT / TẮT ---------- */
+
+/**
+ * Điện thoại đang live trong một khối. BẬT: chip B xanh, thẻ món có tem GHIM (LiveLift vừa ghim). TẮT: chip T xám có
+ * sọc, LiveLift để yên; thẻ món cũ mờ, viền nét đứt (món ghim từ trước có thể vẫn hiện, D-012).
+ */
+export function DienThoaiKhoi({ khoi, mon = "ao-thun", ...p }: HinhProps & { khoi: MatKhoi; mon?: MaMon }) {
+  const Mon = HINH_MON[mon];
+  const bat = khoi === "bat";
+  return (
+    <Goc viewBox="0 0 152 222" {...p} className={`mh-dien-thoai-khoi${p.className ? ` ${p.className}` : ""}`} data-khoi={khoi}>
+      <NhanDan d={chuNhat(24, 8, 104, 206, 20)}>
+        <rect x="34" y="26" width="84" height="172" rx="10" fill={MAU.kem} stroke={MAU.mucNau} strokeWidth={2} />
+        <rect x="62" y="15" width="28" height="5" rx="2.5" fill={MAU.mucNau} />
+        <g transform="translate(42 34)">
+          <rect width="34" height="14" rx="7" fill={MAU.gach} />
+          <text x="20" y="10.2" textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={8} fill="#ffffff">LIVE</text>
+          <circle cx="7" cy="7" r="2.4" fill="#ffffff" />
+        </g>
+        {/* chip khối: B xanh hoặc T xám có sọc */}
+        {bat ? (
+          <g>
+            <rect x="92" y="33" width="18" height="16" rx="4" fill={MAU.bat} />
+            <text x="101" y="45" textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={11} fill="#ffffff">B</text>
+          </g>
+        ) : (
+          <g>
+            <rect x="92" y="33" width="18" height="16" rx="4" fill={MAU.tatNhat} stroke={MAU.tat} strokeWidth={1} />
+            <path d={socChuNhat(93, 34, 16, 14, 4)} stroke={MAU.tat} strokeWidth={1} />
+            <rect x="96" y="36" width="10" height="10" rx="2" fill={MAU.le} />
+            <text x="101" y="45" textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={11} fill={MAU.muc}>T</text>
+          </g>
+        )}
+        <path d="M44 112h40M44 122h28" {...NET_MANH} opacity={0.5} />
+        {bat ? (
+          <g className="mh-the-ghim">
+            <rect x="40" y="142" width="72" height="48" rx="6" fill={MAU.le} stroke={MAU.mucNau} strokeWidth={1.8} />
+            <Mon x={43} y={148} width={30} height={30} />
+            <path d="M78 156h28M78 166h18" {...NET_MANH} />
+            {/* tem GHIM */}
+            <rect x="40" y="128" width="40" height="15" rx="7.5" fill={MAU.bat} stroke={MAU.le} strokeWidth={1.5} />
+            <text x="60" y="139" textAnchor="middle" fontFamily={PHONG} fontWeight={700} fontSize={8.5} fill="#ffffff">GHIM</text>
+          </g>
+        ) : (
+          <g opacity={0.6}>
+            <rect x="40" y="142" width="72" height="48" rx="6" fill={MAU.giay} stroke={MAU.mucNhat} strokeWidth={1.4} strokeDasharray="4 3" />
+            <Mon x={43} y={148} width={30} height={30} />
+            <path d="M78 156h28M78 166h18" {...NET_MANH} stroke={MAU.mucNhat} />
+          </g>
+        )}
+      </NhanDan>
+    </Goc>
+  );
+}
+
 /* ---------- cán cân ---------- */
 
 /**

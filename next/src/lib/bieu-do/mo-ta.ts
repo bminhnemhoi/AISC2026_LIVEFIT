@@ -6,7 +6,7 @@ import { doDai, phanTram, soDau, soGon, soNguyen } from "./so";
 
 /**
  * Câu mô tả thay ảnh cho từng biểu đồ (aria-label của vùng vẽ). Dựng từ đúng các số đang vẽ, không thêm số nào khác.
- * Không có dấu gạch dài, không chữ tắt "KTC" (thuat-ngu.yaml: trên giao diện viết đủ chữ).
+ * Không có dấu gạch dài, không viết tắt "khoảng tin cậy" (thuat-ngu.yaml: trên giao diện viết đủ chữ).
  */
 
 export function moTaDuongThoiGian(diem: DiemThoiGian[], tuyChon: { cuaSoS?: number; dai?: DaiKhoi[] | null } = {}): string {
@@ -40,8 +40,12 @@ export function moTaCham(khoi: KhoiDo[], tb: TrungBinhNhanh): string {
   return `${khoi.length} khối: ${tb.nBat} khối BẬT đo được, ${tb.nTat} khối TẮT đo được${bo}. Trung bình Tỷ lệ nhấp: BẬT ${bat}, TẮT ${tat} ${TY_LE_NHAP_DAY_DU}. Chấm là mô tả từng khối; kết luận lấy từ phân tích đã đăng ký trước.`;
 }
 
+function chuThuongDau(s: string): string {
+  return s ? s[0].toLocaleLowerCase("vi") + s.slice(1) : s;
+}
+
 function cauDong(d: DongRung): string {
-  if (!d.coSo) return `${d.ten}: chưa có ước lượng (${d.lyDo.replace(/\.$/, "")})`;
+  if (!d.coSo) return `${d.ten}: chưa có ước lượng; ${chuThuongDau(d.lyDo.replace(/\.$/, ""))}`;
   return `${d.ten}: ${soDau(d.uocLuong)}, khoảng từ ${soDau(d.thap)} đến ${soDau(d.cao)}, ${KET_LUAN[d.vung].chu}`;
 }
 

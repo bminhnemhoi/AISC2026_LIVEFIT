@@ -1,0 +1,1772 @@
+{
+ "_nguon": "GET http://127.0.0.1:8000 19/10/2026, phien mau (is_demo/dry_run), binh luan da bo chu",
+ "phien": {
+  "session_id": "635571a0-8671-41d7-a056-38818bfba4ad",
+  "platform": "sim",
+  "title": "Demo vàng · ĐỔI #1",
+  "mode": "auto",
+  "status": "ended",
+  "planned_duration_min": 90,
+  "start_ts": "2026-10-18T11:22:32.023506Z",
+  "end_ts": "2026-10-18T12:52:32.023506Z",
+  "dry_run": false,
+  "is_demo": true
+ },
+ "khoi": [
+  {
+   "block_id": "90361d14-3946-44ac-a1cd-c9f1ed338a4b",
+   "block_index": 0,
+   "phase": "early",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 0,
+   "end_offset_s": 600
+  },
+  {
+   "block_id": "005dc3d2-ef4c-4f95-b4c3-7a319415367f",
+   "block_index": 1,
+   "phase": "early",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 600,
+   "end_offset_s": 900
+  },
+  {
+   "block_id": "25e1e67a-c650-449f-a725-da259c02bef4",
+   "block_index": 2,
+   "phase": "early",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 900,
+   "end_offset_s": 1200
+  },
+  {
+   "block_id": "8877518d-83ce-484f-8518-99c52808302e",
+   "block_index": 3,
+   "phase": "early",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 1200,
+   "end_offset_s": 1500
+  },
+  {
+   "block_id": "d51ad1fa-c304-4c75-836b-da5c2ec67a7e",
+   "block_index": 4,
+   "phase": "early",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 1500,
+   "end_offset_s": 1800
+  },
+  {
+   "block_id": "e138a1fc-2a2a-40ad-9865-8eabde3536cf",
+   "block_index": 5,
+   "phase": "mid",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 1800,
+   "end_offset_s": 2100
+  },
+  {
+   "block_id": "b05747b9-ef3a-4fe3-8c95-cd5247914759",
+   "block_index": 6,
+   "phase": "mid",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 2100,
+   "end_offset_s": 2400
+  },
+  {
+   "block_id": "947ac51a-88b3-47c8-b18e-732a35ae8857",
+   "block_index": 7,
+   "phase": "mid",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 2400,
+   "end_offset_s": 2700
+  },
+  {
+   "block_id": "2cd2e4fc-11c9-485d-bbe3-450cc65319af",
+   "block_index": 8,
+   "phase": "mid",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 2700,
+   "end_offset_s": 3000
+  },
+  {
+   "block_id": "69646f6c-5cd9-40be-a9e0-d419893bf599",
+   "block_index": 9,
+   "phase": "mid",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 3000,
+   "end_offset_s": 3300
+  },
+  {
+   "block_id": "679df642-b0eb-4395-9683-85df2a1db58b",
+   "block_index": 10,
+   "phase": "mid",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 3300,
+   "end_offset_s": 3600
+  },
+  {
+   "block_id": "c4d24867-fc2d-4470-9538-cf375088f528",
+   "block_index": 11,
+   "phase": "late",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 3600,
+   "end_offset_s": 3900
+  },
+  {
+   "block_id": "2590b2fa-8255-439d-bb05-1cda98262f60",
+   "block_index": 12,
+   "phase": "late",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 3900,
+   "end_offset_s": 4200
+  },
+  {
+   "block_id": "388d449f-a3fa-490f-93e0-2bfe2c8d28ce",
+   "block_index": 13,
+   "phase": "late",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 4200,
+   "end_offset_s": 4500
+  },
+  {
+   "block_id": "77ce7169-bf04-491a-8ea8-25ff95cbd89b",
+   "block_index": 14,
+   "phase": "late",
+   "assignment": "OFF",
+   "is_washout": false,
+   "start_offset_s": 4500,
+   "end_offset_s": 4800
+  },
+  {
+   "block_id": "04d573ed-01ea-4701-90a1-d3327d324fde",
+   "block_index": 15,
+   "phase": "late",
+   "assignment": "ON",
+   "is_washout": false,
+   "start_offset_s": 4800,
+   "end_offset_s": 5400
+  }
+ ],
+ "ticks": [
+  {
+   "ts_bucket": "2026-10-18T11:22:32.023506Z",
+   "viewers": 1.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:23:02.023506Z",
+   "viewers": 1.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:23:32.023506Z",
+   "viewers": 1.6666666666666667,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:24:02.023506Z",
+   "viewers": 3.1666666666666665,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:24:32.023506Z",
+   "viewers": 3.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:25:02.023506Z",
+   "viewers": 3.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:25:32.023506Z",
+   "viewers": 3.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:26:02.023506Z",
+   "viewers": 4.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:26:32.023506Z",
+   "viewers": 4.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:27:02.023506Z",
+   "viewers": 5.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:27:32.023506Z",
+   "viewers": 5.166666666666667,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:28:02.023506Z",
+   "viewers": 8.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:28:32.023506Z",
+   "viewers": 10.833333333333334,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:29:02.023506Z",
+   "viewers": 13.666666666666666,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:29:32.023506Z",
+   "viewers": 15.5,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:30:02.023506Z",
+   "viewers": 16.166666666666668,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:30:32.023506Z",
+   "viewers": 16.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:31:02.023506Z",
+   "viewers": 18.333333333333332,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:31:32.023506Z",
+   "viewers": 20.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:32:02.023506Z",
+   "viewers": 21.666666666666668,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:32:32.023506Z",
+   "viewers": 22.0,
+   "comment_rate": 4.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T11:33:02.023506Z",
+   "viewers": 21.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:33:32.023506Z",
+   "viewers": 21.5,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:34:02.023506Z",
+   "viewers": 22.333333333333332,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:34:32.023506Z",
+   "viewers": 24.166666666666668,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:35:02.023506Z",
+   "viewers": 26.333333333333332,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:35:32.023506Z",
+   "viewers": 28.666666666666668,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:36:02.023506Z",
+   "viewers": 31.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:36:32.023506Z",
+   "viewers": 32.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 5
+  },
+  {
+   "ts_bucket": "2026-10-18T11:37:02.023506Z",
+   "viewers": 33.0,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:37:32.023506Z",
+   "viewers": 31.5,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T11:38:02.023506Z",
+   "viewers": 31.166666666666668,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:38:32.023506Z",
+   "viewers": 31.833333333333332,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:39:02.023506Z",
+   "viewers": 31.0,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:39:32.023506Z",
+   "viewers": 33.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:40:02.023506Z",
+   "viewers": 32.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:40:32.023506Z",
+   "viewers": 34.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 5
+  },
+  {
+   "ts_bucket": "2026-10-18T11:41:02.023506Z",
+   "viewers": 36.833333333333336,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:41:32.023506Z",
+   "viewers": 38.0,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T11:42:02.023506Z",
+   "viewers": 37.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T11:42:32.023506Z",
+   "viewers": 38.0,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T11:43:02.023506Z",
+   "viewers": 37.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:43:32.023506Z",
+   "viewers": 37.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:44:02.023506Z",
+   "viewers": 38.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:44:32.023506Z",
+   "viewers": 40.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:45:02.023506Z",
+   "viewers": 40.166666666666664,
+   "comment_rate": 4.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:45:32.023506Z",
+   "viewers": 40.0,
+   "comment_rate": 4.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:46:02.023506Z",
+   "viewers": 40.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:46:32.023506Z",
+   "viewers": 39.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:47:02.023506Z",
+   "viewers": 40.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:47:32.023506Z",
+   "viewers": 37.833333333333336,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T11:48:02.023506Z",
+   "viewers": 40.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T11:48:32.023506Z",
+   "viewers": 43.0,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:49:02.023506Z",
+   "viewers": 42.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:49:32.023506Z",
+   "viewers": 44.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T11:50:02.023506Z",
+   "viewers": 45.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:50:32.023506Z",
+   "viewers": 45.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:51:02.023506Z",
+   "viewers": 42.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:51:32.023506Z",
+   "viewers": 39.0,
+   "comment_rate": 4.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:52:02.023506Z",
+   "viewers": 40.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:52:32.023506Z",
+   "viewers": 42.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:53:02.023506Z",
+   "viewers": 45.5,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:53:32.023506Z",
+   "viewers": 45.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:54:02.023506Z",
+   "viewers": 41.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:54:32.023506Z",
+   "viewers": 37.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:55:02.023506Z",
+   "viewers": 36.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:55:32.023506Z",
+   "viewers": 36.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T11:56:02.023506Z",
+   "viewers": 35.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:56:32.023506Z",
+   "viewers": 35.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:57:02.023506Z",
+   "viewers": 36.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:57:32.023506Z",
+   "viewers": 38.0,
+   "comment_rate": 0.0,
+   "click_count": 5
+  },
+  {
+   "ts_bucket": "2026-10-18T11:58:02.023506Z",
+   "viewers": 36.5,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:58:32.023506Z",
+   "viewers": 35.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T11:59:02.023506Z",
+   "viewers": 32.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T11:59:32.023506Z",
+   "viewers": 31.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:00:02.023506Z",
+   "viewers": 34.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:00:32.023506Z",
+   "viewers": 37.5,
+   "comment_rate": 0.0,
+   "click_count": 5
+  },
+  {
+   "ts_bucket": "2026-10-18T12:01:02.023506Z",
+   "viewers": 38.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:01:32.023506Z",
+   "viewers": 37.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:02:02.023506Z",
+   "viewers": 37.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:02:32.023506Z",
+   "viewers": 38.0,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:03:02.023506Z",
+   "viewers": 37.0,
+   "comment_rate": 2.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:03:32.023506Z",
+   "viewers": 35.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:04:02.023506Z",
+   "viewers": 41.0,
+   "comment_rate": 4.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:04:32.023506Z",
+   "viewers": 40.0,
+   "comment_rate": 4.0,
+   "click_count": 6
+  },
+  {
+   "ts_bucket": "2026-10-18T12:05:02.023506Z",
+   "viewers": 37.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:05:32.023506Z",
+   "viewers": 35.0,
+   "comment_rate": 4.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:06:02.023506Z",
+   "viewers": 33.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:06:32.023506Z",
+   "viewers": 31.5,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:07:02.023506Z",
+   "viewers": 31.333333333333332,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:07:32.023506Z",
+   "viewers": 30.166666666666668,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:08:02.023506Z",
+   "viewers": 28.0,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:08:32.023506Z",
+   "viewers": 28.166666666666668,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:09:02.023506Z",
+   "viewers": 29.166666666666668,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:09:32.023506Z",
+   "viewers": 29.5,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:10:02.023506Z",
+   "viewers": 29.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:10:32.023506Z",
+   "viewers": 30.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:11:02.023506Z",
+   "viewers": 31.666666666666668,
+   "comment_rate": 0.0,
+   "click_count": 5
+  },
+  {
+   "ts_bucket": "2026-10-18T12:11:32.023506Z",
+   "viewers": 33.5,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:12:02.023506Z",
+   "viewers": 35.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:12:32.023506Z",
+   "viewers": 39.333333333333336,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:13:02.023506Z",
+   "viewers": 40.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:13:32.023506Z",
+   "viewers": 42.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:14:02.023506Z",
+   "viewers": 41.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:14:32.023506Z",
+   "viewers": 42.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:15:02.023506Z",
+   "viewers": 39.5,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:15:32.023506Z",
+   "viewers": 40.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:16:02.023506Z",
+   "viewers": 41.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:16:32.023506Z",
+   "viewers": 41.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:17:02.023506Z",
+   "viewers": 43.0,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:17:32.023506Z",
+   "viewers": 42.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:18:02.023506Z",
+   "viewers": 42.5,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:18:32.023506Z",
+   "viewers": 42.0,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:19:02.023506Z",
+   "viewers": 42.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:19:32.023506Z",
+   "viewers": 43.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:20:02.023506Z",
+   "viewers": 42.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:20:32.023506Z",
+   "viewers": 39.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:21:02.023506Z",
+   "viewers": 40.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:21:32.023506Z",
+   "viewers": 41.5,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:22:02.023506Z",
+   "viewers": 42.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:22:32.023506Z",
+   "viewers": 42.5,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:23:02.023506Z",
+   "viewers": 40.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:23:32.023506Z",
+   "viewers": 38.0,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:24:02.023506Z",
+   "viewers": 39.5,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:24:32.023506Z",
+   "viewers": 41.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:25:02.023506Z",
+   "viewers": 43.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:25:32.023506Z",
+   "viewers": 44.5,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:26:02.023506Z",
+   "viewers": 44.0,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:26:32.023506Z",
+   "viewers": 46.0,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:27:02.023506Z",
+   "viewers": 46.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:27:32.023506Z",
+   "viewers": 47.5,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:28:02.023506Z",
+   "viewers": 49.0,
+   "comment_rate": 2.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:28:32.023506Z",
+   "viewers": 50.833333333333336,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:29:02.023506Z",
+   "viewers": 50.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:29:32.023506Z",
+   "viewers": 52.0,
+   "comment_rate": 0.0,
+   "click_count": 5
+  },
+  {
+   "ts_bucket": "2026-10-18T12:30:02.023506Z",
+   "viewers": 51.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 8
+  },
+  {
+   "ts_bucket": "2026-10-18T12:30:32.023506Z",
+   "viewers": 51.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:31:02.023506Z",
+   "viewers": 53.833333333333336,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:31:32.023506Z",
+   "viewers": 52.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:32:02.023506Z",
+   "viewers": 51.5,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:32:32.023506Z",
+   "viewers": 50.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:33:02.023506Z",
+   "viewers": 52.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:33:32.023506Z",
+   "viewers": 53.5,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:34:02.023506Z",
+   "viewers": 51.833333333333336,
+   "comment_rate": 2.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:34:32.023506Z",
+   "viewers": 50.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:35:02.023506Z",
+   "viewers": 49.5,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:35:32.023506Z",
+   "viewers": 47.0,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:36:02.023506Z",
+   "viewers": 45.5,
+   "comment_rate": 2.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:36:32.023506Z",
+   "viewers": 45.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:37:02.023506Z",
+   "viewers": 46.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:37:32.023506Z",
+   "viewers": 48.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:38:02.023506Z",
+   "viewers": 51.5,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:38:32.023506Z",
+   "viewers": 50.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:39:02.023506Z",
+   "viewers": 50.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:39:32.023506Z",
+   "viewers": 49.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:40:02.023506Z",
+   "viewers": 48.5,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:40:32.023506Z",
+   "viewers": 48.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:41:02.023506Z",
+   "viewers": 47.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:41:32.023506Z",
+   "viewers": 48.5,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:42:02.023506Z",
+   "viewers": 46.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:42:32.023506Z",
+   "viewers": 47.333333333333336,
+   "comment_rate": 2.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:43:02.023506Z",
+   "viewers": 48.0,
+   "comment_rate": 0.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:43:32.023506Z",
+   "viewers": 49.0,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:44:02.023506Z",
+   "viewers": 47.666666666666664,
+   "comment_rate": 2.0,
+   "click_count": 7
+  },
+  {
+   "ts_bucket": "2026-10-18T12:44:32.023506Z",
+   "viewers": 45.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:45:02.023506Z",
+   "viewers": 45.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:45:32.023506Z",
+   "viewers": 46.5,
+   "comment_rate": 6.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:46:02.023506Z",
+   "viewers": 46.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:46:32.023506Z",
+   "viewers": 45.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 7
+  },
+  {
+   "ts_bucket": "2026-10-18T12:47:02.023506Z",
+   "viewers": 44.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:47:32.023506Z",
+   "viewers": 44.166666666666664,
+   "comment_rate": 4.0,
+   "click_count": 4
+  },
+  {
+   "ts_bucket": "2026-10-18T12:48:02.023506Z",
+   "viewers": 42.333333333333336,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:48:32.023506Z",
+   "viewers": 44.5,
+   "comment_rate": 0.0,
+   "click_count": 0
+  },
+  {
+   "ts_bucket": "2026-10-18T12:49:02.023506Z",
+   "viewers": 44.166666666666664,
+   "comment_rate": 0.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:49:32.023506Z",
+   "viewers": 45.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 1
+  },
+  {
+   "ts_bucket": "2026-10-18T12:50:02.023506Z",
+   "viewers": 47.0,
+   "comment_rate": 2.0,
+   "click_count": 3
+  },
+  {
+   "ts_bucket": "2026-10-18T12:50:32.023506Z",
+   "viewers": 45.0,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:51:02.023506Z",
+   "viewers": 44.666666666666664,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:51:32.023506Z",
+   "viewers": 43.833333333333336,
+   "comment_rate": 0.0,
+   "click_count": 2
+  },
+  {
+   "ts_bucket": "2026-10-18T12:52:02.023506Z",
+   "viewers": 43.166666666666664,
+   "comment_rate": 2.0,
+   "click_count": 3
+  }
+ ],
+ "binhLuan": [
+  {
+   "comment_id": "c0",
+   "ts": "2026-10-18T11:32:12.669585Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c1",
+   "ts": "2026-10-18T11:32:38.060630Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c2",
+   "ts": "2026-10-18T11:33:00.229439Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c3",
+   "ts": "2026-10-18T11:35:58.271565Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c4",
+   "ts": "2026-10-18T11:37:15.207711Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c5",
+   "ts": "2026-10-18T11:37:51.450833Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c6",
+   "ts": "2026-10-18T11:39:09.531833Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c7",
+   "ts": "2026-10-18T11:41:04.250373Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c8",
+   "ts": "2026-10-18T11:41:55.193673Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c9",
+   "ts": "2026-10-18T11:45:22.920814Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c10",
+   "ts": "2026-10-18T11:45:27.353009Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c11",
+   "ts": "2026-10-18T11:45:41.120514Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c12",
+   "ts": "2026-10-18T11:45:45.147253Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c13",
+   "ts": "2026-10-18T11:46:42.465873Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c14",
+   "ts": "2026-10-18T11:47:44.573609Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c15",
+   "ts": "2026-10-18T11:48:47.116551Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c16",
+   "ts": "2026-10-18T11:51:53.156722Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c17",
+   "ts": "2026-10-18T11:52:00.214906Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c18",
+   "ts": "2026-10-18T11:52:54.909437Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c19",
+   "ts": "2026-10-18T11:54:04.253604Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c20",
+   "ts": "2026-10-18T11:56:51.257338Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c21",
+   "ts": "2026-10-18T11:58:21.301797Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c22",
+   "ts": "2026-10-18T12:02:50.249842Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c23",
+   "ts": "2026-10-18T12:03:27.288293Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c24",
+   "ts": "2026-10-18T12:04:11.560561Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c25",
+   "ts": "2026-10-18T12:04:17.576708Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c26",
+   "ts": "2026-10-18T12:04:41.712481Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c27",
+   "ts": "2026-10-18T12:04:48.767842Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c28",
+   "ts": "2026-10-18T12:05:35.407111Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c29",
+   "ts": "2026-10-18T12:05:38.441505Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c30",
+   "ts": "2026-10-18T12:06:22.017355Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c31",
+   "ts": "2026-10-18T12:06:59.269965Z",
+   "text": "",
+   "intent": "hoi_gia",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c32",
+   "ts": "2026-10-18T12:09:19.700062Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c33",
+   "ts": "2026-10-18T12:11:34.771201Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c34",
+   "ts": "2026-10-18T12:12:50.621023Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c35",
+   "ts": "2026-10-18T12:19:01.796491Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c36",
+   "ts": "2026-10-18T12:19:17.936498Z",
+   "text": "",
+   "intent": "hoi_size",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c37",
+   "ts": "2026-10-18T12:20:09.069743Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c38",
+   "ts": "2026-10-18T12:21:05.624675Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c39",
+   "ts": "2026-10-18T12:21:32.226100Z",
+   "text": "",
+   "intent": "hoi_size",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c40",
+   "ts": "2026-10-18T12:22:55.925590Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c41",
+   "ts": "2026-10-18T12:28:23.281148Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c42",
+   "ts": "2026-10-18T12:29:00.205792Z",
+   "text": "",
+   "intent": "hoi_size",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c43",
+   "ts": "2026-10-18T12:29:29.723372Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c44",
+   "ts": "2026-10-18T12:31:16.344586Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c45",
+   "ts": "2026-10-18T12:31:35.924798Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c46",
+   "ts": "2026-10-18T12:32:22.796087Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c47",
+   "ts": "2026-10-18T12:34:29.766432Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c48",
+   "ts": "2026-10-18T12:35:09.078075Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c49",
+   "ts": "2026-10-18T12:35:56.019817Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c50",
+   "ts": "2026-10-18T12:36:29.622868Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c51",
+   "ts": "2026-10-18T12:37:32.783202Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c52",
+   "ts": "2026-10-18T12:38:25.704502Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c53",
+   "ts": "2026-10-18T12:42:50.996860Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c54",
+   "ts": "2026-10-18T12:44:26.403401Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c55",
+   "ts": "2026-10-18T12:45:43.410297Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c56",
+   "ts": "2026-10-18T12:45:53.979871Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c57",
+   "ts": "2026-10-18T12:45:59.224619Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c58",
+   "ts": "2026-10-18T12:46:27.021358Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c59",
+   "ts": "2026-10-18T12:47:24.418804Z",
+   "text": "",
+   "intent": "van_chuyen",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c60",
+   "ts": "2026-10-18T12:47:33.716908Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c61",
+   "ts": "2026-10-18T12:47:42.686875Z",
+   "text": "",
+   "intent": "chot_don",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c62",
+   "ts": "2026-10-18T12:50:06.502728Z",
+   "text": "",
+   "intent": "khac",
+   "pii_kinds": []
+  },
+  {
+   "comment_id": "c63",
+   "ts": "2026-10-18T12:52:02.273442Z",
+   "text": "",
+   "intent": "che_dat",
+   "pii_kinds": []
+  }
+ ],
+ "baoCao": {
+  "session_id": "635571a0-8671-41d7-a056-38818bfba4ad",
+  "tieu_de": "Demo vàng · ĐỔI #1",
+  "platform": "sim",
+  "loai_phien": "thi_nghiem",
+  "nhan": "báo cáo sau phiên — phiên thí nghiệm: phần nhân quả chạy đúng đường phân tích tiền đăng ký",
+  "is_demo": true,
+  "dry_run": false,
+  "binh_luan_tong_hop": 0,
+  "tong_quan": {
+   "thoi_luong_s": 5400.0,
+   "tong_binh_luan": 64,
+   "dinh_binh_luan": {
+    "gia_tri_per_phut": 6.0,
+    "offset_s": 4980.0,
+    "ts": "2026-10-18T12:45:32.023506Z"
+   },
+   "nguoi_xem": {
+    "dinh": 53.833333333333336,
+    "trung_binh": 37.05185185185185,
+    "n_diem_do": 180
+   },
+   "luot_nhap_hop_le": 294,
+   "luot_nhap_tho": 294,
+   "reactions": null,
+   "thieu": {
+    "reactions": "chưa có nguồn sự kiện tim/quà/Super Chat cho phiên này"
+   }
+  },
+  "ket_qua_thi_nghiem": {
+   "source": "experiment",
+   "khoa": false,
+   "ly_do_khoa": null,
+   "estimable": true,
+   "n_blocks": 16,
+   "n_on": 9,
+   "n_off": 7,
+   "estimate": 1.2235021672772906,
+   "ci_low": 0.9319564255959676,
+   "ci_high": 1.4981536592501827,
+   "p_value": 0.000999000999000999,
+   "n_draws": 1000,
+   "message": null
+  },
+  "tom_tat_3_cau": [
+   {
+    "text": "Hệ thống tạo thêm +1,224 lượt nhấp trên mỗi 1.000 giây·người xem so với khi tắt (KTC 95% [+0,932; +1,498] — không chứa 0).",
+    "badge": "thi_nghiem",
+    "refs": [
+     "ket_qua_thi_nghiem.estimate",
+     "ket_qua_thi_nghiem.ci_low",
+     "ket_qua_thi_nghiem.ci_high"
+    ]
+   },
+   {
+    "text": "Bằng chứng: 16 khối đo được (9 BẬT / 7 TẮT); kiểm định hoán vị 1.000 lần vẽ lại cho p < 0,001.",
+    "badge": "thi_nghiem",
+    "refs": [
+     "ket_qua_thi_nghiem.n_blocks",
+     "ket_qua_thi_nghiem.n_on",
+     "ket_qua_thi_nghiem.n_off",
+     "ket_qua_thi_nghiem.p_value",
+     "ket_qua_thi_nghiem.n_draws"
+    ]
+   },
+   {
+    "text": "Việc nên làm: lặp lại đúng thiết kế này ở phiên tới — một phiên chưa phải chuỗi; 16 khối hiện có mới đến từ một buổi, kết luận cuối cùng phải gộp nhiều phiên cùng thiết kế.",
+    "badge": "quan_sat",
+    "refs": [
+     "ket_qua_thi_nghiem.n_blocks"
+    ]
+   }
+  ]
+ },
+ "don": {
+  "tong_don": 0,
+  "tong_san_pham": 0,
+  "tong_doanh_thu": 0.0
+ }
+}
