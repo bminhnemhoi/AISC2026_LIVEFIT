@@ -70,3 +70,5 @@ data/phong-xem/
 # Video nguoi dan dat duoi next/public/xem/ (docs/HUONG-DAN-PHONG-XEM.md):
 # tep lon, co the co hinh nguoi that; chi phuc vu tai cho, khong commit.
 next/public/xem/**/*.[mM][pP]4
+# Dong thoi gian cua video nguoi dan AI (V1, D-015): sinh lai duoc, di cung tep mp4, khong commit.
+next/public/xem/nguoi-dan-ai.json
