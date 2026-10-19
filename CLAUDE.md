@@ -59,7 +59,7 @@ cd next; npx tsc --noEmit; npm run lint; npx vitest run
 
 ## Luật làm việc
 
-- Làm trên nhánh riêng, mở PR. **Push theo D-020** (test xanh + người duyệt độc lập + quét bí mật, PR nháp, không push main, không --force). **Không merge**: Tiến duyệt mã, Minh merge.
+- Làm trên nhánh riêng, mở PR. **Push theo D-020** (test xanh + người duyệt độc lập + quét bí mật, PR nháp, không push main, không --force). **Merge theo D-034**: Claude merge khi qua đủ cổng (CI xanh gồm job `next/`, `kiem_giao_dien.py` 0 ĐỎ, người duyệt độc lập, quét bí mật trên diff); Tiến duyệt mã; không ai push thẳng main.
 - Commit: tiếng Việt không dấu, dòng cuối:
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`
 - Không đụng container Docker của dự án khác trên máy.
