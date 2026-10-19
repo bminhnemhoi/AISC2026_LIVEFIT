@@ -275,7 +275,11 @@ def bat_phong_xem(session_id: str, body: PhongXemIn, store: StoreDep) -> PhongXe
             "enabled": body.enabled,
             "consent_version": body.consent_version,
             "products": list(dict.fromkeys(body.products)),
-            "video_url": body.video_url,
+            # Thân yêu cầu không có trường video_url thì giữ video cũ (gửi lại phòng để đổi bộ
+            # hàng không được làm mất video người dẫn); muốn bỏ video thì gửi video_url=null.
+            "video_url": (
+                body.video_url if "video_url" in body.model_fields_set else room.get("video_url")
+            ),
             "title": body.title or session.get("title") or "Phòng live dàn dựng",
         }
     )

@@ -813,3 +813,24 @@ def test_bad_viewer_ids_are_rejected(room):
     client, _, _, code = room
     assert _event(client, code, "short", "e", "dong_y").status_code == 422
     assert _event(client, code, "x" * 20 + "<script>", "e", "dong_y").status_code == 422
+
+
+def test_gui_lai_phong_khong_co_video_url_thi_giu_video_cu(env, clock):
+    """Gửi lại phong-xem mà không có trường video_url (ví dụ gieo lại để đổi bộ hàng)
+    không được xoá video người dẫn; gửi video_url=null rõ ràng thì mới xoá."""
+    store = InMemoryStore()
+    with TestClient(create_app(store=store)) as client:
+        sid, code = _lab_room(client)
+        than = {"consent_version": "2026-10-15", "products": list(PRODUCTS)}
+        r = client.post(
+            f"/sessions/{sid}/phong-xem", json={**than, "video_url": "/xem/nguoi-dan-ai.mp4"}
+        )
+        assert r.status_code == 200, r.text
+        assert store.get_session(sid)["phong_xem"]["video_url"] == "/xem/nguoi-dan-ai.mp4"
+        assert client.post(f"/sessions/{sid}/phong-xem", json=than).status_code == 200
+        assert store.get_session(sid)["phong_xem"]["video_url"] == "/xem/nguoi-dan-ai.mp4"
+        assert (
+            client.post(f"/sessions/{sid}/phong-xem", json={**than, "video_url": None}).status_code
+            == 200
+        )
+        assert store.get_session(sid)["phong_xem"]["video_url"] is None
