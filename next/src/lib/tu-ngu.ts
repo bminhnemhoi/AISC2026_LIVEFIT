@@ -178,6 +178,46 @@ export const NHAN_CONG_BO: readonly NhanCanon<MaNhanCongBo>[] = [
   },
 ];
 
+/* ---------- kết luận ĐỔI / GIỮ / ĐO THÊM (một bộ câu cho thước, CoChe, bàn, tổng kết) ---------- */
+
+export const MA_KET_LUAN = ["DOI", "GIU", "DO_THEM"] as const;
+export type MaKetLuan = (typeof MA_KET_LUAN)[number];
+
+export interface KetLuanCanon {
+  readonly id: MaKetLuan;
+  /** Chữ lớn trên thẻ kết luận. */
+  readonly chu: string;
+  /** Nhãn vùng trên thước khoảng tin cậy. */
+  readonly nhan_thuoc: string;
+  /** Một câu thường giải thích. */
+  readonly cau: string;
+}
+
+export const KET_LUAN: readonly KetLuanCanon[] = [
+  {
+    id: "DOI",
+    chu: "ĐỔI",
+    nhan_thuoc: "ĐỔI sang cách ghim của LiveLift",
+    cau: "Cả khoảng tin cậy nằm trên 0: ghim theo lịch của LiveLift tạo thêm lượt nhấp so với cách làm thường lệ, nên đổi sang.",
+  },
+  {
+    id: "GIU",
+    chu: "GIỮ",
+    nhan_thuoc: "GIỮ cách làm cũ",
+    cau: "Cả khoảng tin cậy nằm dưới 0: cách ghim của LiveLift kém hơn cách làm thường lệ, nên giữ cách cũ.",
+  },
+  {
+    id: "DO_THEM",
+    chu: "ĐO THÊM",
+    nhan_thuoc: "ĐO THÊM rồi gộp",
+    cau: "Khoảng tin cậy còn chứa 0: chưa đủ bằng chứng theo hướng nào, nên chạy thêm phiên rồi gộp lại.",
+  },
+];
+
+export const KET_LUAN_THEO_MA: Readonly<Record<MaKetLuan, KetLuanCanon>> = Object.freeze(
+  Object.fromEntries(KET_LUAN.map((k) => [k.id, k])) as Record<MaKetLuan, KetLuanCanon>,
+);
+
 /* ---------- chữ cấm ---------- */
 
 export interface TuCam {

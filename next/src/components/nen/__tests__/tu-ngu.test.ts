@@ -10,6 +10,9 @@ import {
   MA_NHAN_NGUON,
   NHAN_CONG_BO,
   NHAN_CONG_BO_THEO_MA,
+  KET_LUAN,
+  KET_LUAN_THEO_MA,
+  MA_KET_LUAN,
   NHAN_NGUON,
   NHAN_NGUON_THEO_MA,
   PHIEN_BAN_CANON,
@@ -35,6 +38,7 @@ interface CanonYaml {
   cau_ghim: string;
   nhan_nguon: Array<{ id: string; hien_thi: string; nghia: string }>;
   nhan_cong_bo: Array<{ id: string; hien_thi: string; nghia: string }>;
+  ket_luan: Array<{ id: string; chu: string; nhan_thuoc: string; cau: string }>;
   tu_cam: Array<{ mau: string; ly_do: string }>;
   quy_tac_khac: string[];
   chinh_ta: { dung: string[]; cam: string[] };
@@ -71,6 +75,12 @@ describe("tu-ngu.ts khớp từng chữ với docs/canon/thuat-ngu.yaml", () => 
     expect([...MA_NHAN_CONG_BO]).toEqual(canon.nhan_cong_bo.map((n) => n.id));
     expect(NHAN_NGUON_THEO_MA.MO_PHONG.hien_thi).toBe("MÔ PHỎNG");
     expect(NHAN_CONG_BO_THEO_MA.NGUOI_DAN_AI.hien_thi).toBe("NGƯỜI DẪN AI · GIỌNG TỔNG HỢP");
+  });
+
+  it("kết luận ĐỔI / GIỮ / ĐO THÊM: cùng mã, chữ, nhãn thước và câu", () => {
+    expect(KET_LUAN.map(gon)).toEqual(canon.ket_luan);
+    expect([...MA_KET_LUAN]).toEqual(canon.ket_luan.map((k) => k.id));
+    expect(KET_LUAN_THEO_MA.DO_THEM.chu).toBe("ĐO THÊM");
   });
 
   it("tệp nguồn không chứa ký tự gạch dài thật (chỉ mã \\u2014)", () => {
