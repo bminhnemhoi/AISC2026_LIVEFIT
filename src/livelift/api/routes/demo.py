@@ -53,30 +53,40 @@ GIO_VN = timezone(timedelta(hours=7))
 #: là đếm số lần đã gieo.
 TIEN_TO_PHIEN_DANG_PHAT = "Phiên đang phát (mô phỏng)"
 
+#: Bộ hàng dùng chung (D-025, 19/10/2026): cùng bốn món, cùng mã ``LAB-1``..``LAB-4``,
+#: cùng giá với ``scripts/mo_phong_xem.py`` (``SAN_PHAM_MAC_DINH``), Live Desk minh hoạ
+#: (``next/src/components/minh-hoa/hang.tsx``) và kịch bản người dẫn AI. Các trường giữ
+#: y hệt ``SAN_PHAM_MAC_DINH`` (không ``category``) vì ``POST /products`` ghi đè theo
+#: ``product_id``: hai nơi gieo khác trường thì danh mục đổi qua đổi lại theo nơi gieo
+#: sau cùng. Giá chỉ để minh hoạ, không lấy từ dữ liệu sàn.
 DEMO_PRODUCTS = [
     {
-        "product_id": "P-SAP",
-        "name": "Sáp thơm để xe hương cà phê",
-        "category": "nhà cửa",
-        "cost": 18000,
-        "price": 45000,
-        "stock": 120,
+        "product_id": "LAB-1",
+        "name": "Áo thun cotton basic",
+        "cost": 45000,
+        "price": 129000,
+        "stock": 100,
     },
     {
-        "product_id": "P-BINH",
-        "name": "Bình giữ nhiệt 500ml",
-        "category": "nhà cửa",
-        "cost": 42000,
-        "price": 95000,
-        "stock": 80,
+        "product_id": "LAB-2",
+        "name": "Túi tote canvas",
+        "cost": 30000,
+        "price": 89000,
+        "stock": 100,
     },
     {
-        "product_id": "P-KHAN",
-        "name": "Set 5 khăn lau đa năng",
-        "category": "nhà cửa",
-        "cost": 15000,
+        "product_id": "LAB-3",
+        "name": "Bình giữ nhiệt inox 750ml",
+        "cost": 60000,
+        "price": 159000,
+        "stock": 100,
+    },
+    {
+        "product_id": "LAB-4",
+        "name": "Set 3 kẹp tóc càng cua",
+        "cost": 12000,
         "price": 39000,
-        "stock": 200,
+        "stock": 100,
     },
 ]
 
@@ -92,7 +102,7 @@ DEMO_COMMENTS = [
     "mua 2 tặng 1 thật không",
     "khi nào tới lượt sản phẩm số 3",
     "chất liệu gì vậy shop",
-    "lấy 1 set khăn nha",
+    "lấy 1 set kẹp tóc nha",
     "mắc quá shop ơi",
     "giao COD được không",
     "bình này giữ nhiệt mấy tiếng",
