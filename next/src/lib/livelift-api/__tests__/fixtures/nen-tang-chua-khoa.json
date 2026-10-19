@@ -1,0 +1,57 @@
+[
+  {
+    "platform": "youtube",
+    "ten": "YouTube Live",
+    "ready": false,
+    "mode": "chinh_thuc",
+    "missing": [
+      "YOUTUBE_API_KEY"
+    ],
+    "source_hint": "Dán link video đang live (youtube.com/watch?v=… hoặc /live/…)",
+    "note": "YouTube Data API v3, miễn phí, hạn mức 10.000 đơn vị/ngày — đủ khoảng một buổi 90 phút khi thu bình luận và người xem. Bật trước giờ phát được: bộ thu chờ NỀN TẢNG báo buổi live đang phát, KHÔNG chờ nút Bắt đầu phát sóng của LiveLift — bình luận ghi trước lúc phiên lên sóng không thuộc khối nào."
+  },
+  {
+    "platform": "facebook",
+    "ten": "Facebook Live (Page của bạn)",
+    "ready": false,
+    "mode": "chinh_thuc",
+    "missing": [
+      "FACEBOOK_PAGE_ACCESS_TOKEN",
+      "FACEBOOK_PAGE_ID"
+    ],
+    "source_hint": "Để trống để tự tìm buổi đang phát trên Page, hoặc dán live-video id",
+    "note": "Graph API, cần quyền pages_read_engagement VÀ pages_read_user_content (thiếu quyền thứ hai sẽ đọc được 0 bình luận mà không báo lỗi). Bật trước giờ phát được: bộ thu chờ NỀN TẢNG báo buổi live đang phát, KHÔNG chờ nút Bắt đầu phát sóng của LiveLift — bình luận ghi trước lúc phiên lên sóng không thuộc khối nào."
+  },
+  {
+    "platform": "shopee",
+    "ten": "Shopee Live (shop của bạn)",
+    "ready": false,
+    "mode": "chinh_thuc",
+    "missing": [
+      "SHOPEE_PARTNER_ID",
+      "SHOPEE_PARTNER_KEY",
+      "SHOPEE_USER_ID",
+      "SHOPEE_ACCESS_TOKEN"
+    ],
+    "source_hint": "Dán Shopee Live session_id",
+    "note": "Shopee Open Platform v2. access_token chỉ sống 4 giờ. Cần xác minh shop Việt Nam có được cấp nhóm API livestream hay không trước khi dựa vào."
+  },
+  {
+    "platform": "tiktok",
+    "ten": "TikTok LIVE",
+    "ready": false,
+    "mode": "khong_ho_tro",
+    "missing": [],
+    "source_hint": "",
+    "note": "Không có API công khai cho bình luận live. Đường không chính thức bị Cloudflare chặn 10/10 lần (đo 10/09/2026). Dùng shortlink đo click và ghi đơn bằng tệp CSV xuất từ TikTok Shop Seller Center."
+  },
+  {
+    "platform": "mo_phong",
+    "ten": "Mô phỏng (kiểm thử)",
+    "ready": true,
+    "mode": "du_phong",
+    "missing": [],
+    "source_hint": "Để trống để phát cả buổi mẫu · gõ ngắn x10 để thử nhanh",
+    "note": "Bình luận do AI soạn sẵn (dữ liệu tổng hợp), không phải khách thật — chỉ để chạy thử Bàn trợ live từ đầu đến cuối. Chỉ bật được trên phiên chạy thử hoặc phiên mẫu; không bao giờ trộn vào dữ liệu thật. Phát kịch bản NGAY khi bật, không chờ nút Bắt đầu phát sóng: bật SAU khi phiên lên sóng để kịch bản rơi vào các khối."
+  }
+]

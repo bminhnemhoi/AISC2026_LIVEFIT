@@ -1,0 +1,77 @@
+{
+  "label": "kết quả MÔ PHỎNG — dữ liệu mẫu (demo), KHÔNG phải kết quả thật",
+  "source": "experiment",
+  "env": "demo",
+  "n_sessions": 6,
+  "n_blocks": 83,
+  "n_on": 42,
+  "n_off": 41,
+  "raw_clicks": 1645,
+  "valid_clicks": 1645,
+  "sessions_excluded": {},
+  "estimate": 0.6360405875764933,
+  "ci_low": 0.45755548597201257,
+  "ci_high": 0.8189328813628676,
+  "p_value": 0.000999000999000999,
+  "n_draws": 1000,
+  "measured_cv": 0.43807127198050827,
+  "measured_compliance": 1.0,
+  "cv_poisson_floor": 0.2731118976913282,
+  "reducible_share": 0.6113204490731111,
+  "power_table": [
+    {
+      "scenario": "không đối tác (18 phiên)",
+      "n_sessions": 18,
+      "blocks_per_session": 16,
+      "n_blocks_total": 288,
+      "cv": 0.43807127198050827,
+      "mde_relative": 0.1736
+    },
+    {
+      "scenario": "có đối tác (+10 phiên)",
+      "n_sessions": 28,
+      "blocks_per_session": 16,
+      "n_blocks_total": 448,
+      "cv": 0.43807127198050827,
+      "mde_relative": 0.1637
+    }
+  ],
+  "denominator_check": {
+    "p_value": 0.4883720930232558,
+    "flagged": false,
+    "n_draws": 300,
+    "estimate": 669.790940766552,
+    "note": "chưa thấy dấu hiệu mẫu số chịu can thiệp — KHÔNG phải bằng chứng mẫu số ngoại sinh"
+  },
+  "message": null,
+  "tom_tat_3_cau": [
+    {
+      "text": "Hệ thống tạo thêm +0,636 lượt nhấp trên mỗi 1.000 giây·người xem so với khi tắt (KTC 95% [+0,458; +0,819] — không chứa 0).",
+      "badge": "thi_nghiem",
+      "refs": [
+        "estimate",
+        "ci_low",
+        "ci_high"
+      ]
+    },
+    {
+      "text": "Bằng chứng: 83 khối đo được (42 BẬT / 41 TẮT) từ 6 phiên; kiểm định hoán vị 1.000 lần vẽ lại cho p < 0,001.",
+      "badge": "thi_nghiem",
+      "refs": [
+        "n_blocks",
+        "n_on",
+        "n_off",
+        "p_value",
+        "n_draws"
+      ]
+    },
+    {
+      "text": "Việc nên làm: giữ nguyên thiết kế và cách vận hành ở phiên tới, tích lũy thêm khối để thu hẹp khoảng tin cậy; tuân thủ đo được 100% — giữ kỷ luật thao tác khối BẬT để ước lượng không bị pha loãng thêm.",
+      "badge": "quan_sat",
+      "refs": [
+        "measured_compliance"
+      ]
+    }
+  ],
+  "estimable": true
+}
